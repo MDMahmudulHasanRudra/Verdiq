@@ -9,3 +9,4 @@ C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Dom
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\refint\Verdiq.Domain.dll
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.pdb
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\ref\Verdiq.Domain.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.sourcelink.json

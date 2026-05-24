@@ -24,6 +24,7 @@ public class AuthResponseDto
     public string Message { get; set; } = string.Empty;
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
+    public string? TempToken { get; set; }
     public UserInfoDto? User { get; set; }
 }
 
@@ -37,6 +38,7 @@ public class UserInfoDto
     public string? AvatarUrl { get; set; }
     public string? BarCouncilId { get; set; }
     public bool IsActive { get; set; }
+    public bool TwoFactorEnabled { get; set; }
 }
 
 public class TokenRefreshDto

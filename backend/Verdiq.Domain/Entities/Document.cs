@@ -15,6 +15,14 @@ public class Document : BaseEntity
     public Guid CaseId { get; set; }
     public Guid UploadedById { get; set; }
 
+    public string StorageProvider { get; set; } = "Local";
+    public string? StorageKey { get; set; }
+    public int CurrentVersion { get; set; } = 1;
+    public Guid OrganizationId { get; set; }
+
     public Case Case { get; set; } = null!;
     public User UploadedBy { get; set; } = null!;
+    public Organization Organization { get; set; } = null!;
+    public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
+    public ICollection<DocumentTag> Tags { get; set; } = new List<DocumentTag>();
 }

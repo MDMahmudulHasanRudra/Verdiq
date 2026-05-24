@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Verdiq.API.Hubs;
 using Verdiq.API.Models;
+using Verdiq.API.Services;
 using Verdiq.Application.DTOs.Notification;
 using Verdiq.Application.Interfaces;
 
@@ -12,10 +14,12 @@ namespace Verdiq.API.Controllers;
 public class NotificationsController : BaseController
 {
     private readonly INotificationService _notificationService;
+    private readonly IRealtimeNotifier _realtimeNotifier;
 
-    public NotificationsController(INotificationService notificationService)
+    public NotificationsController(INotificationService notificationService, IRealtimeNotifier realtimeNotifier)
     {
         _notificationService = notificationService;
+        _realtimeNotifier = realtimeNotifier;
     }
 
     [HttpGet]
@@ -38,6 +42,10 @@ public class NotificationsController : BaseController
     public async Task<ActionResult<ApiResponse<NotificationResponseDto>>> Create([FromBody] CreateNotificationDto dto)
     {
         var notification = await _notificationService.CreateNotificationAsync(dto);
+
+        await _realtimeNotifier.NotifyUserAsync(dto.UserId.ToString(), NotificationHubMethods.NotificationReceived, notification);
+        await _realtimeNotifier.NotifyUserAsync(dto.UserId.ToString(), NotificationHubMethods.UnreadCountChanged, new { count = 1 });
+
         return Ok(ApiResponse<NotificationResponseDto>.Created(notification));
     }
 

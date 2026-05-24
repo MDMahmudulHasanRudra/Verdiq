@@ -467,3 +467,4 @@ C:\Users\mdmah\Desktop\Verdiq\backend\tests\Verdiq.API.Tests\obj\Debug\net10.0\r
 C:\Users\mdmah\Desktop\Verdiq\backend\tests\Verdiq.API.Tests\obj\Debug\net10.0\Verdiq.API.Tests.pdb
 C:\Users\mdmah\Desktop\Verdiq\backend\tests\Verdiq.API.Tests\obj\Debug\net10.0\Verdiq.API.Tests.genruntimeconfig.cache
 C:\Users\mdmah\Desktop\Verdiq\backend\tests\Verdiq.API.Tests\obj\Debug\net10.0\ref\Verdiq.API.Tests.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\tests\Verdiq.API.Tests\obj\Debug\net10.0\Verdiq.API.Tests.sourcelink.json

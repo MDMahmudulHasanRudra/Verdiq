@@ -52,6 +52,30 @@ public class JwtService : IJwtService
         return Convert.ToBase64String(randomBytes);
     }
 
+    public string GenerateTempToken(User user)
+    {
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "VerdiqSecretKey2024SuperSecureLongKey!@#$%^&*()"));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim("purpose", "2fa"),
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"] ?? "Verdiq",
+            audience: _configuration["Jwt:Audience"] ?? "VerdiqApp",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public (string AccessToken, string RefreshToken) GenerateTokens(User user)
     {
         return (GenerateAccessToken(user), GenerateRefreshToken());

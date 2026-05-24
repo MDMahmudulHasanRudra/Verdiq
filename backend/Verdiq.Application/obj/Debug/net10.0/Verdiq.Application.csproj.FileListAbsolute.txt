@@ -13,3 +13,4 @@ C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Debug\net10.0\Verdi
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Debug\net10.0\refint\Verdiq.Application.dll
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Debug\net10.0\Verdiq.Application.pdb
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Debug\net10.0\ref\Verdiq.Application.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Debug\net10.0\Verdiq.Application.sourcelink.json

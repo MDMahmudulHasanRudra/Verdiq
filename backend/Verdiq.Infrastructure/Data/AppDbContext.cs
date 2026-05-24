@@ -14,10 +14,16 @@ public class AppDbContext : DbContext
     public DbSet<Case> Cases => Set<Case>();
     public DbSet<Hearing> Hearings => Set<Hearing>();
     public DbSet<Document> Documents => Set<Document>();
+    public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<DocumentTag> DocumentTags => Set<DocumentTag>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+    public DbSet<Organization> Organizations => Set<Organization>();
+    public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
+    public DbSet<Workspace> Workspaces => Set<Workspace>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +43,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.AvatarUrl).HasMaxLength(500);
             entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
+            entity.Property(e => e.TwoFactorSecret).HasMaxLength(256);
+            entity.Property(e => e.LastLoginIp).HasMaxLength(50);
 
             entity.HasOne(e => e.Subscription)
                 .WithOne(s => s.User)
@@ -64,6 +72,11 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.AssignedLawyerId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -99,6 +112,11 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.AssignedLawyerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
@@ -121,6 +139,11 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.CaseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
@@ -135,6 +158,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.DocumentType).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Category).HasMaxLength(100);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.StorageProvider).HasMaxLength(50).HasDefaultValue("Local");
+            entity.Property(e => e.StorageKey).HasMaxLength(500);
 
             entity.HasOne(e => e.Case)
                 .WithMany(c => c.Documents)
@@ -146,7 +171,53 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.UploadedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasMany(e => e.Versions)
+                .WithOne(v => v.Document)
+                .HasForeignKey(v => v.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Tags)
+                .WithOne(t => t.Document)
+                .HasForeignKey(t => t.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<DocumentVersion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentVersions");
+            entity.HasIndex(e => e.DocumentId);
+            entity.Property(e => e.FileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.OriginalFileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.StorageProvider).HasMaxLength(50).HasDefaultValue("Local");
+            entity.Property(e => e.StorageKey).HasMaxLength(500);
+            entity.Property(e => e.ChangeNotes).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasOne(e => e.UploadedBy)
+                .WithMany()
+                .HasForeignKey(e => e.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<DocumentTag>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentTags");
+            entity.HasIndex(e => new { e.DocumentId, e.TagName }).IsUnique();
+            entity.Property(e => e.TagName).HasMaxLength(100).IsRequired();
+
+            entity.HasQueryFilter(e => e.Document != null && !e.Document.IsDeleted);
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -216,6 +287,82 @@ public class AppDbContext : DbContext
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
+        modelBuilder.Entity<AiConversation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("AiConversations");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
+            entity.Property(e => e.Role).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Content).HasMaxLength(10000).IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Organization>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Organizations");
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.LogoUrl).HasMaxLength(500);
+            entity.Property(e => e.Website).HasMaxLength(500);
+            entity.Property(e => e.Address).HasMaxLength(500);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Email).HasMaxLength(255);
+
+            entity.HasOne(e => e.Owner)
+                .WithMany()
+                .HasForeignKey(e => e.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<OrganizationMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("OrganizationMembers");
+            entity.HasIndex(e => new { e.OrganizationId, e.UserId }).IsUnique();
+            entity.HasIndex(e => new { e.OrganizationId, e.InvitedEmail }).IsUnique();
+            entity.Property(e => e.InvitedEmail).HasMaxLength(255);
+            entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany(o => o.Members)
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.OrganizationMemberships)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Workspace>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Workspaces");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Color).HasMaxLength(20);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany(o => o.Workspaces)
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
         SeedData(modelBuilder);
     }
 
@@ -225,6 +372,7 @@ public class AppDbContext : DbContext
         var adminSubId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
         var lawyerId = Guid.Parse("e5f6a7b8-c9d0-1234-5678-9abcdef01234");
         var lawyerSubId = Guid.Parse("f6a7b8c9-d0e1-2345-6789-abcdef012345");
+        var orgId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
 
         modelBuilder.Entity<User>().HasData(new User
         {
@@ -271,6 +419,27 @@ public class AppDbContext : DbContext
             Status = SubscriptionStatus.Active,
             CurrentPeriodStart = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),
             CurrentPeriodEnd = new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
+        });
+
+        modelBuilder.Entity<Organization>().HasData(new Organization
+        {
+            Id = orgId,
+            Name = "Verdiq Chamber",
+            Slug = "verdiq-chamber",
+            Description = "Default organization for Verdiq legal practice",
+            IsActive = true,
+            OwnerId = lawyerId,
+            CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
+        });
+
+        modelBuilder.Entity<OrganizationMember>().HasData(new OrganizationMember
+        {
+            Id = Guid.Parse("a0000000-0000-0000-0000-000000000002"),
+            OrganizationId = orgId,
+            UserId = lawyerId,
+            Role = OrganizationRole.Owner,
+            AcceptedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),
             CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
         });
     }

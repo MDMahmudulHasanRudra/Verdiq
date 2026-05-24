@@ -14,7 +14,27 @@ public class DashboardStats
     public double ClientGrowth { get; set; }
 }
 
+public class CaseChartDataPoint
+{
+    public string Month { get; set; } = string.Empty;
+    public int Active { get; set; }
+    public int Closed { get; set; }
+    public int Pending { get; set; }
+}
+
+public class RecentActivity
+{
+    public string Id { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+    public string? ReferenceId { get; set; }
+}
+
 public interface IDashboardService
 {
     Task<DashboardStats> GetDashboardStatsAsync(Guid lawyerId);
+    Task<List<CaseChartDataPoint>> GetCaseChartDataAsync(Guid lawyerId, int months = 12);
+    Task<List<RecentActivity>> GetRecentActivitiesAsync(Guid lawyerId, int count = 10);
 }

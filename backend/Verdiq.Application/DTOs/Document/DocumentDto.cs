@@ -14,6 +14,38 @@ public class DocumentResponseDto
     public string CaseTitle { get; set; } = string.Empty;
     public string UploadedByName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public string StorageProvider { get; set; } = "Local";
+    public int CurrentVersion { get; set; } = 1;
+    public int VersionCount { get; set; }
+    public List<string> Tags { get; set; } = new();
+    public List<DocumentVersionDto> Versions { get; set; } = new();
+}
+
+public class DocumentVersionDto
+{
+    public Guid Id { get; set; }
+    public int VersionNumber { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string OriginalFileName { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? ChangeNotes { get; set; }
+    public string UploadedByName { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class DocumentTagDto
+{
+    public Guid Id { get; set; }
+    public string TagName { get; set; } = string.Empty;
+}
+
+public class BulkOperationResult
+{
+    public int Succeeded { get; set; }
+    public int Failed { get; set; }
+    public List<string> Errors { get; set; } = new();
 }
 
 public class CaseStatsDto

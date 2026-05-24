@@ -213,3 +213,35 @@ Page/Component → React Query Hook → Service (axios) → Backend API
 7. **Tailwind CSS v4** — No `tailwind.config.js`; all config in CSS via `@import "tailwindcss"`
 8. **OpenApi v2** — Microsoft.OpenApi namespace (not Swashbuckle's Swashbuckle.AspNetCore)
 9. **CORS: SetIsOriginAllowed** — Allows any origin during development (avoids IP mismatch issues)
+
+## New Modules (Phases 1-4)
+
+### Phase 1: Real Analytics
+- `GET /api/dashboard/case-chart?months=12` — Monthly case status breakdown
+- `GET /api/dashboard/recent-activities?count=10` — Recent case/hearing/document activity feed
+- Frontend uses **recharts** (`BarChart`, `PieChart`) replacing CSS-based charts
+- `RecentActivities` component with type-based icons and relative timestamps
+
+### Phase 2: AI Legal Assistant
+- `Verdiq.Domain.Entities.AiConversation` — Stores chat history per user
+- `IAIService` with 6 methods: Chat, AnalyzeCase, SummarizeDocument, GenerateLegalNotice, SearchJudgements, GeneratePetition
+- `AIService` implementation: calls OpenAI API when `OpenAI:ApiKey` is configured; falls back to keyword-based responses when not
+- `AIController`: 7 endpoints (`POST /api/ai/*` + `GET /api/ai/history`)
+- Frontend: `useAiChat()` mutation hook, real API calling (no more setTimeout mock)
+
+### Phase 3: Admin Panel
+- `IAdminService` with user management, case overview, revenue analytics, system stats
+- `AdminController` (Admin-only): `GET /api/admin/users`, `PATCH /api/admin/users/:id/status`, `DELETE /api/admin/users/:id`, `GET /api/admin/cases`, `GET /api/admin/revenue`, `GET /api/admin/system-stats`
+- Frontend: `useAdminUsers`, `useAdminSystemStats`, `useAdminRevenue` hooks, real data in dashboard stats cards, user table with suspend/delete actions
+
+### Phase 4: Global Search Engine
+- `ISearchService` — Searches cases, clients, hearings, documents by `LOWER LIKE` across multiple fields
+- `SearchController`: `GET /api/search?q=...&limit=10`
+- Frontend: `useSearch` hook (enabled only when query >= 2 chars), `search-service.ts`
+- Navbar search input is now functional with live dropdown showing type-icon + title + subtitle + status badge
+
+### Phase 5: Real Navbar
+- User info pulled from Zustand `useAuthStore` (no hardcoded "Adv. A. Karim")
+- Notification bell shows real unread count from `useUnreadCount()`
+- Dropdown links: Settings `/lawyer/settings`, Admin Panel `/admin` (role-gated), Logout
+- Global search integrated directly into navbar with debounced API calls

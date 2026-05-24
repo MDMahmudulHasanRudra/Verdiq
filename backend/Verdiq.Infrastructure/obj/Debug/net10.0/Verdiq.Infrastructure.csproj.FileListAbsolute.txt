@@ -17,3 +17,4 @@ C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Debug\net10.0\re
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Debug\net10.0\Verdiq.Infrastructure.pdb
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Debug\net10.0\Verdiq.Infrastructure.genruntimeconfig.cache
 C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Debug\net10.0\ref\Verdiq.Infrastructure.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Debug\net10.0\Verdiq.Infrastructure.sourcelink.json

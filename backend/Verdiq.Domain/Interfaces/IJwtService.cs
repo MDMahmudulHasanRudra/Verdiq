@@ -8,4 +8,5 @@ public interface IJwtService
     string GenerateRefreshToken();
     Guid? ValidateToken(string token);
     (string AccessToken, string RefreshToken) GenerateTokens(User user);
+    string GenerateTempToken(User user);
 }

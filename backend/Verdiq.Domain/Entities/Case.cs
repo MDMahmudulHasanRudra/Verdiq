@@ -20,9 +20,11 @@ public class Case : BaseEntity
     public DateTime? ClosingDate { get; set; }
     public Guid ClientId { get; set; }
     public Guid AssignedLawyerId { get; set; }
+    public Guid OrganizationId { get; set; }
 
     public Client Client { get; set; } = null!;
     public User AssignedLawyer { get; set; } = null!;
+    public Organization Organization { get; set; } = null!;
     public ICollection<Hearing> Hearings { get; set; } = new List<Hearing>();
     public ICollection<Document> Documents { get; set; } = new List<Document>();
 }

@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
+using Verdiq.API.Hubs;
 using Verdiq.API.Middleware;
+using Verdiq.API.Services;
 using Verdiq.Application.Interfaces;
 using Verdiq.Application.Validators;
-using Verdiq.Domain.Entities;
-using Verdiq.Domain.Enums;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
 using Verdiq.Infrastructure.Repositories;
@@ -99,9 +99,20 @@ try
     builder.Services.AddScoped<IHearingService, HearingService>();
     builder.Services.AddScoped<IClientService, ClientService>();
     builder.Services.AddScoped<IDocumentService, DocumentService>();
+    builder.Services.AddScoped<ICloudStorageService, CloudStorageService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddScoped<IAIService, AIService>();
+    builder.Services.AddHttpClient<IAIService, AIService>();
+    builder.Services.AddScoped<IAdminService, AdminService>();
+    builder.Services.AddScoped<ISearchService, SearchService>();
+    builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+    builder.Services.AddScoped<IPaymentService, PaymentService>();
+    builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();
+
+    builder.Services.AddSignalR();
+    builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
 
     builder.Services.AddHealthChecks();
 
@@ -136,6 +147,7 @@ try
     if (!app.Environment.IsEnvironment("Testing"))
         app.UseSerilogRequestLogging();
 
+    app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseMiddleware<ExceptionMiddleware>();
     app.UseMiddleware<RequestLoggingMiddleware>();
 
@@ -153,6 +165,8 @@ try
 
     app.MapControllers();
     app.MapHealthChecks("/health");
+    app.MapHub<NotificationHub>("/hubs/notifications");
+    app.MapHub<PresenceHub>("/hubs/presence");
 
     if (!app.Environment.IsEnvironment("Testing"))
     {
@@ -160,6 +174,7 @@ try
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.EnsureCreated();
+            await DemoDataSeeder.SeedAsync(db);
         }
     }
 
@@ -174,68 +189,6 @@ finally
 {
     if (!IsTestingEnvironment())
         Log.CloseAndFlush();
-}
-
-static void SeedDefaultUsers(AppDbContext db)
-{
-    if (db.Users.Any()) return;
-
-    var adminId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-    var adminSubId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
-    var lawyerId = Guid.Parse("e5f6a7b8-c9d0-1234-5678-9abcdef01234");
-    var lawyerSubId = Guid.Parse("f6a7b8c9-d0e1-2345-6789-abcdef012345");
-
-    db.Users.AddRange(
-        new User
-        {
-            Id = adminId,
-            FullName = "Admin Verdiq",
-            Email = "admin@verdiq.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-            Phone = "+8801700000000",
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        },
-        new User
-        {
-            Id = lawyerId,
-            FullName = "Adv. Abdul Karim",
-            Email = "lawyer@verdiq.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
-            Phone = "+8801712345678",
-            BarCouncilId = "BC-2024-001",
-            ChamberAddress = "42 Gulshan Avenue, Dhaka",
-            Role = UserRole.Lawyer,
-            IsActive = true,
-            CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
-        }
-    );
-
-    db.Subscriptions.AddRange(
-        new Subscription
-        {
-            Id = adminSubId,
-            UserId = adminId,
-            Plan = SubscriptionPlan.Chamber,
-            Status = SubscriptionStatus.Active,
-            CurrentPeriodStart = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            CurrentPeriodEnd = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        },
-        new Subscription
-        {
-            Id = lawyerSubId,
-            UserId = lawyerId,
-            Plan = SubscriptionPlan.Pro,
-            Status = SubscriptionStatus.Active,
-            CurrentPeriodStart = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-            CurrentPeriodEnd = new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc),
-            CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
-        }
-    );
-
-    db.SaveChanges();
 }
 
 static bool IsTestingEnvironment() =>

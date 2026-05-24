@@ -26,6 +26,7 @@ public class CasesController : BaseController
         [FromQuery] string? status = null,
         [FromQuery] string? type = null,
         [FromQuery] string? priority = null,
+        [FromQuery] Guid? clientId = null,
         [FromQuery] string sortBy = "createdAt",
         [FromQuery] string sortOrder = "desc")
     {
@@ -50,6 +51,9 @@ public class CasesController : BaseController
 
         if (!string.IsNullOrWhiteSpace(priority))
             cases = cases.Where(c => c.Priority.Equals(priority, StringComparison.OrdinalIgnoreCase));
+
+        if (clientId.HasValue)
+            cases = cases.Where(c => c.ClientId == clientId.Value);
 
         cases = sortBy.ToLower() switch
         {

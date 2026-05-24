@@ -14,6 +14,8 @@ public class Hearing : BaseEntity
     public HearingStatus Status { get; set; } = HearingStatus.Scheduled;
     public string? Notes { get; set; }
     public bool ReminderSent { get; set; }
+    public Guid OrganizationId { get; set; }
 
     public Case Case { get; set; } = null!;
+    public Organization Organization { get; set; } = null!;
 }

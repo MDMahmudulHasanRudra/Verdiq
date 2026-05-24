@@ -16,7 +16,16 @@ public class User : BaseEntity
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
 
+    public bool TwoFactorEnabled { get; set; }
+    public string? TwoFactorSecret { get; set; }
+    public DateTime? TwoFactorVerifiedAt { get; set; }
+    public int LoginAttempts { get; set; }
+    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LastLoginAt { get; set; }
+    public string? LastLoginIp { get; set; }
+
     public ICollection<Case> AssignedCases { get; set; } = new List<Case>();
     public ICollection<Document> UploadedDocuments { get; set; } = new List<Document>();
+    public ICollection<OrganizationMember> OrganizationMemberships { get; set; } = new List<OrganizationMember>();
     public Subscription? Subscription { get; set; }
 }

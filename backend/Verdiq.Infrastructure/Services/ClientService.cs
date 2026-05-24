@@ -129,7 +129,7 @@ public class ClientService : IClientService
             IsActive = c.IsActive,
             CasesCount = c.Cases.Count,
             JoinedDate = c.CreatedAt,
-            TotalPayments = c.Payments.Where(p => p.IsSuccessful).Sum(p => p.Amount)
+            TotalPayments = c.Payments.Where(p => p.Status == Domain.Enums.PaymentStatus.Completed).Sum(p => p.Amount)
         };
     }
 }

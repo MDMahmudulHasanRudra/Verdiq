@@ -12,6 +12,8 @@ public class AuthService : IAuthService
 {
     private readonly AppDbContext _context;
     private readonly IJwtService _jwtService;
+    private const int MaxLoginAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
     public AuthService(AppDbContext context, IJwtService jwtService)
     {
@@ -67,11 +69,43 @@ public class AuthService : IAuthService
         LoginAsync(string email, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (user == null)
             return (false, "Invalid email or password", null, null, null);
+
+        if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
+        {
+            var remaining = (int)(user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes;
+            return (false, $"Account locked. Try again in {remaining} minutes.", null, null, null);
+        }
+
+        if (user.LockoutEnd.HasValue && user.LockoutEnd <= DateTime.UtcNow)
+        {
+            user.LoginAttempts = 0;
+            user.LockoutEnd = null;
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            user.LoginAttempts++;
+            if (user.LoginAttempts >= MaxLoginAttempts)
+                user.LockoutEnd = DateTime.UtcNow.Add(LockoutDuration);
+
+            await _context.SaveChangesAsync();
+            return (false, "Invalid email or password", null, null, null);
+        }
 
         if (!user.IsActive)
             return (false, "Account is deactivated. Contact admin.", null, null, null);
+
+        if (user.TwoFactorEnabled)
+        {
+            var tempToken = _jwtService.GenerateTempToken(user);
+            return (true, "2FA required", user, null, tempToken);
+        }
+
+        user.LoginAttempts = 0;
+        user.LockoutEnd = null;
+        user.LastLoginAt = DateTime.UtcNow;
 
         var (accessToken, refreshToken) = _jwtService.GenerateTokens(user);
         user.RefreshToken = refreshToken;

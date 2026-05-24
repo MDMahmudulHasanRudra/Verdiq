@@ -25,11 +25,12 @@ public class DocumentsController : BaseController
         [FromQuery] string? search = null,
         [FromQuery] string? category = null,
         [FromQuery] string? status = null,
+        [FromQuery] string? tag = null,
         [FromQuery] Guid? caseId = null,
         [FromQuery] string sortBy = "createdAt",
         [FromQuery] string sortOrder = "desc")
     {
-        var documents = await _documentService.GetAllDocumentsAsync(caseId, category);
+        var documents = await _documentService.GetAllDocumentsAsync(caseId, category, tag);
 
         if (!string.IsNullOrWhiteSpace(search))
             documents = documents.Where(d =>
@@ -86,6 +87,7 @@ public class DocumentsController : BaseController
         [FromQuery] Guid caseId,
         [FromQuery] string documentType,
         [FromQuery] string category,
+        [FromQuery] string? tags,
         IFormFile file)
     {
         var allowedTypes = new[] { "application/pdf", "image/jpeg", "image/png", "application/msword",
@@ -108,10 +110,14 @@ public class DocumentsController : BaseController
             return BadRequest(ApiResponse<DocumentResponseDto>.Fail("File size exceeds 50MB limit"));
 
         var userId = GetUserId();
+        var tagList = !string.IsNullOrWhiteSpace(tags)
+            ? tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
+            : null;
+
         using var stream = file.OpenReadStream();
         var document = await _documentService.UploadDocumentAsync(
             stream, file.FileName, file.ContentType, file.Length,
-            documentType, category, caseId, userId);
+            documentType, category, caseId, userId, tagList);
 
         return Ok(ApiResponse<DocumentResponseDto>.Created(document));
     }
@@ -147,4 +153,104 @@ public class DocumentsController : BaseController
             return NotFound(ApiResponse<object>.Fail(ex.Message));
         }
     }
+
+    [HttpPost("bulk-delete")]
+    public async Task<ActionResult<ApiResponse<BulkOperationResult>>> BulkDelete([FromBody] List<Guid> ids)
+    {
+        if (ids == null || ids.Count == 0)
+            return BadRequest(ApiResponse<BulkOperationResult>.Fail("No document IDs provided"));
+
+        var result = await _documentService.BulkDeleteAsync(ids);
+        return Ok(ApiResponse<BulkOperationResult>.Ok(result));
+    }
+
+    [HttpGet("{id}/signed-url")]
+    public async Task<ActionResult<ApiResponse<string>>> GetSignedUrl(Guid id)
+    {
+        try
+        {
+            var url = await _documentService.GenerateSignedUrlAsync(id);
+            return Ok(ApiResponse<string>.Ok(url));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.Fail(ex.Message));
+        }
+    }
+
+    [HttpPost("{id}/versions")]
+    [RequestSizeLimit(50_000_000)]
+    public async Task<ActionResult<ApiResponse<DocumentResponseDto>>> UploadVersion(
+        Guid id,
+        [FromQuery] string? changeNotes,
+        IFormFile file)
+    {
+        var userId = GetUserId();
+        using var stream = file.OpenReadStream();
+        var document = await _documentService.UploadNewVersionAsync(
+            id, stream, file.FileName, file.ContentType, file.Length, userId, changeNotes);
+        return Ok(ApiResponse<DocumentResponseDto>.Ok(document));
+    }
+
+    [HttpGet("{id}/versions")]
+    public async Task<ActionResult<ApiResponse<List<DocumentVersionDto>>>> GetVersions(Guid id)
+    {
+        var versions = await _documentService.GetVersionHistoryAsync(id);
+        return Ok(ApiResponse<List<DocumentVersionDto>>.Ok(versions));
+    }
+
+    [HttpPost("{id}/versions/{versionId}/restore")]
+    public async Task<ActionResult<ApiResponse<DocumentResponseDto>>> RestoreVersion(Guid id, Guid versionId)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var document = await _documentService.RestoreVersionAsync(id, versionId, userId);
+            return Ok(ApiResponse<DocumentResponseDto>.Ok(document));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<DocumentResponseDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpPost("{id}/tags")]
+    public async Task<ActionResult<ApiResponse<object>>> AddTag(Guid id, [FromBody] AddTagRequest request)
+    {
+        try
+        {
+            await _documentService.AddTagAsync(id, request.TagName);
+            return Ok(ApiResponse<object>.Ok(null!, "Tag added"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
+    [HttpDelete("{id}/tags/{tagName}")]
+    public async Task<ActionResult<ApiResponse<object>>> RemoveTag(Guid id, string tagName)
+    {
+        try
+        {
+            await _documentService.RemoveTagAsync(id, tagName);
+            return Ok(ApiResponse<object>.Ok(null!, "Tag removed"));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
+    [HttpGet("{id}/tags")]
+    public async Task<ActionResult<ApiResponse<List<DocumentTagDto>>>> GetTags(Guid id)
+    {
+        var tags = await _documentService.GetTagsAsync(id);
+        return Ok(ApiResponse<List<DocumentTagDto>>.Ok(tags));
+    }
+}
+
+public class AddTagRequest
+{
+    public string TagName { get; set; } = string.Empty;
 }
