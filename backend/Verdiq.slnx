@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Verdiq.API.Tests/Verdiq.API.Tests.csproj" />
+  </Folder>
+  <Project Path="Verdiq.API/Verdiq.API.csproj" />
+  <Project Path="Verdiq.Application/Verdiq.Application.csproj" />
+  <Project Path="Verdiq.Domain/Verdiq.Domain.csproj" />
+  <Project Path="Verdiq.Infrastructure/Verdiq.Infrastructure.csproj" />
+</Solution>

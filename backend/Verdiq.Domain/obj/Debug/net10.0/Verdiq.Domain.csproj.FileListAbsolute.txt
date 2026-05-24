@@ -1,0 +1,11 @@
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\bin\Debug\net10.0\Verdiq.Domain.deps.json
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\bin\Debug\net10.0\Verdiq.Domain.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\bin\Debug\net10.0\Verdiq.Domain.pdb
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.AssemblyInfoInputs.cache
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.AssemblyInfo.cs
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.csproj.CoreCompileInputs.cache
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\refint\Verdiq.Domain.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\Verdiq.Domain.pdb
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Domain\obj\Debug\net10.0\ref\Verdiq.Domain.dll

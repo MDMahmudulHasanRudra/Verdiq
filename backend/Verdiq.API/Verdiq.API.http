@@ -1,0 +1,6 @@
+@Verdiq.API_HostAddress = http://localhost:5073
+
+GET {{Verdiq.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
