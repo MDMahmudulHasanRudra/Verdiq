@@ -39,4 +39,32 @@ public static class AuthValidators
 
         return (true, string.Empty);
     }
+
+    public static (bool IsValid, string Error) ValidateUpdateProfile(UpdateProfileDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            return (false, "Full name is required");
+
+        if (string.IsNullOrWhiteSpace(dto.Phone))
+            return (false, "Phone number is required");
+
+        return (true, string.Empty);
+    }
+
+    public static (bool IsValid, string Error) ValidateChangePassword(ChangePasswordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+            return (false, "Current password is required");
+
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
+            return (false, "New password must be at least 6 characters");
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+            return (false, "New passwords do not match");
+
+        if (dto.CurrentPassword == dto.NewPassword)
+            return (false, "New password must be different from the current password");
+
+        return (true, string.Empty);
+    }
 }

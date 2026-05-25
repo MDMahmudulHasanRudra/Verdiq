@@ -14,4 +14,10 @@ public interface IAuthService
         string accessToken, string refreshToken);
 
     Task<bool> LogoutAsync(Guid userId);
+
+    Task<(bool Success, string Message, User? User)> UpdateProfileAsync(
+        Guid userId, string fullName, string phone, string? barCouncilId);
+
+    Task<(bool Success, string Message)> ChangePasswordAsync(
+        Guid userId, string currentPassword, string newPassword);
 }

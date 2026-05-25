@@ -47,6 +47,19 @@ public class ClientService : IClientService
 
     public async Task<ClientResponseDto> CreateClientAsync(CreateClientDto dto, Guid lawyerId)
     {
+        var orgId = await _context.OrganizationMembers
+            .Where(m => m.UserId == lawyerId && !m.IsDeleted)
+            .Select(m => m.OrganizationId)
+            .FirstOrDefaultAsync();
+
+        if (orgId == Guid.Empty)
+        {
+            orgId = await _context.Organizations
+                .Where(o => !o.IsDeleted)
+                .Select(o => o.Id)
+                .FirstOrDefaultAsync();
+        }
+
         var client = new Client
         {
             FullName = dto.FullName,
@@ -57,6 +70,7 @@ public class ClientService : IClientService
             Notes = dto.Notes,
             IsActive = true,
             AssignedLawyerId = lawyerId,
+            OrganizationId = orgId,
             CreatedAt = DateTime.UtcNow
         };
 

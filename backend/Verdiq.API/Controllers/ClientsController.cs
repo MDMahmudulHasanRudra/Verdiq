@@ -92,7 +92,8 @@ public class ClientsController : BaseController
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResponse<ClientResponseDto>.Fail(ex.Message));
+            var message = ex.InnerException?.Message ?? ex.Message;
+            return BadRequest(ApiResponse<ClientResponseDto>.Fail(message));
         }
     }
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Verdiq.API.Models;
 using Verdiq.Application.DTOs.Auth;
+using Verdiq.Domain.Entities;
 using Verdiq.Application.Validators;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
@@ -173,6 +174,73 @@ public class AuthController : ControllerBase
         });
     }
 
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<AuthResponseDto>> GetCurrentUser()
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty)
+            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return NotFound(new AuthResponseDto { Success = false, Message = "User not found" });
+
+        return Ok(new AuthResponseDto
+        {
+            Success = true,
+            Message = "User retrieved",
+            User = MapUserInfo(user)
+        });
+    }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<ActionResult<AuthResponseDto>> UpdateProfile([FromBody] UpdateProfileDto dto)
+    {
+        var (isValid, error) = AuthValidators.ValidateUpdateProfile(dto);
+        if (!isValid)
+            return BadRequest(new AuthResponseDto { Success = false, Message = error });
+
+        var userId = GetUserId();
+        if (userId == Guid.Empty)
+            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
+
+        var (success, message, user) =
+            await _authService.UpdateProfileAsync(userId, dto.FullName, dto.Phone, dto.BarCouncilId);
+
+        if (!success)
+            return BadRequest(new AuthResponseDto { Success = false, Message = message });
+
+        return Ok(new AuthResponseDto
+        {
+            Success = true,
+            Message = message,
+            User = user != null ? MapUserInfo(user) : null
+        });
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<ActionResult<AuthResponseDto>> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        var (isValid, error) = AuthValidators.ValidateChangePassword(dto);
+        if (!isValid)
+            return BadRequest(new AuthResponseDto { Success = false, Message = error });
+
+        var userId = GetUserId();
+        if (userId == Guid.Empty)
+            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
+
+        var (success, message) =
+            await _authService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
+
+        if (!success)
+            return BadRequest(new AuthResponseDto { Success = false, Message = message });
+
+        return Ok(new AuthResponseDto { Success = true, Message = message });
+    }
+
     [HttpPost("logout")]
     public async Task<ActionResult> Logout()
     {
@@ -189,4 +257,17 @@ public class AuthController : ControllerBase
         var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         return claim != null ? Guid.Parse(claim) : Guid.Empty;
     }
+
+    private static UserInfoDto MapUserInfo(User user) => new()
+    {
+        Id = user.Id,
+        FullName = user.FullName,
+        Email = user.Email,
+        Phone = user.Phone,
+        Role = user.Role.ToString(),
+        AvatarUrl = user.AvatarUrl,
+        BarCouncilId = user.BarCouncilId,
+        IsActive = user.IsActive,
+        TwoFactorEnabled = user.TwoFactorEnabled
+    };
 }

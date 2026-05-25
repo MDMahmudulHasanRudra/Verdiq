@@ -62,7 +62,7 @@ public class HearingService : IHearingService
 
     public async Task<IEnumerable<HearingResponseDto>> GetHearingsByDateAsync(DateTime date, Guid lawyerId)
     {
-        var dayStart = date.Date;
+        var dayStart = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
         var dayEnd = dayStart.AddDays(1);
 
         var hearings = await _context.Hearings

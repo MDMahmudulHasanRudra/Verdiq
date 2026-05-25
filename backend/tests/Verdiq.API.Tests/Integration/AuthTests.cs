@@ -133,6 +133,65 @@ public class AuthTests : TestBase
     }
 
     [Fact]
+    public async Task ChangePassword_WithValidCurrentPassword_Succeeds()
+    {
+        var token = await GetAdminTokenAsync();
+        SetAuthHeader(token);
+
+        var response = await Client.PostAsJsonAsync("/api/auth/change-password", new
+        {
+            currentPassword = "admin123",
+            newPassword = "Admin123!",
+            confirmPassword = "Admin123!"
+        });
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<AuthTestResponse>();
+        result!.Success.Should().BeTrue();
+
+        ClearAuthHeader();
+        var oldLogin = await Client.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "admin@verdiq.com",
+            password = "admin123"
+        });
+        oldLogin.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+
+        var newLogin = await Client.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "admin@verdiq.com",
+            password = "Admin123!"
+        });
+        newLogin.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+        var newLoginResult = await newLogin.Content.ReadFromJsonAsync<AuthTestResponse>();
+
+        SetAuthHeader(newLoginResult!.AccessToken!);
+        var revertResponse = await Client.PostAsJsonAsync("/api/auth/change-password", new
+        {
+            currentPassword = "Admin123!",
+            newPassword = "admin123",
+            confirmPassword = "admin123"
+        });
+        revertResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ChangePassword_WithWrongCurrentPassword_ReturnsBadRequest()
+    {
+        var token = await GetAdminTokenAsync();
+        SetAuthHeader(token);
+
+        var response = await Client.PostAsJsonAsync("/api/auth/change-password", new
+        {
+            currentPassword = "wrongpassword",
+            newPassword = "NewPass123!",
+            confirmPassword = "NewPass123!"
+        });
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Logout_InvalidatesRefreshToken()
     {
         var token = await GetAdminTokenAsync();

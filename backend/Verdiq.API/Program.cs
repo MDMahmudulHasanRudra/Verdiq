@@ -88,6 +88,23 @@ try
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             };
+
+            // SignalR sends the JWT on the WebSocket query string during negotiate/connect.
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var path = context.HttpContext.Request.Path;
+                    if (path.StartsWithSegments("/hubs"))
+                    {
+                        var token = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(token))
+                            context.Token = token;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
     builder.Services.AddAuthorization();
@@ -119,15 +136,22 @@ try
     builder.Services.AddRateLimiter(options =>
     {
         options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? "unknown",
+        {
+            var path = context.Request.Path;
+            if (path.StartsWithSegments("/hubs") || path.StartsWithSegments("/health"))
+                return RateLimitPartition.GetNoLimiter("realtime");
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ??
+                              context.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? "unknown",
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 100,
                     Window = TimeSpan.FromMinutes(1),
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = 5
-                }));
+                });
+        });
         options.RejectionStatusCode = 429;
     });
 
@@ -173,7 +197,7 @@ try
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
+            await DatabaseInitializer.InitializeAsync(db);
             await DemoDataSeeder.SeedAsync(db);
         }
     }

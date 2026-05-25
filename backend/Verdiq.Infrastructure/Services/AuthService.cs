@@ -146,4 +146,41 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<(bool Success, string Message, User? User)> UpdateProfileAsync(
+        Guid userId, string fullName, string phone, string? barCouncilId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return (false, "User not found", null);
+
+        user.FullName = fullName.Trim();
+        user.Phone = phone.Trim();
+        user.BarCouncilId = string.IsNullOrWhiteSpace(barCouncilId) ? null : barCouncilId.Trim();
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return (true, "Profile updated successfully", user);
+    }
+
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(
+        Guid userId, string currentPassword, string newPassword)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return (false, "User not found");
+
+        if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+            return (false, "Current password is incorrect");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.LoginAttempts = 0;
+        user.LockoutEnd = null;
+        user.RefreshToken = null;
+        user.RefreshTokenExpiry = null;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return (true, "Password changed successfully");
+    }
 }
