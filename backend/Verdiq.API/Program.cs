@@ -129,6 +129,7 @@ try
     builder.Services.AddHttpClient<IAIService, AIService>();
     builder.Services.AddScoped<IAdminService, AdminService>();
     builder.Services.AddScoped<ISearchService, SearchService>();
+    builder.Services.AddScoped<ISuperAdminService, SuperAdminService>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     builder.Services.AddSignalR();

@@ -1,6 +1,6 @@
-# Verdiq — Lawyer Management System
+# Verdiq — Law Firm Management System (11 Modules)
 
-A production-grade SaaS Lawyer Management System for the Bangladesh legal market. Built with ASP.NET Core 10 + Next.js 16 with PostgreSQL.
+A production-grade SaaS Law Firm/Chamber Management System for the Bangladesh legal market. Built with ASP.NET Core 10 + Next.js 16 with PostgreSQL.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ A production-grade SaaS Lawyer Management System for the Bangladesh legal market
 - **Runtime:** .NET 10 (SDK 10.0.300)
 - **Framework:** ASP.NET Core 10
 - **Database:** PostgreSQL 16 + Entity Framework Core 10.0.0-preview
-- **Auth:** JWT Bearer with refresh token rotation, BCrypt password hashing
+- **Auth:** JWT Bearer with refresh token rotation, BCrypt password hashing, ChamberId claim
 - **API:** RESTful, OpenAPI 2.4.1 (Swagger)
 - **Validation:** FluentValidation
 - **Logging:** Serilog
@@ -34,19 +34,10 @@ A production-grade SaaS Lawyer Management System for the Bangladesh legal market
 
 ```bash
 cd backend
-
-# Set environment variable workaround for npm (Windows)
 $env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"
-
-# Restore and build
 dotnet restore
 dotnet build
-
-# Run with PostgreSQL via Docker
 docker compose up -d
-# API at http://localhost:5000
-
-# Or run directly (requires PostgreSQL on localhost:5432)
 dotnet run --project Verdiq.API
 ```
 
@@ -54,73 +45,107 @@ dotnet run --project Verdiq.API
 
 ```bash
 cd frontend
-
-# NPM workaround (Windows)
 $env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"
-
-# Create environment config (required!)
 copy .env.example .env.local
-
 npm install
 npm run dev
-# App at http://localhost:3000
 ```
 
 ### Seed Users
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@verdiq.com | admin123 | Admin |
-| lawyer@verdiq.com | lawyer123 | Lawyer |
+| admin@verdiq.com | admin123 | Owner |
+| lawyer@verdiq.com | lawyer123 | SeniorLawyer |
+
+### Super Admin Access
+
+| User ID | Password | URL |
+|---------|----------|-----|
+| rudra | rudra | `/super-admin/login` |
+
+## 11 Modules
+
+| # | Module | Description |
+|---|--------|-------------|
+| 1 | Authentication & Chamber | Multi-chamber, role-based access (Owner/SeniorLawyer/JuniorLawyer/Assistant/Accountant/Client), permission system |
+| 2 | Case Management | Case creation, timeline (CaseActivity), hearing management, cause list tracking |
+| 3 | Client Management | Profiles (name/nid/company), many-to-many client-case linking, client timeline |
+| 4 | Document Management | Upload (PDF/DOCX/Image), OCR search, version control, folder structure (Petition/Evidence/Order/Agreement) |
+| 5 | Legal Drafting | Template library, AI draft generator, smart variables ({{client_name}}, {{court_name}}, {{case_number}}) |
+| 6 | AI Legal Assistant | Case summary, hearing prep, Bangla chatbot, voice-to-note |
+| 7 | Calendar & Reminder | Smart calendar, multi-channel reminders (SMS/Push/WhatsApp/Email) |
+| 8 | Billing & Finance | Invoice system (INV-YYYY-XXXX), expense tracking (court fees/stamp/transport), subscription billing |
+| 9 | Internal Chamber | Task assignment (Senior→Junior), internal notes, attendance |
+| 10 | Court & Legal Database | Laws (Penal Code/CPC/CrPC/Constitution), judgment search (citation/judge/keyword) |
+| 11 | Analytics Dashboard | Active cases, win ratio, upcoming hearings, pending bills, lawyer productivity |
+| SA | Super Admin System | Centralized control: chamber management (upgrade/downgrade/clear), user management (reset passwords/toggle status), chamber impersonation, system health monitoring |
 
 ## Project Structure
 
 ```
 backend/
-  Verdiq.Domain/          # Entities, enums, interfaces (pure C#)
-  Verdiq.Application/     # DTOs, validators, application interfaces
-  Verdiq.Infrastructure/  # EF Core DbContext, repositories, services
-  Verdiq.API/             # Controllers, middleware, Program.cs
+  Verdiq.Domain/          # 24 entities, 13 enums, 5 interfaces
+  Verdiq.Application/     # 17 DTO groups, 18 service interfaces, 6 validators
+  Verdiq.Infrastructure/  # EF Core (27 DbSets), 16 services, audit interceptor
+  Verdiq.API/             # 17 controllers, 3 middleware, 2 SignalR hubs
   tests/
-    Verdiq.API.Tests/     # xUnit + Testcontainers integration tests
-  Dockerfile
-  docker-compose.yml
+    Verdiq.API.Tests/
 
 frontend/
   src/
-    app/                  # Next.js App Router pages
-    components/           # Shared UI + feature components
+    app/                  # 15 pages (App Router)
+    components/           # 21 UI primitives + 15 feature components
     lib/
-      services/           # API service layer (8 service files)
-      hooks/              # React Query hooks (6 hook files)
-      store/              # Zustand stores
-      api.ts              # Axios client with interceptors
-      api-response.ts     # ApiResponse<T> + PagedResponse<T> types
-    types/                # TypeScript type definitions
+      services/           # 18 API service files
+      hooks/              # 20 React Query hook files
+      store/              # Zustand auth store
+      api.ts              # Axios with JWT refresh interceptor
+    types/                # 20+ TypeScript interfaces
 ```
+
+## Database Schema (27 Tables)
+
+- `Chambers` — Multi-chamber support with subscription plan
+- `Users` — 6 roles, linked to chamber
+- `Permissions`, `RolePermissions` — Fine-grained role-based access control
+- `Cases` — Case management core
+- `CaseActivities` — Case timeline/hearing/order/note tracking
+- `CauseLists` — Court cause list data
+- `Clients` — Client profiles with NID, company
+- `ClientCases` — Many-to-many client-case join
+- `Hearings` — Court hearings with result/next-hearing-date
+- `Documents`, `DocumentVersions`, `DocumentContents` — Document management + OCR
+- `Templates` — Legal drafting templates with smart variables
+- `Invoices`, `Expenses`, `Payments` — Billing & finance
+- `Subscriptions` — Chamber subscription plans
+- `Tasks` — Internal task assignment
+- `Reminders` — Multi-channel reminder engine
+- `LegalDocuments` — Laws & judgment database
+- `Notifications` — User notifications
+- `AuditLogs` — Entity change audit trail
+- `AiConversations` — AI chat history
 
 ## Key Conventions
 
 - All pages use `"use client"` (base-ui runtime requirement)
-- `BaseEntity.Id` is `Guid` (not int)
-- All list endpoints return `PagedResponse<T>` (page, pageSize, totalCount, totalPages)
-- All mutation endpoints return `ApiResponse<T>`
-- Soft delete via `IsDeleted` global query filter
+- `BaseEntity.Id` is `Guid`
+- List endpoints return `PagedResponse<T>`; mutation endpoints return `ApiResponse<T>`
+- Soft delete via `IsDeleted` global query filter on all entities
 - Audit logging via `AuditSaveChangesInterceptor`
-- Auth tokens stored in **both** localStorage and cookies (middleware checks cookies, axios reads localStorage)
-- Frontend services map API field names (`fullName` → `name`, `avatarUrl` → `avatar`) via mapper functions
-- CORS allows any origin with credentials (`SetIsOriginAllowed(_ => true)`)
-- NPM requires workaround on Windows: `$env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"`
-- Next.js 16.2.6 deprecates `middleware.ts` in favor of `proxy.ts`
-- `.env.local` is required for the frontend (not optional)
+- Auth tokens in **both** localStorage and cookies
+- Frontend services map API field names via mapper functions
+- CORS: `SetIsOriginAllowed(_ => true)` with credentials
+- `.env.local` is required for frontend
+- All queries scoped by `ChamberId` from JWT claim
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| Login redirects back to `/login` | Make sure `.env.local` exists with `NEXT_PUBLIC_API_URL` and restart dev server |
-| 401 on API calls | Tokens stored in localStorage after login; check `access_token` in Application > Local Storage |
-| CORS error in browser | Backend uses `SetIsOriginAllowed(_ => true)`, but verify the API is running on port 5000 |
+| Login redirects back to `/login` | Create `.env.local` with `NEXT_PUBLIC_API_URL` |
+| 401 on API calls | Check `access_token` in localStorage |
+| CORS error | Verify API running on port 5000 |
 | `npm run dev` fails | Run `$env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"` first |
 
 ## License
