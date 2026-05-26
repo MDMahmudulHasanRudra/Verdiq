@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Verdiq.API.Models;
-using Verdiq.Application.DTOs.Payment;
+using Verdiq.Application.DTOs.Invoice;
 using Verdiq.Application.Interfaces;
 
 namespace Verdiq.API.Controllers;
@@ -11,93 +11,60 @@ namespace Verdiq.API.Controllers;
 [Authorize]
 public class PaymentsController : BaseController
 {
-    private readonly IPaymentService _paymentService;
+    private readonly IInvoiceService _invoiceService;
 
-    public PaymentsController(IPaymentService paymentService)
+    public PaymentsController(IInvoiceService invoiceService)
     {
-        _paymentService = paymentService;
-    }
-
-    [HttpPost("checkout")]
-    public async Task<ActionResult<ApiResponse<CheckoutResponseDto>>> InitiateCheckout([FromBody] InitiateCheckoutDto dto)
-    {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _paymentService.InitiateCheckoutAsync(userId, dto);
-            return Ok(ApiResponse<CheckoutResponseDto>.Ok(result));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<CheckoutResponseDto>.Fail(ex.Message));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ApiResponse<CheckoutResponseDto>.Fail(ex.Message));
-        }
-    }
-
-    [HttpPost("webhook")]
-    [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<PaymentResponseDto>>> Webhook([FromBody] PaymentWebhookDto dto)
-    {
-        try
-        {
-            var result = await _paymentService.ProcessWebhookAsync(dto);
-            return Ok(ApiResponse<PaymentResponseDto>.Ok(result));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<PaymentResponseDto>.Fail(ex.Message));
-        }
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<PaymentResponseDto>>> GetById(Guid id)
-    {
-        try
-        {
-            var payment = await _paymentService.GetPaymentAsync(id);
-            return Ok(ApiResponse<PaymentResponseDto>.Ok(payment));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<PaymentResponseDto>.Fail(ex.Message));
-        }
+        _invoiceService = invoiceService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<PaymentResponseDto>>>> GetMyPayments()
+    public async Task<ActionResult<ApiResponse<List<InvoiceResponseDto>>>> GetAll(
+        [FromQuery] string? status = null)
     {
-        var userId = GetUserId();
-        var payments = await _paymentService.GetUserPaymentsAsync(userId);
-        return Ok(ApiResponse<List<PaymentResponseDto>>.Ok(payments));
+        var chamberId = GetChamberId();
+        var invoices = await _invoiceService.GetAllAsync(chamberId, status);
+        return Ok(ApiResponse<List<InvoiceResponseDto>>.Ok(invoices.ToList()));
     }
 
-    [HttpGet("history")]
-    public async Task<ActionResult<ApiResponse<PaymentHistoryDto>>> GetPaymentHistory()
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<InvoiceResponseDto>>> GetById(Guid id)
     {
-        var userId = GetUserId();
-        var history = await _paymentService.GetPaymentHistoryAsync(userId);
-        return Ok(ApiResponse<PaymentHistoryDto>.Ok(history));
+        var invoice = await _invoiceService.GetByIdAsync(id);
+        if (invoice == null)
+            return NotFound(ApiResponse<InvoiceResponseDto>.Fail("Invoice not found"));
+
+        return Ok(ApiResponse<InvoiceResponseDto>.Ok(invoice));
     }
 
-    [HttpPost("{id}/refund")]
-    public async Task<ActionResult<ApiResponse<PaymentResponseDto>>> Refund(Guid id)
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<InvoiceResponseDto>>> Create(
+        [FromBody] CreateInvoiceDto dto)
     {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _paymentService.RefundPaymentAsync(id, userId);
-            return Ok(ApiResponse<PaymentResponseDto>.Ok(result));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<PaymentResponseDto>.Fail(ex.Message));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ApiResponse<PaymentResponseDto>.Fail(ex.Message));
-        }
+        var chamberId = GetChamberId();
+        var (success, message, data) = await _invoiceService.CreateAsync(dto, chamberId);
+
+        if (!success)
+            return BadRequest(ApiResponse<InvoiceResponseDto>.Fail(message));
+
+        return Ok(ApiResponse<InvoiceResponseDto>.Created(data!));
+    }
+
+    [HttpPost("{id}/pay")]
+    public async Task<ActionResult<ApiResponse<object>>> MarkAsPaid(Guid id)
+    {
+        var (success, message) = await _invoiceService.MarkAsPaidAsync(id);
+
+        if (!success)
+            return BadRequest(ApiResponse<object>.Fail(message));
+
+        return Ok(ApiResponse<object>.Ok(null!, message));
+    }
+
+    [HttpGet("by-client/{clientId}")]
+    public async Task<ActionResult<ApiResponse<List<InvoiceResponseDto>>>> GetByClient(Guid clientId)
+    {
+        var invoices = await _invoiceService.GetByClientIdAsync(clientId);
+        return Ok(ApiResponse<List<InvoiceResponseDto>>.Ok(invoices.ToList()));
     }
 }

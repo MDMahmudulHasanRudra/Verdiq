@@ -18,28 +18,44 @@ public class DashboardController : BaseController
     }
 
     [HttpGet("stats")]
-    public async Task<ActionResult<ApiResponse<DashboardStats>>> GetStats()
+    public async Task<ActionResult<ApiResponse<object>>> GetStats()
     {
-        var userId = GetUserId();
-        var stats = await _dashboardService.GetDashboardStatsAsync(userId);
-        return Ok(ApiResponse<DashboardStats>.Ok(stats));
+        var chamberId = GetChamberId();
+        var stats = await _dashboardService.GetStatsAsync(chamberId);
+        return Ok(ApiResponse<object>.Ok(stats));
     }
 
     [HttpGet("case-chart")]
-    public async Task<ActionResult<ApiResponse<List<CaseChartDataPoint>>>> GetCaseChart(
+    public async Task<ActionResult<ApiResponse<object>>> GetCaseChart(
         [FromQuery] int months = 12)
     {
-        var userId = GetUserId();
-        var data = await _dashboardService.GetCaseChartDataAsync(userId, months);
-        return Ok(ApiResponse<List<CaseChartDataPoint>>.Ok(data));
+        var chamberId = GetChamberId();
+        var data = await _dashboardService.GetCaseChartAsync(chamberId, months);
+        return Ok(ApiResponse<object>.Ok(data));
     }
 
     [HttpGet("recent-activities")]
-    public async Task<ActionResult<ApiResponse<List<RecentActivity>>>> GetRecentActivities(
+    public async Task<ActionResult<ApiResponse<object>>> GetRecentActivities(
         [FromQuery] int count = 10)
     {
-        var userId = GetUserId();
-        var activities = await _dashboardService.GetRecentActivitiesAsync(userId, count);
-        return Ok(ApiResponse<List<RecentActivity>>.Ok(activities));
+        var chamberId = GetChamberId();
+        var activities = await _dashboardService.GetRecentActivitiesAsync(chamberId, count);
+        return Ok(ApiResponse<object>.Ok(activities));
+    }
+
+    [HttpGet("lawyer-productivity")]
+    public async Task<ActionResult<ApiResponse<object>>> GetLawyerProductivity()
+    {
+        var chamberId = GetChamberId();
+        var data = await _dashboardService.GetLawyerProductivityAsync(chamberId);
+        return Ok(ApiResponse<object>.Ok(data));
+    }
+
+    [HttpGet("win-ratio")]
+    public async Task<ActionResult<ApiResponse<object>>> GetWinRatio()
+    {
+        var chamberId = GetChamberId();
+        var data = await _dashboardService.GetWinRatioAsync(chamberId);
+        return Ok(ApiResponse<object>.Ok(data));
     }
 }

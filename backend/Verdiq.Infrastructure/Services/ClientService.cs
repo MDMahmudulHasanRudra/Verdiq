@@ -2,131 +2,122 @@ using Microsoft.EntityFrameworkCore;
 using Verdiq.Application.DTOs.Client;
 using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
-using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
 
 namespace Verdiq.Infrastructure.Services;
 
 public class ClientService : IClientService
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly AppDbContext _context;
 
-    public ClientService(IUnitOfWork unitOfWork, AppDbContext context)
+    public ClientService(AppDbContext context)
     {
-        _unitOfWork = unitOfWork;
         _context = context;
     }
 
-    public async Task<ClientResponseDto> GetClientByIdAsync(Guid id)
+    public async Task<(bool Success, string Message, ClientResponseDto? Data)> CreateAsync(CreateClientDto dto, Guid chamberId)
+    {
+        var client = new Client
+        {
+            Name = dto.Name,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Address = dto.Address,
+            Nid = dto.Nid,
+            CompanyName = dto.CompanyName,
+            Notes = dto.Notes,
+            IsActive = true,
+            ChamberId = chamberId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Clients.Add(client);
+        await _context.SaveChangesAsync();
+
+        var result = await GetByIdAsync(client.Id);
+        return (true, "Client created successfully", result);
+    }
+
+    public async Task<(bool Success, string Message, ClientResponseDto? Data)> UpdateAsync(Guid id, UpdateClientDto dto)
+    {
+        var client = await _context.Clients.FindAsync(id);
+        if (client == null || client.IsDeleted)
+            return (false, "Client not found", null);
+
+        if (dto.Name != null) client.Name = dto.Name;
+        if (dto.Email != null) client.Email = dto.Email;
+        if (dto.Phone != null) client.Phone = dto.Phone;
+        if (dto.Address != null) client.Address = dto.Address;
+        if (dto.Nid != null) client.Nid = dto.Nid;
+        if (dto.CompanyName != null) client.CompanyName = dto.CompanyName;
+        if (dto.Notes != null) client.Notes = dto.Notes;
+
+        client.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var result = await GetByIdAsync(id);
+        return (true, "Client updated successfully", result);
+    }
+
+    public async Task<(bool Success, string Message)> DeleteAsync(Guid id)
+    {
+        var client = await _context.Clients.FindAsync(id);
+        if (client == null || client.IsDeleted)
+            return (false, "Client not found");
+
+        client.IsDeleted = true;
+        client.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return (true, "Client deleted successfully");
+    }
+
+    public async Task<ClientResponseDto?> GetByIdAsync(Guid id)
     {
         var client = await _context.Clients
-            .Include(c => c.Cases.Where(cs => !cs.IsDeleted))
-            .Include(c => c.Payments)
+            .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
 
         if (client == null)
-            throw new KeyNotFoundException("Client not found");
+            return null;
 
         return MapToDto(client);
     }
 
-    public async Task<IEnumerable<ClientResponseDto>> GetAllClientsAsync(Guid? lawyerId = null)
+    public async Task<IEnumerable<ClientResponseDto>> GetAllAsync(Guid chamberId, int page = 1, int pageSize = 10)
     {
-        var query = _context.Clients
-            .Include(c => c.Cases.Where(cs => !cs.IsDeleted))
-            .Include(c => c.Payments)
-            .Where(c => !c.IsDeleted);
+        var clients = await _context.Clients
+            .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
+            .Where(c => c.ChamberId == chamberId && !c.IsDeleted)
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
-        if (lawyerId.HasValue)
-            query = query.Where(c => c.AssignedLawyerId == lawyerId.Value);
-
-        var clients = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
         return clients.Select(MapToDto);
     }
 
-    public async Task<ClientResponseDto> CreateClientAsync(CreateClientDto dto, Guid lawyerId)
+    public async Task<IEnumerable<ClientResponseDto>> SearchAsync(string query, Guid chamberId)
     {
-        var orgId = await _context.OrganizationMembers
-            .Where(m => m.UserId == lawyerId && !m.IsDeleted)
-            .Select(m => m.OrganizationId)
-            .FirstOrDefaultAsync();
-
-        if (orgId == Guid.Empty)
-        {
-            orgId = await _context.Organizations
-                .Where(o => !o.IsDeleted)
-                .Select(o => o.Id)
-                .FirstOrDefaultAsync();
-        }
-
-        var client = new Client
-        {
-            FullName = dto.FullName,
-            Email = dto.Email,
-            Phone = dto.Phone,
-            Address = dto.Address,
-            NationalId = dto.NationalId,
-            Notes = dto.Notes,
-            IsActive = true,
-            AssignedLawyerId = lawyerId,
-            OrganizationId = orgId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _unitOfWork.Clients.AddAsync(client);
-        await _unitOfWork.CompleteAsync();
-
-        return await GetClientByIdAsync(client.Id);
-    }
-
-    public async Task<ClientResponseDto> UpdateClientAsync(Guid id, UpdateClientDto dto)
-    {
-        var client = await _context.Clients.FindAsync(id);
-        if (client == null || client.IsDeleted)
-            throw new KeyNotFoundException("Client not found");
-
-        if (dto.FullName != null) client.FullName = dto.FullName;
-        if (dto.Email != null) client.Email = dto.Email;
-        if (dto.Phone != null) client.Phone = dto.Phone;
-        if (dto.Address != null) client.Address = dto.Address;
-        if (dto.NationalId != null) client.NationalId = dto.NationalId;
-        if (dto.Notes != null) client.Notes = dto.Notes;
-        if (dto.IsActive.HasValue) client.IsActive = dto.IsActive.Value;
-
-        await _unitOfWork.Clients.UpdateAsync(client);
-        await _unitOfWork.CompleteAsync();
-
-        return await GetClientByIdAsync(id);
-    }
-
-    public async Task DeleteClientAsync(Guid id)
-    {
-        var client = await _context.Clients.FindAsync(id);
-        if (client == null || client.IsDeleted)
-            throw new KeyNotFoundException("Client not found");
-
-        await _unitOfWork.Clients.DeleteAsync(client);
-        await _unitOfWork.CompleteAsync();
-    }
-
-    public async Task<IEnumerable<ClientResponseDto>> SearchClientsAsync(string searchTerm, Guid? lawyerId = null)
-    {
-        var term = searchTerm.ToLower();
-        var query = _context.Clients
-            .Include(c => c.Cases.Where(cs => !cs.IsDeleted))
-            .Include(c => c.Payments)
-            .Where(c => !c.IsDeleted &&
-                (c.FullName.ToLower().Contains(term) ||
+        var term = query.ToLower();
+        var clients = await _context.Clients
+            .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
+            .Where(c => c.ChamberId == chamberId && !c.IsDeleted &&
+                (c.Name.ToLower().Contains(term) ||
                  c.Email.ToLower().Contains(term) ||
                  c.Phone.Contains(term) ||
-                 c.NationalId!.Contains(term)));
+                 (c.Nid != null && c.Nid.Contains(term)) ||
+                 (c.CompanyName != null && c.CompanyName.ToLower().Contains(term))))
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
 
-        if (lawyerId.HasValue)
-            query = query.Where(c => c.AssignedLawyerId == lawyerId.Value);
-
-        var clients = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
         return clients.Select(MapToDto);
+    }
+
+    public async Task<int> GetCountAsync(Guid chamberId)
+    {
+        return await _context.Clients
+            .CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
     }
 
     private static ClientResponseDto MapToDto(Client c)
@@ -134,16 +125,16 @@ public class ClientService : IClientService
         return new ClientResponseDto
         {
             Id = c.Id,
-            FullName = c.FullName,
-            Email = c.Email,
+            Name = c.Name,
             Phone = c.Phone,
+            Email = c.Email,
             Address = c.Address,
-            NationalId = c.NationalId,
+            Nid = c.Nid,
+            CompanyName = c.CompanyName,
             Notes = c.Notes,
             IsActive = c.IsActive,
-            CasesCount = c.Cases.Count,
-            JoinedDate = c.CreatedAt,
-            TotalPayments = c.Payments.Where(p => p.Status == Domain.Enums.PaymentStatus.Completed).Sum(p => p.Amount)
+            CasesCount = c.ClientCases.Count,
+            CreatedAt = c.CreatedAt
         };
     }
 }

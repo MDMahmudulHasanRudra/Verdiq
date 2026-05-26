@@ -6,6 +6,8 @@ namespace Verdiq.Infrastructure.Data;
 
 public static class DemoDataSeeder
 {
+    private static readonly Guid DefaultChamberId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
+
     public static async Task SeedAsync(AppDbContext db)
     {
         if (await db.Clients.AnyAsync()) return;
@@ -23,8 +25,6 @@ public static class DemoDataSeeder
 
         var now = DateTime.UtcNow;
 
-        // ─── LAWYERS ──────────────────────────────────────────────────────
-
         var lawyers = new List<User>
         {
             new()
@@ -35,9 +35,9 @@ public static class DemoDataSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801711122233",
                 BarCouncilId = "BC-2024-002",
-                ChamberAddress = "15 Banani C/A, Dhaka",
-                Role = UserRole.Lawyer,
+                Role = UserRole.SeniorLawyer,
                 IsActive = true,
+                ChamberId = DefaultChamberId,
                 CreatedAt = new DateTime(2024, 2, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new()
@@ -48,9 +48,9 @@ public static class DemoDataSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801814455667",
                 BarCouncilId = "BC-2024-003",
-                ChamberAddress = "22 Motijheel C/A, Dhaka",
                 Role = UserRole.Lawyer,
                 IsActive = true,
+                ChamberId = DefaultChamberId,
                 CreatedAt = new DateTime(2024, 2, 15, 0, 0, 0, DateTimeKind.Utc)
             },
             new()
@@ -61,9 +61,9 @@ public static class DemoDataSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801917788990",
                 BarCouncilId = "BC-2024-004",
-                ChamberAddress = "8 Dhanmondi Road 2, Dhaka",
                 Role = UserRole.Lawyer,
                 IsActive = true,
+                ChamberId = DefaultChamberId,
                 CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         };
@@ -74,7 +74,7 @@ public static class DemoDataSeeder
             new Subscription
             {
                 Id = lawyer2SubId,
-                UserId = lawyer2Id,
+                ChamberId = DefaultChamberId,
                 Plan = SubscriptionPlan.Pro,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 2, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -84,7 +84,7 @@ public static class DemoDataSeeder
             new Subscription
             {
                 Id = lawyer3SubId,
-                UserId = lawyer3Id,
+                ChamberId = DefaultChamberId,
                 Plan = SubscriptionPlan.Chamber,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 2, 15, 0, 0, 0, DateTimeKind.Utc),
@@ -94,7 +94,7 @@ public static class DemoDataSeeder
             new Subscription
             {
                 Id = lawyer4SubId,
-                UserId = lawyer4Id,
+                ChamberId = DefaultChamberId,
                 Plan = SubscriptionPlan.Pro,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -104,8 +104,6 @@ public static class DemoDataSeeder
         );
 
         var allLawyerIds = new[] { lawyer1Id, lawyer2Id, lawyer3Id, lawyer4Id };
-
-        // ─── CLIENTS ──────────────────────────────────────────────────────
 
         var clientNames = new[]
         {
@@ -200,20 +198,19 @@ public static class DemoDataSeeder
             "19851234567890126", "19921234567890126"
         };
 
-        var allLawyerIdsArr = allLawyerIds;
         var clients = new List<Client>();
         for (int i = 0; i < 50; i++)
         {
             clients.Add(new Client
             {
                 Id = Guid.Parse($"B0000001-0000-0000-0000-{(i + 1):D12}"),
-                FullName = clientNames[i],
+                Name = clientNames[i],
                 Email = clientEmails[i],
                 Phone = phones[i],
                 Address = addresses[i],
-                NationalId = nids[i],
+                Nid = nids[i],
                 IsActive = true,
-                AssignedLawyerId = allLawyerIdsArr[i % 4],
+                ChamberId = DefaultChamberId,
                 Notes = (i % 5) switch
                 {
                     0 => "Referred by Adv. Abdul Karim",
@@ -228,8 +225,6 @@ public static class DemoDataSeeder
         db.Clients.AddRange(clients);
 
         await db.SaveChangesAsync();
-
-        // ─── CASES ────────────────────────────────────────────────────────
 
         var caseTypeData = new[]
         {
@@ -304,7 +299,7 @@ public static class DemoDataSeeder
             "Comilla District Court"
         };
 
-        var courtRooms = new[] { null, "Court Room 101", "Court Room 202", "Court Room 303", "Court Room 404", "Court Room 505", null, null, "Court Room 102", "Court Room 201" };
+        var courtRooms = new[] { "Court Room 101", "Court Room 202", "Court Room 303", "Court Room 404", "Court Room 505" };
 
         var policeStations = new[]
         {
@@ -327,17 +322,24 @@ public static class DemoDataSeeder
             "Judge Rezaul Karim"
         };
 
+        var opponentNames = new[]
+        {
+            "Md. Abdul Gaffar", "Shamima Begum", "Mohammad Ali", "Rita Sultana",
+            "Md. Helal Uddin", "Parvin Nahar", "Kazi Mahmud", "Sharmin Rani Das",
+            "Md. Shamsul Islam", "Nargis Akhter", "Syed Manzur", "Fahmida Hasan",
+            "Md. Jasim Uddin", "Rokeya Begum", "Harun-or-Rashid", "Runa Laila",
+            "Md. Shahidullah", "Shahanara Khatun", "Rezaul Karim", "Nasima Akhter"
+        };
+
         var descriptions = new[]
         {
-            null, null,
             "The case involves serious allegations requiring urgent hearing.",
             "Both parties have been advised to seek mediation.",
             "Multiple witnesses have been cited by the prosecution.",
             "Evidence documents have been submitted to the court.",
             "The accused is currently on bail. Next hearing for charge framing.",
             "Case transferred from lower court for revision.",
-            "Parties are attempting an out-of-court settlement.",
-            null, null, null
+            "Parties are attempting an out-of-court settlement."
         };
 
         var allStatuses = new[] { CaseStatus.Active, CaseStatus.Pending, CaseStatus.Closed, CaseStatus.Appeal };
@@ -376,14 +378,12 @@ public static class DemoDataSeeder
                 ? $"State vs. {clientNames[clientIdx]}"
                 : $"{clientNames[clientIdx]} vs. Opp. Party";
 
-            var clientId = clientIds[clientIdx];
-            var lawyerId = allLawyerIdsArr[clientIdx % 4];
+            var opponent = opponentNames[random.Next(opponentNames.Length)];
+            var lawyerId = allLawyerIds[clientIdx % 4];
 
             var status = allStatuses[random.Next(allStatuses.Length)];
             var priority = allPriorities[random.Next(allPriorities.Length)];
             var court = courts[random.Next(courts.Length)];
-            var courtroom = courtRooms[random.Next(courtRooms.Length)];
-            var judge = judgeNames[random.Next(judgeNames.Length)];
             var ps = policeStations[random.Next(policeStations.Length)];
             var desc = descriptions[random.Next(descriptions.Length)];
 
@@ -404,17 +404,16 @@ public static class DemoDataSeeder
                 CaseType = typeName,
                 Status = status,
                 Priority = priority,
-                Court = court,
-                CourtRoom = courtroom,
-                JudgeName = judge,
+                CourtName = court,
+                Opponent = opponent,
                 FirNumber = firNum,
                 PoliceStation = typeName is "Criminal" or "Narcotics" ? ps : null,
                 ActsAndSections = acts,
                 Description = desc,
                 FilingDate = baseFilingDate,
                 ClosingDate = closingDate,
-                ClientId = clientId,
                 AssignedLawyerId = lawyerId,
+                ChamberId = DefaultChamberId,
                 CreatedAt = baseFilingDate
             });
         }
@@ -422,32 +421,45 @@ public static class DemoDataSeeder
 
         await db.SaveChangesAsync();
 
-        // ─── HEARINGS ─────────────────────────────────────────────────────
+        var clientCases = new List<ClientCase>();
+        var ccIdx = 0;
+        for (int i = 0; i < 120; i++)
+        {
+            var clientIdx = i % 50;
+            ccIdx++;
+            clientCases.Add(new ClientCase
+            {
+                Id = Guid.Parse($"CC000001-0000-0000-0000-{ccIdx:D12}"),
+                ClientId = clientIds[clientIdx],
+                CaseId = cases[i].Id,
+                CreatedAt = cases[i].CreatedAt
+            });
+        }
+        db.ClientCases.AddRange(clientCases);
+
+        await db.SaveChangesAsync();
 
         var caseIds = cases.Select(c => c.Id).ToArray();
-        var hearingTypes = new[]
-        {
-            "Charge Framing", "Argument Hearing", "Witness Examination",
-            "Cross Examination", "Plea Hearing", "Sentencing Hearing",
-            "Bail Hearing", "Status Hearing", "Preliminary Hearing",
-            "Final Argument", "Judgment", "Case Management Conference",
-            "Settlement Conference", "Evidence Recording", "Adjourned Hearing"
-        };
-
         var hearingStatuses = new[] { HearingStatus.Scheduled, HearingStatus.Completed, HearingStatus.Adjourned, HearingStatus.Cancelled };
-        var hearingTimes = new[] { "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM" };
+
+        var hearingResults = new[]
+        {
+            "Charge framed", "Witness examination completed", "Bail granted",
+            "Bail rejected", "Adjourned for lack of prosecution witness",
+            "Evidence submitted", "Cross-examination completed",
+            "Final arguments heard. Judgment reserved.", "Settlement reached",
+            "Case dismissed for lack of evidence"
+        };
 
         var hearingNotes = new[]
         {
-            null, null, null,
             "Witness cross-examination completed.",
             "Charge framing completed. Next date for witness examination.",
             "Defense counsel requested adjournment.",
             "Both parties present. Evidence submitted.",
             "Case adjourned due to absence of prosecution witness.",
             "Final arguments heard. Judgment reserved.",
-            "Settlement talks failed. Matter proceeds to trial.",
-            null, null
+            "Settlement talks failed. Matter proceeds to trial."
         };
 
         var hearings = new List<Hearing>();
@@ -472,20 +484,24 @@ public static class DemoDataSeeder
                 var offset = random.Next(0, 700);
                 var hDate = baseHearingDate.AddDays(offset);
 
-                var hearingCourt = cases[i].Court;
-                var hearingJudge = cases[i].JudgeName;
+                var hearingJudge = judgeNames[random.Next(judgeNames.Length)];
+
+                DateTime? nextHearing = hStatus == HearingStatus.Adjourned
+                    ? hDate.AddDays(random.Next(7, 60))
+                    : (hStatus == HearingStatus.Completed && random.NextDouble() < 0.3
+                        ? hDate.AddDays(random.Next(30, 90))
+                        : null);
 
                 hearings.Add(new Hearing
                 {
                     Id = Guid.Parse($"D0000001-0000-0000-0000-{hearingIdx:D12}"),
                     CaseId = caseIds[i],
                     HearingDate = hDate,
-                    Time = hearingTimes[random.Next(hearingTimes.Length)],
-                    Court = hStatus == HearingStatus.Cancelled ? hearingCourt : hearingCourt,
-                    CourtRoom = courtRooms[random.Next(courtRooms.Length)],
+                    Courtroom = courtRooms[random.Next(courtRooms.Length)],
                     JudgeName = hearingJudge,
-                    HearingType = hearingTypes[random.Next(hearingTypes.Length)],
                     Status = hStatus,
+                    Result = hStatus == HearingStatus.Completed ? hearingResults[random.Next(hearingResults.Length)] : null,
+                    NextHearingDate = nextHearing,
                     Notes = hearingNotes[random.Next(hearingNotes.Length)],
                     ReminderSent = hStatus == HearingStatus.Scheduled && random.NextDouble() < 0.7,
                     CreatedAt = hDate.AddDays(-random.Next(5, 30))
@@ -496,17 +512,8 @@ public static class DemoDataSeeder
 
         await db.SaveChangesAsync();
 
-        // ─── DOCUMENTS ────────────────────────────────────────────────────
-
-        var docTypes = new[]
-        {
-            "Petition", "Affidavit", "Witness Statement", "Evidence Exhibit",
-            "Court Order", "Case File", "Legal Notice", "Power of Attorney",
-            "Bail Bond", "Investigation Report", "Charge Sheet", "Written Statement"
-        };
-
         var docCategories = new[] { "Pleadings", "Evidence", "Court Orders", "Correspondence", "Research", "Administrative" };
-        var contentTypes = new[] { "application/pdf", "image/jpeg", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+        var fileTypes = new[] { "pdf", "jpg", "doc", "docx" };
         var docStatuses = new[] { DocumentStatus.Draft, DocumentStatus.Final, DocumentStatus.Filed };
 
         var documents = new List<Document>();
@@ -516,19 +523,12 @@ public static class DemoDataSeeder
         {
             docIdx++;
             var caseIdx = i % 120;
-            var clientName = clientNames[(int)(cases[caseIdx].ClientId == clientIds[0] ? 0 : Array.IndexOf(clientIds.ToArray(), cases[caseIdx].ClientId))];
-            if (clientName == null) clientName = "Client";
+            var clientIdx = caseIdx % 50;
+            var clientName = clientNames[clientIdx];
 
             var firstName = clientName.Replace("Md. ", "").Split(' ').First();
-            var docType = docTypes[random.Next(docTypes.Length)];
-            var extension = contentTypes[random.Next(contentTypes.Length)] switch
-            {
-                "application/pdf" => "pdf",
-                "image/jpeg" => "jpg",
-                "application/msword" => "doc",
-                _ => "docx"
-            };
-            var fileName = $"{firstName}_{docType.Replace(" ", "_")}_{i + 1:D2}.{extension}";
+            var fileType = fileTypes[random.Next(fileTypes.Length)];
+            var fileName = $"{firstName}_Document_{i + 1:D2}.{fileType}";
             var fileSize = random.Next(100, 5000) * 1024L;
 
             documents.Add(new Document
@@ -536,14 +536,15 @@ public static class DemoDataSeeder
                 Id = Guid.Parse($"F0000001-0000-0000-0000-{docIdx:D12}"),
                 FileName = fileName,
                 OriginalFileName = fileName,
-                ContentType = contentTypes[random.Next(contentTypes.Length)],
-                FileSize = fileSize,
                 FilePath = $"uploads/cases/{caseIds[caseIdx]:N}/{fileName}",
-                DocumentType = docType,
+                FileType = fileType,
+                FileSize = fileSize,
                 Category = docCategories[random.Next(docCategories.Length)],
+                FolderPath = docCategories[random.Next(docCategories.Length)],
                 Status = docStatuses[random.Next(docStatuses.Length)],
+                Version = random.Next(1, 4),
                 CaseId = caseIds[caseIdx],
-                UploadedById = allLawyerIdsArr[random.Next(allLawyerIdsArr.Length)],
+                UploadedById = allLawyerIds[random.Next(allLawyerIds.Length)],
                 CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 800))
             });
         }
@@ -551,15 +552,104 @@ public static class DemoDataSeeder
 
         await db.SaveChangesAsync();
 
-        // ─── NOTIFICATIONS ────────────────────────────────────────────────
+        var invoices = new List<Invoice>();
+        var invIdx = 0;
+        var invoiceStatuses = new[] { PaymentStatus.Pending, PaymentStatus.Processing, PaymentStatus.Completed, PaymentStatus.Failed };
+
+        for (int i = 0; i < 30; i++)
+        {
+            invIdx++;
+            var clientIdx = i % 50;
+            var caseIdx = i % 120;
+            var invStatus = invoiceStatuses[random.Next(invoiceStatuses.Length)];
+
+            invoices.Add(new Invoice
+            {
+                Id = Guid.Parse($"I0000001-0000-0000-0000-{invIdx:D12}"),
+                InvoiceNumber = $"INV-2024-{invIdx:D4}",
+                Amount = random.Next(5000, 200001) * (decimal)0.01,
+                Currency = "BDT",
+                Status = invStatus,
+                Description = $"Professional fees for case {cases[caseIdx].CaseNumber}",
+                DueDate = new DateTime(2024, 4, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 365)),
+                PaidAt = invStatus == PaymentStatus.Completed
+                    ? new DateTime(2024, 4, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 365))
+                    : null,
+                ClientId = clientIds[clientIdx],
+                CaseId = caseIds[caseIdx],
+                CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 365))
+            });
+        }
+        db.Invoices.AddRange(invoices);
+
+        await db.SaveChangesAsync();
+
+        var expenses = new List<Expense>();
+        var expIdx = 0;
+        var expenseCategories = new[] { "Travel", "Filing Fees", "Stationery", "Witness Expenses", "Photocopy", "Miscellaneous" };
+
+        for (int i = 0; i < 40; i++)
+        {
+            expIdx++;
+            var caseIdx = i % 120;
+            var userId = allLawyerIds[i % 4];
+
+            expenses.Add(new Expense
+            {
+                Id = Guid.Parse($"E0000001-0000-0000-0000-{expIdx:D12}"),
+                Description = $"{expenseCategories[i % expenseCategories.Length]} for case {cases[caseIdx].CaseNumber}",
+                Amount = random.Next(500, 50001) * (decimal)0.01,
+                Currency = "BDT",
+                Category = expenseCategories[i % expenseCategories.Length],
+                ExpenseDate = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 700)),
+                ChamberId = DefaultChamberId,
+                CaseId = caseIds[caseIdx],
+                UserId = userId,
+                CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 700))
+            });
+        }
+        db.Expenses.AddRange(expenses);
+
+        await db.SaveChangesAsync();
+
+        var tasks = new List<Domain.Entities.Task>();
+        var taskIdx = 0;
+        var taskStatuses = new[] { Domain.Entities.TaskStatus.Pending, Domain.Entities.TaskStatus.InProgress, Domain.Entities.TaskStatus.Completed, Domain.Entities.TaskStatus.Cancelled };
+        var taskPriorities = new[] { "Low", "Medium", "High", "Urgent" };
+
+        for (int i = 0; i < 50; i++)
+        {
+            taskIdx++;
+            var caseIdx = i % 120;
+            var assignerId = allLawyerIds[i % 4];
+            var assigneeId = allLawyerIds[(i + 1) % 4];
+
+            tasks.Add(new Domain.Entities.Task
+            {
+                Id = Guid.Parse($"T0000001-0000-0000-0000-{taskIdx:D12}"),
+                Title = new[] { "File review", "Draft pleading", "Collect evidence", "Client meeting", "Court appearance preparation", "Legal research" }[i % 6],
+                Description = $"Task related to case {cases[caseIdx].CaseNumber}",
+                DueDate = new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 700)),
+                Status = taskStatuses[random.Next(taskStatuses.Length)],
+                Priority = taskPriorities[random.Next(taskPriorities.Length)],
+                AssignedTo = assigneeId,
+                AssignedBy = assignerId,
+                CaseId = caseIds[caseIdx],
+                ChamberId = DefaultChamberId,
+                CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(random.Next(0, 365))
+            });
+        }
+        db.Tasks.AddRange(tasks);
+
+        await db.SaveChangesAsync();
 
         var allUserIds = new[] { adminId, lawyer1Id, lawyer2Id, lawyer3Id, lawyer4Id };
         var notificationTemplates = new[]
         {
-            ("New Hearing Scheduled", "A hearing has been scheduled for case {0} on {1:dd MMM yyyy} at {2}."),
+            ("New Hearing Scheduled", "A hearing has been scheduled for case {0} on {1:dd MMM yyyy}."),
             ("Case Updated", "Case {0} status has been updated to {1}."),
             ("Document Uploaded", "A new document has been uploaded for case {0}."),
-            ("Hearing Reminder", "Reminder: Hearing for case {0} is tomorrow at {1}."),
+            ("Hearing Reminder", "Reminder: Hearing for case {0} is scheduled for tomorrow."),
             ("Case Assigned", "You have been assigned case {0}."),
             ("Case Closed", "Case {0} has been closed. Closing date: {1:dd MMM yyyy}."),
             ("Payment Received", "Payment of {0} BDT received for case {1}."),
@@ -577,10 +667,10 @@ public static class DemoDataSeeder
             var (notifTitle, notifFormat) = notificationTemplates[i % notificationTemplates.Length];
             var msg = notifTitle switch
             {
-                "New Hearing Scheduled" => string.Format(notifFormat, caseRef.CaseNumber, DateTime.UtcNow.AddDays(random.Next(1, 30)), hearingTimes[random.Next(hearingTimes.Length)]),
+                "New Hearing Scheduled" => string.Format(notifFormat, caseRef.CaseNumber, DateTime.UtcNow.AddDays(random.Next(1, 30))),
                 "Case Updated" => string.Format(notifFormat, caseRef.CaseNumber, caseRef.Status),
                 "Document Uploaded" => string.Format(notifFormat, caseRef.CaseNumber),
-                "Hearing Reminder" => string.Format(notifFormat, caseRef.CaseNumber, hearingTimes[random.Next(hearingTimes.Length)]),
+                "Hearing Reminder" => string.Format(notifFormat, caseRef.CaseNumber),
                 "Case Assigned" => string.Format(notifFormat, caseRef.CaseNumber),
                 "Case Closed" => string.Format(notifFormat, caseRef.CaseNumber, DateTime.UtcNow),
                 "Payment Received" => string.Format(notifFormat, random.Next(5000, 50000) * 100, caseRef.CaseNumber),
@@ -592,7 +682,7 @@ public static class DemoDataSeeder
 
             notifications.Add(new Notification
             {
-                Id = Guid.Parse($"E0000001-0000-0000-0000-{notifIdx:D12}"),
+                Id = Guid.Parse($"N0000001-0000-0000-0000-{notifIdx:D12}"),
                 UserId = userId,
                 Title = notifTitle,
                 Message = msg,

@@ -22,11 +22,15 @@ public class AuthService : IAuthService
     }
 
     public async Task<(bool Success, string Message, User? User, string? AccessToken, string? RefreshToken)>
-        RegisterAsync(string fullName, string email, string password, string phone, string role)
+        RegisterAsync(string fullName, string email, string password, string phone, string role, Guid chamberId)
     {
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (existingUser != null)
             return (false, "Email already registered", null, null, null);
+
+        var chamber = await _context.Chambers.FindAsync(chamberId);
+        if (chamber == null)
+            return (false, "Chamber not found", null, null, null);
 
         if (!Enum.TryParse<UserRole>(role, true, out var userRole))
             return (false, "Invalid role", null, null, null);
@@ -38,6 +42,7 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             Phone = phone,
             Role = userRole,
+            ChamberId = chamberId,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };

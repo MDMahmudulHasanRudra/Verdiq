@@ -1,29 +1,27 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Verdiq.API.Models;
 using Verdiq.Application.DTOs.Auth;
 using Verdiq.Domain.Entities;
 using Verdiq.Application.Validators;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
-using Verdiq.Infrastructure.Services;
 
 namespace Verdiq.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
-    private readonly ITwoFactorService _twoFactorService;
     private readonly IJwtService _jwtService;
     private readonly AppDbContext _context;
 
-    public AuthController(IAuthService authService, ITwoFactorService twoFactorService,
+    public AuthController(IAuthService authService,
         IJwtService jwtService, AppDbContext context)
     {
         _authService = authService;
-        _twoFactorService = twoFactorService;
         _jwtService = jwtService;
         _context = context;
     }
@@ -36,7 +34,7 @@ public class AuthController : ControllerBase
             return BadRequest(new AuthResponseDto { Success = false, Message = error });
 
         var (success, message, user, accessToken, refreshToken) =
-            await _authService.RegisterAsync(dto.FullName, dto.Email, dto.Password, dto.Phone, dto.Role);
+            await _authService.RegisterAsync(dto.FullName, dto.Email, dto.Password, dto.Phone, dto.Role, dto.ChamberId);
 
         if (!success)
             return BadRequest(new AuthResponseDto { Success = false, Message = message });
@@ -47,18 +45,7 @@ public class AuthController : ControllerBase
             Message = message,
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            User = user != null ? new UserInfoDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Role = user.Role.ToString(),
-                AvatarUrl = user.AvatarUrl,
-                BarCouncilId = user.BarCouncilId,
-                IsActive = user.IsActive,
-                TwoFactorEnabled = user.TwoFactorEnabled
-            } : null
+            User = user != null ? MapUserInfo(user) : null
         });
     }
 
@@ -81,79 +68,8 @@ public class AuthController : ControllerBase
             Message = message,
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            TempToken = accessToken == null ? refreshToken : null,
-            User = user != null ? new UserInfoDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Role = user.Role.ToString(),
-                AvatarUrl = user.AvatarUrl,
-                BarCouncilId = user.BarCouncilId,
-                IsActive = user.IsActive,
-                TwoFactorEnabled = user.TwoFactorEnabled
-            } : null
+            User = user != null ? MapUserInfo(user) : null
         });
-    }
-
-    [HttpPost("2fa/verify")]
-    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> VerifyTwoFactor([FromBody] TwoFactorVerifyDto dto, [FromQuery] string tempToken)
-    {
-        var userId = _jwtService.ValidateToken(tempToken);
-        if (userId == null)
-            return Unauthorized(ApiResponse<AuthResponseDto>.Fail("Invalid or expired verification token"));
-
-        var valid = await _twoFactorService.VerifyAsync(userId.Value, dto.Code);
-        if (!valid)
-            return Unauthorized(ApiResponse<AuthResponseDto>.Fail("Invalid 2FA code"));
-
-        var user = await _context.Users.FindAsync(userId.Value);
-        if (user == null)
-            return Unauthorized(ApiResponse<AuthResponseDto>.Fail("User not found"));
-
-        var (accessToken, refreshToken) = _jwtService.GenerateTokens(user);
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-        user.LoginAttempts = 0;
-        user.LockoutEnd = null;
-        user.LastLoginAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-
-        return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
-        {
-            Success = true,
-            Message = "2FA verified",
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            User = new UserInfoDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Role = user.Role.ToString(),
-                IsActive = user.IsActive,
-                TwoFactorEnabled = true
-            }
-        }));
-    }
-
-    [HttpPost("2fa/setup")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<TwoFactorSetupResponse>>> SetupTwoFactor()
-    {
-        var userId = GetUserId();
-        var setup = await _twoFactorService.SetupAsync(userId);
-        return Ok(ApiResponse<TwoFactorSetupResponse>.Ok(setup));
-    }
-
-    [HttpPost("2fa/disable")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponse<object>>> DisableTwoFactor()
-    {
-        var userId = GetUserId();
-        await _twoFactorService.DisableAsync(userId);
-        return Ok(ApiResponse<object>.Ok(null!, "2FA disabled"));
     }
 
     [HttpPost("refresh")]
@@ -179,10 +95,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponseDto>> GetCurrentUser()
     {
         var userId = GetUserId();
-        if (userId == Guid.Empty)
-            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
-
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.Include(u => u.Chamber).FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return NotFound(new AuthResponseDto { Success = false, Message = "User not found" });
 
@@ -203,8 +116,6 @@ public class AuthController : ControllerBase
             return BadRequest(new AuthResponseDto { Success = false, Message = error });
 
         var userId = GetUserId();
-        if (userId == Guid.Empty)
-            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
 
         var (success, message, user) =
             await _authService.UpdateProfileAsync(userId, dto.FullName, dto.Phone, dto.BarCouncilId);
@@ -229,8 +140,6 @@ public class AuthController : ControllerBase
             return BadRequest(new AuthResponseDto { Success = false, Message = error });
 
         var userId = GetUserId();
-        if (userId == Guid.Empty)
-            return Unauthorized(new AuthResponseDto { Success = false, Message = "Unauthorized" });
 
         var (success, message) =
             await _authService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
@@ -252,22 +161,23 @@ public class AuthController : ControllerBase
         return Ok(new { success = true, message = "Logged out successfully" });
     }
 
-    private Guid GetUserId()
+    private UserInfoDto MapUserInfo(User user)
     {
-        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return claim != null ? Guid.Parse(claim) : Guid.Empty;
-    }
+        var chamberName = user.Chamber?.Name
+            ?? _context.Chambers.Where(c => c.Id == user.ChamberId).Select(c => c.Name).FirstOrDefault()
+            ?? "";
 
-    private static UserInfoDto MapUserInfo(User user) => new()
-    {
-        Id = user.Id,
-        FullName = user.FullName,
-        Email = user.Email,
-        Phone = user.Phone,
-        Role = user.Role.ToString(),
-        AvatarUrl = user.AvatarUrl,
-        BarCouncilId = user.BarCouncilId,
-        IsActive = user.IsActive,
-        TwoFactorEnabled = user.TwoFactorEnabled
-    };
+        return new UserInfoDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Phone = user.Phone,
+            Role = user.Role.ToString(),
+            AvatarUrl = user.AvatarUrl,
+            BarCouncilId = user.BarCouncilId,
+            ChamberId = user.ChamberId,
+            ChamberName = chamberName
+        };
+    }
 }

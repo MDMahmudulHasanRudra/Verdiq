@@ -21,57 +21,45 @@ public class SubscriptionController : BaseController
     [HttpGet("my")]
     public async Task<ActionResult<ApiResponse<SubscriptionResponseDto>>> GetMySubscription()
     {
-        try
-        {
-            var userId = GetUserId();
-            var subscription = await _subscriptionService.GetUserSubscriptionAsync(userId);
-            return Ok(ApiResponse<SubscriptionResponseDto>.Ok(subscription));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<SubscriptionResponseDto>.Fail(ex.Message));
-        }
+        var chamberId = GetChamberId();
+        var subscription = await _subscriptionService.GetByChamberIdAsync(chamberId);
+        if (subscription == null)
+            return NotFound(ApiResponse<SubscriptionResponseDto>.Fail("Subscription not found"));
+
+        return Ok(ApiResponse<SubscriptionResponseDto>.Ok(subscription));
     }
 
     [HttpPut("change-plan")]
-    public async Task<ActionResult<ApiResponse<SubscriptionResponseDto>>> ChangePlan([FromBody] ChangePlanDto dto)
+    public async Task<ActionResult<ApiResponse<SubscriptionResponseDto>>> ChangePlan(
+        [FromBody] ChangePlanDto dto)
     {
-        try
-        {
-            var userId = GetUserId();
-            var subscription = await _subscriptionService.ChangePlanAsync(userId, dto.Plan);
-            return Ok(ApiResponse<SubscriptionResponseDto>.Ok(subscription));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<SubscriptionResponseDto>.Fail(ex.Message));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ApiResponse<SubscriptionResponseDto>.Fail(ex.Message));
-        }
+        var chamberId = GetChamberId();
+        var (success, message) = await _subscriptionService.ChangePlanAsync(chamberId, dto.Plan);
+
+        if (!success)
+            return BadRequest(ApiResponse<SubscriptionResponseDto>.Fail(message));
+
+        var subscription = await _subscriptionService.GetByChamberIdAsync(chamberId);
+        return Ok(ApiResponse<SubscriptionResponseDto>.Ok(subscription!, message));
     }
 
     [HttpPost("cancel")]
     public async Task<ActionResult<ApiResponse<object>>> Cancel()
     {
-        try
-        {
-            var userId = GetUserId();
-            await _subscriptionService.CancelSubscriptionAsync(userId);
-            return Ok(ApiResponse<object>.Ok(null!, "Subscription will cancel at period end"));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ApiResponse<object>.Fail(ex.Message));
-        }
+        var chamberId = GetChamberId();
+        var (success, message) = await _subscriptionService.CancelAsync(chamberId);
+
+        if (!success)
+            return BadRequest(ApiResponse<object>.Fail(message));
+
+        return Ok(ApiResponse<object>.Ok(null!, "Subscription will cancel at period end"));
     }
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<List<SubscriptionResponseDto>>>> GetAll()
     {
-        var subscriptions = await _subscriptionService.GetAllSubscriptionsAsync();
+        var subscriptions = await _subscriptionService.GetAllAsync();
         return Ok(ApiResponse<List<SubscriptionResponseDto>>.Ok(subscriptions.ToList()));
     }
 }

@@ -15,58 +15,55 @@ public class SubscriptionService : ISubscriptionService
         _context = context;
     }
 
-    public async Task<SubscriptionResponseDto> GetUserSubscriptionAsync(Guid userId)
+    public async Task<SubscriptionResponseDto?> GetByChamberIdAsync(Guid chamberId)
     {
         var subscription = await _context.Subscriptions
-            .FirstOrDefaultAsync(s => s.UserId == userId && !s.IsDeleted);
+            .Include(s => s.Chamber)
+            .FirstOrDefaultAsync(s => s.ChamberId == chamberId && !s.IsDeleted);
 
-        if (subscription == null)
-            throw new KeyNotFoundException("Subscription not found");
-
-        return MapToDto(subscription);
+        return subscription == null ? null : MapToDto(subscription);
     }
 
-    public async Task<SubscriptionResponseDto> ChangePlanAsync(Guid userId, string plan)
+    public async Task<(bool Success, string Message)> ChangePlanAsync(Guid chamberId, string plan)
     {
         var subscription = await _context.Subscriptions
-            .FirstOrDefaultAsync(s => s.UserId == userId && !s.IsDeleted);
+            .FirstOrDefaultAsync(s => s.ChamberId == chamberId && !s.IsDeleted);
 
         if (subscription == null)
-            throw new KeyNotFoundException("Subscription not found");
+            return (false, "Subscription not found for this chamber");
 
         if (!Enum.TryParse<SubscriptionPlan>(plan, true, out var newPlan))
-            throw new ArgumentException("Invalid plan. Valid values: Free, Pro, Chamber");
+            return (false, "Invalid plan. Valid values: Free, Pro, Chamber");
 
         subscription.Plan = newPlan;
         subscription.UpdatedAt = DateTime.UtcNow;
 
         if (newPlan == SubscriptionPlan.Free)
-        {
             subscription.Status = SubscriptionStatus.Active;
-        }
 
         await _context.SaveChangesAsync();
-
-        return MapToDto(subscription);
+        return (true, $"Plan changed to {newPlan} successfully");
     }
 
-    public async Task CancelSubscriptionAsync(Guid userId)
+    public async Task<(bool Success, string Message)> CancelAsync(Guid chamberId)
     {
         var subscription = await _context.Subscriptions
-            .FirstOrDefaultAsync(s => s.UserId == userId && !s.IsDeleted);
+            .FirstOrDefaultAsync(s => s.ChamberId == chamberId && !s.IsDeleted);
 
         if (subscription == null)
-            throw new KeyNotFoundException("Subscription not found");
+            return (false, "Subscription not found for this chamber");
 
         subscription.CancelAtPeriodEnd = true;
         subscription.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+
+        return (true, "Subscription will be cancelled at the end of the current billing period");
     }
 
-    public async Task<IEnumerable<SubscriptionResponseDto>> GetAllSubscriptionsAsync()
+    public async Task<IEnumerable<SubscriptionResponseDto>> GetAllAsync()
     {
         var subscriptions = await _context.Subscriptions
-            .Include(s => s.User)
+            .Include(s => s.Chamber)
             .Where(s => !s.IsDeleted)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
@@ -77,7 +74,7 @@ public class SubscriptionService : ISubscriptionService
     private static SubscriptionResponseDto MapToDto(Domain.Entities.Subscription s) => new()
     {
         Id = s.Id,
-        UserId = s.UserId,
+        ChamberId = s.ChamberId,
         Plan = s.Plan.ToString(),
         Status = s.Status.ToString(),
         CurrentPeriodStart = s.CurrentPeriodStart,

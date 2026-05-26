@@ -4,5 +4,5 @@ namespace Verdiq.Application.Interfaces;
 
 public interface ISearchService
 {
-    Task<SearchResponse> SearchAsync(Guid userId, string query, int limit = 10);
+    Task<SearchResponse> SearchAsync(string query, Guid chamberId, int limit = 10);
 }

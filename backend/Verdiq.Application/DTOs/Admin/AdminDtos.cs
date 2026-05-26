@@ -9,9 +9,9 @@ public class AdminUserDto
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public string? BarCouncilId { get; set; }
-    public string? AvatarUrl { get; set; }
+    public Guid ChamberId { get; set; }
+    public string ChamberName { get; set; } = string.Empty;
     public int CasesCount { get; set; }
-    public string? SubscriptionPlan { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -22,9 +22,7 @@ public class AdminCaseDto
     public string Title { get; set; } = string.Empty;
     public string CaseType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public string Priority { get; set; } = string.Empty;
-    public string Court { get; set; } = string.Empty;
-    public string ClientName { get; set; } = string.Empty;
+    public string CourtName { get; set; } = string.Empty;
     public string AssignedLawyerName { get; set; } = string.Empty;
     public DateTime FilingDate { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -39,21 +37,12 @@ public class AdminRevenueDto
 
 public class AdminSystemStatsDto
 {
+    public int TotalChambers { get; set; }
     public int TotalUsers { get; set; }
-    public int ActiveLawyers { get; set; }
-    public int TotalClients { get; set; }
     public int TotalCases { get; set; }
+    public int TotalClients { get; set; }
     public int ActiveSubscriptions { get; set; }
     public decimal MonthlyRevenue { get; set; }
-    public long StorageUsed { get; set; }
-    public DatabaseStatsDto Database { get; set; } = new();
-}
-
-public class DatabaseStatsDto
-{
-    public int ActiveConnections { get; set; }
-    public string Size { get; set; } = string.Empty;
-    public string LastBackup { get; set; } = string.Empty;
 }
 
 public class UpdateUserStatusDto

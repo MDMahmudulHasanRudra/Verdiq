@@ -2,8 +2,10 @@ namespace Verdiq.Domain.Enums;
 
 public enum UserRole
 {
-    Admin,
-    Lawyer,
+    Owner,
+    SeniorLawyer,
+    JuniorLawyer,
     Assistant,
+    Accountant,
     Client
 }

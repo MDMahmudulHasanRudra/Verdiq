@@ -16,14 +16,17 @@ public class NotificationsController : BaseController
     private readonly INotificationService _notificationService;
     private readonly IRealtimeNotifier _realtimeNotifier;
 
-    public NotificationsController(INotificationService notificationService, IRealtimeNotifier realtimeNotifier)
+    public NotificationsController(
+        INotificationService notificationService,
+        IRealtimeNotifier realtimeNotifier)
     {
         _notificationService = notificationService;
         _realtimeNotifier = realtimeNotifier;
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<NotificationResponseDto>>>> GetAll([FromQuery] bool unreadOnly = false)
+    public async Task<ActionResult<ApiResponse<List<NotificationResponseDto>>>> GetAll(
+        [FromQuery] bool unreadOnly = false)
     {
         var userId = GetUserId();
         var notifications = await _notificationService.GetUserNotificationsAsync(userId, unreadOnly);
@@ -39,12 +42,20 @@ public class NotificationsController : BaseController
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<NotificationResponseDto>>> Create([FromBody] CreateNotificationDto dto)
+    public async Task<ActionResult<ApiResponse<NotificationResponseDto>>> Create(
+        [FromBody] CreateNotificationDto dto)
     {
         var notification = await _notificationService.CreateNotificationAsync(dto);
 
-        await _realtimeNotifier.NotifyUserAsync(dto.UserId.ToString(), NotificationHubMethods.NotificationReceived, notification);
-        await _realtimeNotifier.NotifyUserAsync(dto.UserId.ToString(), NotificationHubMethods.UnreadCountChanged, new { count = 1 });
+        await _realtimeNotifier.NotifyUserAsync(
+            dto.UserId.ToString(),
+            NotificationHubMethods.NotificationReceived,
+            notification);
+
+        await _realtimeNotifier.NotifyUserAsync(
+            dto.UserId.ToString(),
+            NotificationHubMethods.UnreadCountChanged,
+            new { count = 1 });
 
         return Ok(ApiResponse<NotificationResponseDto>.Created(notification));
     }

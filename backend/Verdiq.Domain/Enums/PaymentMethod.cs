@@ -2,7 +2,7 @@ namespace Verdiq.Domain.Enums;
 
 public enum PaymentMethod
 {
-    bkash,
+    Bkash,
     Nagad,
     Card,
     BankTransfer

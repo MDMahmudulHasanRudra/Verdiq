@@ -4,5 +4,6 @@ public enum CasePriority
 {
     Low,
     Medium,
-    High
+    High,
+    Urgent
 }

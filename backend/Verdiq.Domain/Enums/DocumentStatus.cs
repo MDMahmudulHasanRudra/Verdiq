@@ -4,5 +4,6 @@ public enum DocumentStatus
 {
     Draft,
     Final,
-    Filed
+    Filed,
+    Archived
 }

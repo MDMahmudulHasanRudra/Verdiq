@@ -8,6 +8,9 @@ public abstract class BaseController : ControllerBase
     protected Guid GetUserId() =>
         Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+    protected Guid GetChamberId() =>
+        Guid.Parse(User.FindFirst("chamberId")!.Value);
+
     protected string GetUserRole() =>
         User.FindFirst(ClaimTypes.Role)?.Value ?? "";
 

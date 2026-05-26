@@ -3,54 +3,20 @@ using Verdiq.Application.DTOs.Case;
 using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
-using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
 
 namespace Verdiq.Infrastructure.Services;
 
 public class CaseService : ICaseService
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly AppDbContext _context;
 
-    public CaseService(IUnitOfWork unitOfWork, AppDbContext context)
+    public CaseService(AppDbContext context)
     {
-        _unitOfWork = unitOfWork;
         _context = context;
     }
 
-    public async Task<CaseResponseDto> GetCaseByIdAsync(Guid id)
-    {
-        var caseEntity = await _context.Cases
-            .Include(c => c.Client)
-            .Include(c => c.AssignedLawyer)
-            .Include(c => c.Hearings)
-            .Include(c => c.Documents)
-            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-
-        if (caseEntity == null)
-            throw new KeyNotFoundException("Case not found");
-
-        return MapToDto(caseEntity);
-    }
-
-    public async Task<IEnumerable<CaseResponseDto>> GetAllCasesAsync(Guid? lawyerId = null)
-    {
-        var query = _context.Cases
-            .Include(c => c.Client)
-            .Include(c => c.AssignedLawyer)
-            .Include(c => c.Hearings)
-            .Include(c => c.Documents)
-            .Where(c => !c.IsDeleted);
-
-        if (lawyerId.HasValue)
-            query = query.Where(c => c.AssignedLawyerId == lawyerId.Value);
-
-        var cases = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
-        return cases.Select(MapToDto);
-    }
-
-    public async Task<CaseResponseDto> CreateCaseAsync(CreateCaseDto dto, Guid lawyerId)
+    public async Task<(bool Success, string Message, CaseResponseDto? Data)> CreateAsync(CreateCaseDto dto, Guid userId, Guid chamberId)
     {
         var caseNumber = await GenerateCaseNumberAsync();
 
@@ -61,125 +27,200 @@ public class CaseService : ICaseService
             CaseType = dto.CaseType,
             Status = CaseStatus.Pending,
             Priority = Enum.TryParse<CasePriority>(dto.Priority, true, out var priority) ? priority : CasePriority.Medium,
-            Court = dto.Court,
-            CourtRoom = dto.CourtRoom,
-            JudgeName = dto.JudgeName,
+            CourtName = dto.CourtName,
+            Opponent = dto.Opponent,
             FirNumber = dto.FirNumber,
             PoliceStation = dto.PoliceStation,
             ActsAndSections = dto.ActsAndSections,
             Description = dto.Description,
-            FilingDate = DateTime.UtcNow,
-            ClientId = dto.ClientId,
-            AssignedLawyerId = lawyerId,
+            FilingDate = dto.FilingDate == default ? DateTime.UtcNow : dto.FilingDate,
+            AssignedLawyerId = userId,
+            ChamberId = chamberId,
             CreatedAt = DateTime.UtcNow
         };
 
-        await _unitOfWork.Cases.AddAsync(caseEntity);
-        await _unitOfWork.CompleteAsync();
+        _context.Cases.Add(caseEntity);
 
-        return await GetCaseByIdAsync(caseEntity.Id);
+        foreach (var clientId in dto.ClientIds)
+        {
+            _context.ClientCases.Add(new ClientCase
+            {
+                ClientId = clientId,
+                CaseId = caseEntity.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        var result = await GetByIdAsync(caseEntity.Id);
+        return (true, "Case created successfully", result);
     }
 
-    public async Task<CaseResponseDto> UpdateCaseAsync(Guid id, UpdateCaseDto dto)
+    public async Task<(bool Success, string Message, CaseResponseDto? Data)> UpdateAsync(Guid id, UpdateCaseDto dto)
     {
-        var caseEntity = await _context.Cases.FindAsync(id);
-        if (caseEntity == null || caseEntity.IsDeleted)
-            throw new KeyNotFoundException("Case not found");
+        var caseEntity = await _context.Cases
+            .Include(c => c.ClientCases)
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+
+        if (caseEntity == null)
+            return (false, "Case not found", null);
 
         if (dto.Title != null) caseEntity.Title = dto.Title;
+        if (dto.CourtName != null) caseEntity.CourtName = dto.CourtName;
         if (dto.CaseType != null) caseEntity.CaseType = dto.CaseType;
         if (dto.Status != null && Enum.TryParse<CaseStatus>(dto.Status, true, out var status))
             caseEntity.Status = status;
         if (dto.Priority != null && Enum.TryParse<CasePriority>(dto.Priority, true, out var priority))
             caseEntity.Priority = priority;
-        if (dto.Court != null) caseEntity.Court = dto.Court;
-        if (dto.CourtRoom != null) caseEntity.CourtRoom = dto.CourtRoom;
-        if (dto.JudgeName != null) caseEntity.JudgeName = dto.JudgeName;
-        if (dto.FirNumber != null) caseEntity.FirNumber = dto.FirNumber;
-        if (dto.PoliceStation != null) caseEntity.PoliceStation = dto.PoliceStation;
-        if (dto.ActsAndSections != null) caseEntity.ActsAndSections = dto.ActsAndSections;
+        if (dto.Opponent != null) caseEntity.Opponent = dto.Opponent;
         if (dto.Description != null) caseEntity.Description = dto.Description;
+        if (dto.ActsAndSections != null) caseEntity.ActsAndSections = dto.ActsAndSections;
 
         if (caseEntity.Status == CaseStatus.Closed)
             caseEntity.ClosingDate = DateTime.UtcNow;
 
-        await _unitOfWork.Cases.UpdateAsync(caseEntity);
-        await _unitOfWork.CompleteAsync();
+        if (dto.ClientIds != null)
+        {
+            var existingIds = caseEntity.ClientCases.Select(cc => cc.ClientId).ToHashSet();
+            var newIds = dto.ClientIds.ToHashSet();
 
-        return await GetCaseByIdAsync(id);
+            foreach (var cc in caseEntity.ClientCases.Where(cc => !newIds.Contains(cc.ClientId)).ToList())
+                _context.ClientCases.Remove(cc);
+
+            foreach (var clientId in newIds.Where(id => !existingIds.Contains(id)))
+            {
+                _context.ClientCases.Add(new ClientCase
+                {
+                    ClientId = clientId,
+                    CaseId = caseEntity.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        caseEntity.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        var result = await GetByIdAsync(id);
+        return (true, "Case updated successfully", result);
     }
 
-    public async Task DeleteCaseAsync(Guid id)
+    public async Task<(bool Success, string Message)> DeleteAsync(Guid id)
     {
         var caseEntity = await _context.Cases.FindAsync(id);
         if (caseEntity == null || caseEntity.IsDeleted)
-            throw new KeyNotFoundException("Case not found");
+            return (false, "Case not found");
 
-        await _unitOfWork.Cases.DeleteAsync(caseEntity);
-        await _unitOfWork.CompleteAsync();
+        caseEntity.IsDeleted = true;
+        caseEntity.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return (true, "Case deleted successfully");
     }
 
-    public async Task<IEnumerable<CaseResponseDto>> SearchCasesAsync(string searchTerm, Guid? lawyerId = null)
+    public async Task<CaseResponseDto?> GetByIdAsync(Guid id)
     {
-        var term = searchTerm.ToLower();
-        var query = _context.Cases
-            .Include(c => c.Client)
+        var caseEntity = await _context.Cases
             .Include(c => c.AssignedLawyer)
+            .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
             .Include(c => c.Hearings)
             .Include(c => c.Documents)
-            .Where(c => !c.IsDeleted &&
-                (c.CaseNumber.ToLower().Contains(term) ||
-                 c.Title.ToLower().Contains(term) ||
-                 c.Client.FullName.ToLower().Contains(term) ||
-                 c.Court.ToLower().Contains(term) ||
-                 c.FirNumber!.ToLower().Contains(term)));
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
 
-        if (lawyerId.HasValue)
-            query = query.Where(c => c.AssignedLawyerId == lawyerId.Value);
+        if (caseEntity == null)
+            return null;
 
-        var cases = await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
+        return MapToDto(caseEntity);
+    }
+
+    public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, int page = 1, int pageSize = 10)
+    {
+        var query = _context.Cases
+            .Include(c => c.AssignedLawyer)
+            .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
+            .Include(c => c.Hearings)
+            .Include(c => c.Documents)
+            .Where(c => c.ChamberId == chamberId && !c.IsDeleted);
+
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<CaseStatus>(status, true, out var caseStatus))
+            query = query.Where(c => c.Status == caseStatus);
+
+        if (!string.IsNullOrEmpty(priority) && Enum.TryParse<CasePriority>(priority, true, out var casePriority))
+            query = query.Where(c => c.Priority == casePriority);
+
+        var cases = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
         return cases.Select(MapToDto);
     }
 
-    public async Task<string> GenerateCaseNumberAsync()
+    public async Task<IEnumerable<CaseResponseDto>> SearchAsync(string query, Guid chamberId)
+    {
+        var term = query.ToLower();
+        var cases = await _context.Cases
+            .Include(c => c.AssignedLawyer)
+            .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
+            .Include(c => c.Hearings)
+            .Include(c => c.Documents)
+            .Where(c => c.ChamberId == chamberId && !c.IsDeleted &&
+                (c.CaseNumber.ToLower().Contains(term) ||
+                 c.Title.ToLower().Contains(term) ||
+                 c.CourtName.ToLower().Contains(term) ||
+                 (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
+                 (c.FirNumber != null && c.FirNumber.ToLower().Contains(term)) ||
+                 c.ClientCases.Any(cc => cc.Client.Name.ToLower().Contains(term))))
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
+
+        return cases.Select(MapToDto);
+    }
+
+    public async Task<int> GetCountAsync(Guid chamberId)
+    {
+        return await _context.Cases
+            .CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+    }
+
+    private async Task<string> GenerateCaseNumberAsync()
     {
         var year = DateTime.UtcNow.Year;
         var count = await _context.Cases
             .CountAsync(c => c.CreatedAt.Year == year) + 1;
-        return $"VRD-{year}-{count:D4}";
+        return $"VER-{year}-{count:D4}";
     }
 
     private static CaseResponseDto MapToDto(Case c)
     {
-        var nextHearing = c.Hearings
-            .Where(h => h.HearingDate >= DateTime.UtcNow && h.Status == HearingStatus.Scheduled)
-            .OrderBy(h => h.HearingDate)
-            .FirstOrDefault();
-
         return new CaseResponseDto
         {
             Id = c.Id,
             CaseNumber = c.CaseNumber,
             Title = c.Title,
+            CourtName = c.CourtName,
             CaseType = c.CaseType,
+            FilingDate = c.FilingDate,
+            Opponent = c.Opponent,
             Status = c.Status.ToString(),
             Priority = c.Priority.ToString(),
-            Court = c.Court,
-            CourtRoom = c.CourtRoom,
-            JudgeName = c.JudgeName,
-            FirNumber = c.FirNumber,
-            PoliceStation = c.PoliceStation,
-            ActsAndSections = c.ActsAndSections,
             Description = c.Description,
-            FilingDate = c.FilingDate,
+            ActsAndSections = c.ActsAndSections,
             ClosingDate = c.ClosingDate,
-            NextHearingDate = nextHearing?.HearingDate,
-            ClientId = c.ClientId,
-            ClientName = c.Client.FullName,
             AssignedLawyerId = c.AssignedLawyerId,
             AssignedLawyerName = c.AssignedLawyer.FullName,
-            DocumentsCount = c.Documents.Count(d => !d.IsDeleted),
+            Clients = c.ClientCases
+                .Where(cc => !cc.IsDeleted)
+                .Select(cc => new ClientInfo
+                {
+                    Id = cc.Client.Id,
+                    Name = cc.Client.Name,
+                    Phone = cc.Client.Phone
+                }).ToList(),
             HearingsCount = c.Hearings.Count(h => !h.IsDeleted),
+            DocumentsCount = c.Documents.Count(d => !d.IsDeleted),
             CreatedAt = c.CreatedAt
         };
     }
