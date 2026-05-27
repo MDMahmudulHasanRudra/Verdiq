@@ -1,0 +1,16 @@
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.csproj.AssemblyReference.cache
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.AssemblyInfoInputs.cache
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.AssemblyInfo.cs
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.csproj.CoreCompileInputs.cache
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.sourcelink.json
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\bin\Release\net10.0\Verdiq.Application.deps.json
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\bin\Release\net10.0\Verdiq.Application.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\bin\Release\net10.0\Verdiq.Application.pdb
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\bin\Release\net10.0\Verdiq.Domain.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\bin\Release\net10.0\Verdiq.Domain.pdb
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.A.4689AD5E.Up2Date
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\refint\Verdiq.Application.dll
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\Verdiq.Application.pdb
+C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Application\obj\Release\net10.0\ref\Verdiq.Application.dll

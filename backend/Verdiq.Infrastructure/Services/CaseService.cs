@@ -51,6 +51,15 @@ public class CaseService : ICaseService
             });
         }
 
+        _context.CaseActivities.Add(new CaseActivity
+        {
+            CaseId = caseEntity.Id,
+            ActivityType = ActivityType.Note,
+            Description = $"Case created: {dto.Title}",
+            CreatedBy = userId,
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
 
         var result = await GetByIdAsync(caseEntity.Id);
@@ -79,6 +88,15 @@ public class CaseService : ICaseService
 
         if (caseEntity.Status == CaseStatus.Closed)
             caseEntity.ClosingDate = DateTime.UtcNow;
+
+        _context.CaseActivities.Add(new CaseActivity
+        {
+            CaseId = caseEntity.Id,
+            ActivityType = ActivityType.StatusChange,
+            Description = $"Case updated: {(dto.Title ?? caseEntity.Title)}",
+            CreatedBy = caseEntity.AssignedLawyerId,
+            CreatedAt = DateTime.UtcNow
+        });
 
         if (dto.ClientIds != null)
         {
@@ -114,6 +132,16 @@ public class CaseService : ICaseService
 
         caseEntity.IsDeleted = true;
         caseEntity.UpdatedAt = DateTime.UtcNow;
+
+        _context.CaseActivities.Add(new CaseActivity
+        {
+            CaseId = caseEntity.Id,
+            ActivityType = ActivityType.Note,
+            Description = $"Case deleted: {caseEntity.Title}",
+            CreatedBy = caseEntity.AssignedLawyerId,
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
 
         return (true, "Case deleted successfully");
@@ -134,7 +162,7 @@ public class CaseService : ICaseService
         return MapToDto(caseEntity);
     }
 
-    public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, string? search = null, string? sortBy = null, string? sortOrder = null, int page = 1, int pageSize = 10)
     {
         var query = _context.Cases
             .Include(c => c.AssignedLawyer)
@@ -149,8 +177,33 @@ public class CaseService : ICaseService
         if (!string.IsNullOrEmpty(priority) && Enum.TryParse<CasePriority>(priority, true, out var casePriority))
             query = query.Where(c => c.Priority == casePriority);
 
+        if (!string.IsNullOrEmpty(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(c =>
+                c.CaseNumber.ToLower().Contains(term) ||
+                c.Title.ToLower().Contains(term) ||
+                c.CourtName.ToLower().Contains(term) ||
+                (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
+                c.ClientCases.Any(cc => cc.Client.Name.ToLower().Contains(term)));
+        }
+
+        query = (sortBy?.ToLower(), sortOrder?.ToLower()) switch
+        {
+            ("casenumber", "asc") => query.OrderBy(c => c.CaseNumber),
+            ("casenumber", "desc") => query.OrderByDescending(c => c.CaseNumber),
+            ("title", "asc") => query.OrderBy(c => c.Title),
+            ("title", "desc") => query.OrderByDescending(c => c.Title),
+            ("status", "asc") => query.OrderBy(c => c.Status),
+            ("status", "desc") => query.OrderByDescending(c => c.Status),
+            ("priority", "asc") => query.OrderBy(c => c.Priority),
+            ("priority", "desc") => query.OrderByDescending(c => c.Priority),
+            ("filingdate", "asc") => query.OrderBy(c => c.FilingDate),
+            ("filingdate", "desc") => query.OrderByDescending(c => c.FilingDate),
+            _ => query.OrderByDescending(c => c.CreatedAt)
+        };
+
         var cases = await query
-            .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

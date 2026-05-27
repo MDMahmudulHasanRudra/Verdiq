@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.Infrastructure.Repositories;
 
@@ -62,5 +63,13 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     public IQueryable<T> Query()
     {
         return _dbSet.Where(e => !e.IsDeleted).AsQueryable();
+    }
+
+    public async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
+    {
+        var query = _dbSet.Where(e => !e.IsDeleted);
+        if (predicate != null)
+            query = query.Where(predicate);
+        return await query.CountAsync();
     }
 }

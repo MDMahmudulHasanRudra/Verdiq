@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Serilog;
 using Verdiq.API.Hubs;
 using Verdiq.API.Middleware;
@@ -43,17 +44,6 @@ try
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new() { Title = "Verdiq API", Version = "v1" });
-        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "JWT Authorization header using the Bearer scheme"
-        });
-        c.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
-        {
-            { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
-        });
     });
 
     builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
@@ -131,6 +121,7 @@ try
     builder.Services.AddScoped<ISearchService, SearchService>();
     builder.Services.AddScoped<ISuperAdminService, SuperAdminService>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 
     builder.Services.AddSignalR();
     builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();

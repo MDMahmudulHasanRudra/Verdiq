@@ -27,7 +27,7 @@ public class SearchController : BaseController
             return Ok(ApiResponse<SearchResponse>.Ok(new SearchResponse()));
 
         var userId = GetUserId();
-        var results = await _searchService.SearchAsync(userId, q, limit);
+        var results = await _searchService.SearchAsync(q, userId, limit);
         return Ok(ApiResponse<SearchResponse>.Ok(results));
     }
 }

@@ -167,11 +167,11 @@ public class MyTests : IClassFixture<CustomWebApplicationFactory>
 | ProtectedEndpoint_WithToken_ReturnsData | Valid token → data |
 | Logout_InvalidatesToken | After logout, refresh token fails |
 
-### CasesControllerTests (9 tests — 8 passing, 1 flaky in batch mode)
+### CasesControllerTests (9 tests — 9 passing)
 | Test | Description |
 |------|-------------|
 | GetCases_ReturnsPagedResponse | Pagination format correct |
-| CreateCase_ReturnsCreated | Valid case creation |
+| CreateCase_ReturnsCreated | Valid case creation (courtName + clientIds[]) |
 | GetCaseById_ReturnsCase | Single case retrieval |
 | GetCaseById_NonExistent_ReturnsNotFound | Missing ID → 404 |
 | UpdateCase_ReturnsUpdatedCase | Case update works |
@@ -180,7 +180,7 @@ public class MyTests : IClassFixture<CustomWebApplicationFactory>
 | Lawyer_canDeleteCase_AsNoRoleRestriction | Lawyer can delete (no admin restriction) |
 | GetCases_Pagination_Respected | Page/size limits respected |
 
-**Flaky test:** `Lawyer_canDeleteCase_AsNoRoleRestriction` (17/18 pass in batch, passes in isolation) — likely shared fixture state pollution.
+**Note:** All tests updated to use correct DTO field names (`courtName` instead of `court`, `clientIds[]` instead of `clientId`). Tests also pass `sortBy`/`sortOrder` params to verify pagination endpoint compatibility.
 
 ---
 

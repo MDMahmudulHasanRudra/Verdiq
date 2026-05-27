@@ -36,18 +36,16 @@ public class CloudStorageService : ICloudStorageService
             _logger.LogInformation("Using local file storage at {Path}", _localPath);
     }
 
-    public bool IsEnabled => _isEnabled;
-
-    public async Task<CloudStorageResult> UploadAsync(Stream fileStream, string fileName, string contentType)
+    public async Task<string> UploadAsync(string key, Stream fileStream, string contentType)
     {
-        var key = $"{Guid.NewGuid():N}_{fileName}";
+        var storageKey = key;
 
         if (_isEnabled)
         {
             try
             {
-                var result = await UploadToS3Async(fileStream, key, contentType);
-                return result;
+                await UploadToS3Async(fileStream, storageKey, contentType);
+                return storageKey;
             }
             catch (Exception ex)
             {
@@ -55,27 +53,22 @@ public class CloudStorageService : ICloudStorageService
             }
         }
 
-        var filePath = Path.Combine(_localPath, key);
+        var filePath = Path.Combine(_localPath, storageKey);
         await using (var fs = new FileStream(filePath, FileMode.Create))
         {
             await fileStream.CopyToAsync(fs);
         }
 
-        return new CloudStorageResult
-        {
-            StorageProvider = "Local",
-            StorageKey = key,
-            FilePath = filePath
-        };
+        return storageKey;
     }
 
-    public async Task<Stream> DownloadAsync(string storageKey)
+    public async Task<Stream?> DownloadAsync(string key)
     {
         if (_isEnabled)
         {
             try
             {
-                return await DownloadFromS3Async(storageKey);
+                return await DownloadFromS3Async(key);
             }
             catch (Exception ex)
             {
@@ -83,21 +76,21 @@ public class CloudStorageService : ICloudStorageService
             }
         }
 
-        var filePath = Path.Combine(_localPath, storageKey);
+        var filePath = Path.Combine(_localPath, key);
         if (!File.Exists(filePath))
-            throw new FileNotFoundException("Document file not found");
+            return null;
 
         return new FileStream(filePath, FileMode.Open, FileAccess.Read);
     }
 
-    public async Task DeleteAsync(string storageKey)
+    public async Task<bool> DeleteAsync(string key)
     {
         if (_isEnabled)
         {
             try
             {
-                await DeleteFromS3Async(storageKey);
-                return;
+                await DeleteFromS3Async(key);
+                return true;
             }
             catch (Exception ex)
             {
@@ -105,62 +98,28 @@ public class CloudStorageService : ICloudStorageService
             }
         }
 
-        var filePath = Path.Combine(_localPath, storageKey);
+        var filePath = Path.Combine(_localPath, key);
         if (File.Exists(filePath))
-            File.Delete(filePath);
-    }
-
-    public async Task<string> GenerateSignedUrlAsync(string storageKey, int expiresInMinutes = 60)
-    {
-        if (_isEnabled)
         {
-            try
-            {
-                return await GenerateS3SignedUrlAsync(storageKey, expiresInMinutes);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "S3 signed URL generation failed");
-            }
+            File.Delete(filePath);
+            return true;
         }
 
-        return await Task.FromResult(string.Empty);
+        return false;
     }
 
-    private Task<CloudStorageResult> UploadToS3Async(Stream fileStream, string key, string contentType)
+    private Task UploadToS3Async(Stream fileStream, string key, string contentType)
     {
-        // AWS SDK S3 upload — requires AWSSDK.S3 NuGet package
-        // using var s3Client = new AmazonS3Client(_accessKey, _secretKey, RegionEndpoint.GetBySystemName(_region));
-        // var putRequest = new PutObjectRequest
-        // {
-        //     InputStream = fileStream,
-        //     BucketName = _bucketName,
-        //     Key = key,
-        //     ContentType = contentType
-        // };
-        // await s3Client.PutObjectAsync(putRequest);
-        // return new CloudStorageResult
-        // {
-        //     StorageProvider = "S3",
-        //     StorageKey = key,
-        //     FilePath = $"s3://{_bucketName}/{key}"
-        // };
-
         throw new NotImplementedException("Install AWSSDK.S3 NuGet package to enable S3 uploads");
     }
 
-    private Task<Stream> DownloadFromS3Async(string storageKey)
+    private Task<Stream> DownloadFromS3Async(string key)
     {
         throw new NotImplementedException("Install AWSSDK.S3 NuGet package to enable S3 downloads");
     }
 
-    private Task DeleteFromS3Async(string storageKey)
+    private Task DeleteFromS3Async(string key)
     {
         throw new NotImplementedException("Install AWSSDK.S3 NuGet package to enable S3 deletes");
-    }
-
-    private Task<string> GenerateS3SignedUrlAsync(string storageKey, int expiresInMinutes)
-    {
-        throw new NotImplementedException("Install AWSSDK.S3 NuGet package to enable S3 signed URLs");
     }
 }

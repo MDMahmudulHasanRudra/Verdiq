@@ -4,6 +4,7 @@ using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
 using Verdiq.Infrastructure.Data;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.Infrastructure.Services;
 
@@ -30,7 +31,7 @@ public class TaskService : ITaskService
             Description = dto.Description,
             DueDate = dto.DueDate,
             Priority = dto.Priority,
-            Status = Enums.TaskStatus.Pending,
+            Status = Domain.Enums.TaskStatus.Pending,
             AssignedTo = dto.AssignedTo,
             AssignedBy = assignedBy,
             CaseId = dto.CaseId,
@@ -54,7 +55,7 @@ public class TaskService : ITaskService
         if (dto.Description != null) taskEntity.Description = dto.Description;
         if (dto.DueDate.HasValue) taskEntity.DueDate = dto.DueDate.Value;
         if (dto.Priority != null) taskEntity.Priority = dto.Priority;
-        if (dto.Status != null && Enum.TryParse<Enums.TaskStatus>(dto.Status, true, out var status))
+        if (dto.Status != null && Enum.TryParse<Domain.Enums.TaskStatus>(dto.Status, true, out var status))
             taskEntity.Status = status;
 
         taskEntity.UpdatedAt = DateTime.UtcNow;

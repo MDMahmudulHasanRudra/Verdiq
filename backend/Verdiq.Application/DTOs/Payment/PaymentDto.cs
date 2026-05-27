@@ -33,6 +33,15 @@ public class CheckoutResponseDto
     public string? ClientSecret { get; set; }
 }
 
+public class PaymentHistoryDto
+{
+    public List<PaymentResponseDto> Payments { get; set; } = [];
+    public decimal TotalPaid { get; set; }
+    public decimal TotalPending { get; set; }
+    public decimal TotalRefunded { get; set; }
+    public int TotalTransactions { get; set; }
+}
+
 public class PaymentWebhookDto
 {
     public string Gateway { get; set; } = string.Empty;

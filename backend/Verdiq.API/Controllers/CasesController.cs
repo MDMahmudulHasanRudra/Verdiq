@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Verdiq.API.Models;
+using Verdiq.API.Services;
 using Verdiq.Application.DTOs.Case;
 using Verdiq.Application.Interfaces;
 
@@ -12,10 +13,12 @@ namespace Verdiq.API.Controllers;
 public class CasesController : BaseController
 {
     private readonly ICaseService _caseService;
+    private readonly IRealtimeNotifier _notifier;
 
-    public CasesController(ICaseService caseService)
+    public CasesController(ICaseService caseService, IRealtimeNotifier notifier)
     {
         _caseService = caseService;
+        _notifier = notifier;
     }
 
     [HttpGet]
@@ -23,10 +26,13 @@ public class CasesController : BaseController
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? status = null,
-        [FromQuery] string? priority = null)
+        [FromQuery] string? priority = null,
+        [FromQuery] string? search = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortOrder = null)
     {
         var chamberId = GetChamberId();
-        var cases = await _caseService.GetAllAsync(chamberId, status, priority, page, pageSize);
+        var cases = await _caseService.GetAllAsync(chamberId, status, priority, search, sortBy, sortOrder, page, pageSize);
         var totalCount = await _caseService.GetCountAsync(chamberId);
 
         return Ok(new PagedResponse<CaseResponseDto>
@@ -37,6 +43,17 @@ public class CasesController : BaseController
             TotalCount = totalCount,
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
         });
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<CaseResponseDto>>>> Search([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return Ok(ApiResponse<IEnumerable<CaseResponseDto>>.Ok(Enumerable.Empty<CaseResponseDto>()));
+
+        var chamberId = GetChamberId();
+        var results = await _caseService.SearchAsync(q, chamberId);
+        return Ok(ApiResponse<IEnumerable<CaseResponseDto>>.Ok(results));
     }
 
     [HttpGet("{id}")]
@@ -56,6 +73,9 @@ public class CasesController : BaseController
         if (!success || data == null)
             return BadRequest(ApiResponse<CaseResponseDto>.Fail(message));
 
+        await _notifier.NotifyCaseGroupAsync(data.Id.ToString(), "CaseUpdated", data);
+        await _notifier.NotifyUserAsync(GetUserId().ToString(), "NotificationReceived", new { title = "Case Created", description = $"Case {data.CaseNumber} created" });
+
         return CreatedAtAction(nameof(GetById), new { id = data.Id },
             ApiResponse<CaseResponseDto>.Created(data));
     }
@@ -67,6 +87,8 @@ public class CasesController : BaseController
         if (!success || data == null)
             return NotFound(ApiResponse<CaseResponseDto>.Fail(message));
 
+        await _notifier.NotifyCaseGroupAsync(id.ToString(), "CaseUpdated", data);
+
         return Ok(ApiResponse<CaseResponseDto>.Ok(data));
     }
 
@@ -76,6 +98,8 @@ public class CasesController : BaseController
         var (success, message) = await _caseService.DeleteAsync(id);
         if (!success)
             return NotFound(ApiResponse<object>.Fail(message));
+
+        await _notifier.NotifyCaseGroupAsync(id.ToString(), "CaseUpdated", new { deleted = true });
 
         return Ok(ApiResponse<object>.Ok(null!, "Case deleted successfully"));
     }

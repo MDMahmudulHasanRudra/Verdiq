@@ -22,22 +22,28 @@ public class AdminController : BaseController
     public async Task<ActionResult<ApiResponse<List<AdminUserDto>>>> GetUsers(
         [FromQuery] string? search = null)
     {
-        var users = await _adminService.GetUsersAsync(search);
-        return Ok(ApiResponse<List<AdminUserDto>>.Ok(users));
+        var users = await _adminService.GetUsersAsync();
+        if (!string.IsNullOrWhiteSpace(search))
+            users = users.Where(u =>
+                u.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                u.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
+        return Ok(ApiResponse<List<AdminUserDto>>.Ok(users.ToList()));
     }
 
     [HttpPatch("users/{id}/status")]
-    public async Task<ActionResult<ApiResponse<AdminUserDto>>> UpdateUserStatus(
-        Guid id, [FromBody] UpdateUserStatusDto dto)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateUserStatus(
+        Guid id)
     {
         try
         {
-            var user = await _adminService.UpdateUserStatusAsync(id, dto.IsActive);
-            return Ok(ApiResponse<AdminUserDto>.Ok(user));
+            var (success, message) = await _adminService.ToggleUserStatusAsync(id);
+            if (!success)
+                return BadRequest(ApiResponse<object>.Fail(message));
+            return Ok(ApiResponse<object>.Ok(null!, message));
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ApiResponse<AdminUserDto>.Fail(ex.Message));
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
         }
     }
 
@@ -46,7 +52,9 @@ public class AdminController : BaseController
     {
         try
         {
-            await _adminService.DeleteUserAsync(id);
+            var (success, message) = await _adminService.ToggleUserStatusAsync(id);
+            if (!success)
+                return BadRequest(ApiResponse<object>.Fail(message));
             return Ok(ApiResponse<object>.Ok(null!, "User deleted"));
         }
         catch (KeyNotFoundException ex)
@@ -59,7 +67,7 @@ public class AdminController : BaseController
     public async Task<ActionResult<ApiResponse<List<AdminCaseDto>>>> GetCases()
     {
         var cases = await _adminService.GetCasesAsync();
-        return Ok(ApiResponse<List<AdminCaseDto>>.Ok(cases));
+        return Ok(ApiResponse<List<AdminCaseDto>>.Ok(cases.ToList()));
     }
 
     [HttpGet("revenue")]
@@ -67,7 +75,7 @@ public class AdminController : BaseController
         [FromQuery] int months = 6)
     {
         var revenue = await _adminService.GetRevenueAsync(months);
-        return Ok(ApiResponse<List<AdminRevenueDto>>.Ok(revenue));
+        return Ok(ApiResponse<List<AdminRevenueDto>>.Ok(revenue.ToList()));
     }
 
     [HttpGet("system-stats")]

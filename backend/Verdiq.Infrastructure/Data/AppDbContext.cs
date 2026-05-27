@@ -31,6 +31,9 @@ public class AppDbContext : DbContext
     public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Organization> Organizations => Set<Organization>();
+    public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
+    public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -72,8 +75,9 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Subscription)
-                .WithOne()
-                .HasForeignKey<Subscription>(s => s.ChamberId);
+                .WithOne(s => s.User)
+                .HasForeignKey<Subscription>(s => s.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -499,6 +503,65 @@ public class AppDbContext : DbContext
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
+        modelBuilder.Entity<Organization>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Organizations");
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.LogoUrl).HasMaxLength(500);
+            entity.Property(e => e.Website).HasMaxLength(255);
+            entity.Property(e => e.Address).HasMaxLength(500);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Email).HasMaxLength(255);
+
+            entity.HasOne(e => e.Owner)
+                .WithMany()
+                .HasForeignKey(e => e.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<OrganizationMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("OrganizationMembers");
+            entity.HasIndex(e => new { e.OrganizationId, e.UserId }).IsUnique();
+            entity.Property(e => e.Role).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.InvitedEmail).HasMaxLength(255);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany(o => o.Members)
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Workspace>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Workspaces");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Color).HasMaxLength(20);
+
+            entity.HasOne(e => e.Organization)
+                .WithMany(o => o.Workspaces)
+                .HasForeignKey(e => e.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
         SeedData(modelBuilder);
     }
 
@@ -524,7 +587,7 @@ public class AppDbContext : DbContext
             Id = adminId,
             FullName = "Admin Verdiq",
             Email = "admin@verdiq.com",
-            PasswordHash = "$2a$11$K4YfGqJ1e4YHIpQqJ5qJ5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e",
+            PasswordHash = SeedPasswords.Admin,
             Phone = "+8801700000000",
             Role = UserRole.Owner,
             IsActive = true,
@@ -537,7 +600,7 @@ public class AppDbContext : DbContext
             Id = lawyerId,
             FullName = "Adv. Abdul Karim",
             Email = "lawyer@verdiq.com",
-            PasswordHash = "$2a$11$K4YfGqJ1e4YHIpQqJ5qJ5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e",
+            PasswordHash = SeedPasswords.Lawyer,
             Phone = "+8801712345678",
             BarCouncilId = "BC-2024-001",
             Role = UserRole.SeniorLawyer,
@@ -550,6 +613,7 @@ public class AppDbContext : DbContext
         {
             Id = subId,
             ChamberId = chamberId,
+            UserId = adminId,
             Plan = SubscriptionPlan.Chamber,
             Status = SubscriptionStatus.Active,
             CurrentPeriodStart = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),

@@ -4,6 +4,7 @@ using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
 using Verdiq.Infrastructure.Data;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.Infrastructure.Services;
 

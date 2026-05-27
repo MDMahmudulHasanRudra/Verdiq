@@ -20,70 +20,77 @@ public class AIController : BaseController
 
     [HttpPost("chat")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> Chat(
-        [FromBody] AiChatRequest request,
-        CancellationToken ct)
+        [FromBody] AiChatRequest request)
     {
         var userId = GetUserId();
-        var result = await _aiService.ChatAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
+        var (reply, tokensUsed) = await _aiService.ChatAsync(request.Message, userId);
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = reply,
+            TokensUsed = tokensUsed,
+            ConversationId = request.ConversationId
+        }));
     }
 
     [HttpPost("case-analysis")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> AnalyzeCase(
-        [FromBody] AiCaseAnalysisRequest request,
-        CancellationToken ct)
+        [FromBody] AiCaseAnalysisRequest request)
     {
-        var userId = GetUserId();
-        var result = await _aiService.AnalyzeCaseAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
+        var result = await _aiService.AnalyzeCaseAsync(Guid.Parse(request.CaseId));
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = result,
+            TokensUsed = 0
+        }));
     }
 
     [HttpPost("document-summary")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> SummarizeDocument(
-        [FromBody] AiDocumentSummaryRequest request,
-        CancellationToken ct)
+        [FromBody] AiDocumentSummaryRequest request)
     {
-        var userId = GetUserId();
-        var result = await _aiService.SummarizeDocumentAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
+        var result = await _aiService.SummarizeDocumentAsync(Guid.Parse(request.DocumentId));
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = result,
+            TokensUsed = 0
+        }));
     }
 
     [HttpPost("legal-notice")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> GenerateLegalNotice(
-        [FromBody] AiLegalNoticeRequest request,
-        CancellationToken ct)
+        [FromBody] AiLegalNoticeRequest request)
     {
-        var userId = GetUserId();
-        var result = await _aiService.GenerateLegalNoticeAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
+        var result = await _aiService.GenerateLegalNoticeAsync(
+            Guid.Parse(request.CaseId), request.NoticeType, request.Recipient);
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = result,
+            TokensUsed = 0
+        }));
     }
 
     [HttpPost("judgement-search")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> SearchJudgements(
-        [FromBody] AiJudgementSearchRequest request,
-        CancellationToken ct)
+        [FromBody] AiJudgementSearchRequest request)
     {
-        var userId = GetUserId();
-        var result = await _aiService.SearchJudgementsAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
+        var result = await _aiService.SearchJudgementsAsync(request.Query, request.Court, request.Year);
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = result,
+            TokensUsed = 0
+        }));
     }
 
     [HttpPost("petition-generator")]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> GeneratePetition(
-        [FromBody] AiPetitionRequest request,
-        CancellationToken ct)
+        [FromBody] AiPetitionRequest request)
     {
-        var userId = GetUserId();
-        var result = await _aiService.GeneratePetitionAsync(userId, request, ct);
-        return Ok(ApiResponse<AiChatResponse>.Ok(result));
-    }
-
-    [HttpGet("history")]
-    public async Task<ActionResult<ApiResponse<List<AiChatResponse>>>> GetHistory(
-        [FromQuery] int limit = 50)
-    {
-        var userId = GetUserId();
-        var history = await _aiService.GetConversationHistoryAsync(userId, limit);
-        return Ok(ApiResponse<List<AiChatResponse>>.Ok(history));
+        var result = await _aiService.GeneratePetitionAsync(
+            Guid.Parse(request.CaseId), request.PetitionType, request.Court);
+        return Ok(ApiResponse<AiChatResponse>.Ok(new AiChatResponse
+        {
+            Reply = result,
+            TokensUsed = 0
+        }));
     }
 }

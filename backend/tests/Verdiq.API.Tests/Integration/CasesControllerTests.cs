@@ -54,8 +54,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Test Case",
             caseType = "Civil",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "A test case description",
             priority = "medium"
         });
@@ -80,8 +80,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Case To Find",
             caseType = "Criminal",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "Searchable case",
             priority = "high"
         });
@@ -129,8 +129,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Original Title",
             caseType = "Family",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "Original description",
             priority = "low"
         });
@@ -143,7 +143,7 @@ public class CasesControllerTests : TestBase
         {
             title = "Updated Title",
             caseType = "Family",
-            court = "Dhaka District Court",
+            courtName = "Dhaka District Court",
             description = "Updated description"
         });
 
@@ -168,8 +168,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Case To Delete",
             caseType = "Civil",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "Will be deleted",
             priority = "medium"
         });
@@ -200,8 +200,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Alpha Specific Case",
             caseType = "Civil",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "Search target",
             priority = "low"
         });
@@ -227,8 +227,8 @@ public class CasesControllerTests : TestBase
         {
             title = "Auth Test Case",
             caseType = "Civil",
-            court = "Dhaka District Court",
-            clientId = clientId,
+            courtName = "Dhaka District Court",
+            clientIds = new[] { clientId },
             description = "Testing auth",
             priority = "low"
         })).Content.ReadAsStringAsync();
@@ -256,8 +256,8 @@ public class CasesControllerTests : TestBase
             {
                 title = $"Pagination Case {i}",
                 caseType = "Civil",
-                court = "Dhaka District Court",
-                clientId = clientId,
+                courtName = "Dhaka District Court",
+                clientIds = new[] { clientId },
                 description = "Pagination test",
                 priority = "medium"
             });

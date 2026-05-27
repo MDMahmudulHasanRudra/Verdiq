@@ -117,8 +117,6 @@ public class DashboardService : IDashboardService
 
     public async Task<object> GetRecentActivitiesAsync(Guid chamberId, int count = 10)
     {
-        var activities = new List<object>();
-
         var recentCases = await _context.Cases
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted)
             .OrderByDescending(c => c.CreatedAt)
@@ -133,8 +131,6 @@ public class DashboardService : IDashboardService
                 ReferenceId = c.Id.ToString()
             })
             .ToListAsync();
-
-        activities.AddRange(recentCases);
 
         var recentHearings = await _context.Hearings
             .Where(h => h.Case.ChamberId == chamberId && !h.IsDeleted)
@@ -151,8 +147,6 @@ public class DashboardService : IDashboardService
             })
             .ToListAsync();
 
-        activities.AddRange(recentHearings);
-
         var recentDocuments = await _context.Documents
             .Where(d => d.Case.ChamberId == chamberId && !d.IsDeleted)
             .OrderByDescending(d => d.CreatedAt)
@@ -168,9 +162,11 @@ public class DashboardService : IDashboardService
             })
             .ToListAsync();
 
-        activities.AddRange(recentDocuments);
+        var all = recentCases
+            .Concat(recentHearings)
+            .Concat(recentDocuments);
 
-        return activities
+        return all
             .OrderByDescending(a => a.Timestamp)
             .Take(count)
             .ToList();

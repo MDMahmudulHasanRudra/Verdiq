@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
+using Task = System.Threading.Tasks.Task;
+using TaskStatus = Verdiq.Domain.Enums.TaskStatus;
 
 namespace Verdiq.Infrastructure.Data;
 
@@ -48,7 +50,7 @@ public static class DemoDataSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801814455667",
                 BarCouncilId = "BC-2024-003",
-                Role = UserRole.Lawyer,
+                Role = UserRole.JuniorLawyer,
                 IsActive = true,
                 ChamberId = DefaultChamberId,
                 CreatedAt = new DateTime(2024, 2, 15, 0, 0, 0, DateTimeKind.Utc)
@@ -61,7 +63,7 @@ public static class DemoDataSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801917788990",
                 BarCouncilId = "BC-2024-004",
-                Role = UserRole.Lawyer,
+                Role = UserRole.JuniorLawyer,
                 IsActive = true,
                 ChamberId = DefaultChamberId,
                 CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -614,7 +616,7 @@ public static class DemoDataSeeder
 
         var tasks = new List<Domain.Entities.Task>();
         var taskIdx = 0;
-        var taskStatuses = new[] { Domain.Entities.TaskStatus.Pending, Domain.Entities.TaskStatus.InProgress, Domain.Entities.TaskStatus.Completed, Domain.Entities.TaskStatus.Cancelled };
+        var taskStatuses = new[] { TaskStatus.Pending, TaskStatus.InProgress, TaskStatus.Completed, TaskStatus.Cancelled };
         var taskPriorities = new[] { "Low", "Medium", "High", "Urgent" };
 
         for (int i = 0; i < 50; i++)

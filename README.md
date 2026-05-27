@@ -69,7 +69,7 @@ npm run dev
 | # | Module | Description |
 |---|--------|-------------|
 | 1 | Authentication & Chamber | Multi-chamber, role-based access (Owner/SeniorLawyer/JuniorLawyer/Assistant/Accountant/Client), permission system |
-| 2 | Case Management | Case creation, timeline (CaseActivity), hearing management, cause list tracking |
+| 2 | Case Management | Case CRUD with auto-numbering (VER-YYYY-XXXX), search/sort/filter, timeline (CaseActivity), real-time updates via SignalR, hearing management, cause list tracking |
 | 3 | Client Management | Profiles (name/nid/company), many-to-many client-case linking, client timeline |
 | 4 | Document Management | Upload (PDF/DOCX/Image), OCR search, version control, folder structure (Petition/Evidence/Order/Agreement) |
 | 5 | Legal Drafting | Template library, AI draft generator, smart variables ({{client_name}}, {{court_name}}, {{case_number}}) |
@@ -79,26 +79,26 @@ npm run dev
 | 9 | Internal Chamber | Task assignment (Senior→Junior), internal notes, attendance |
 | 10 | Court & Legal Database | Laws (Penal Code/CPC/CrPC/Constitution), judgment search (citation/judge/keyword) |
 | 11 | Analytics Dashboard | Active cases, win ratio, upcoming hearings, pending bills, lawyer productivity |
-| SA | Super Admin System | Centralized control: chamber management (upgrade/downgrade/clear), user management (reset passwords/toggle status), chamber impersonation, system health monitoring |
+| SA | Super Admin System | Centralized control: chamber management (upgrade/downgrade/clear/impersonate), user management (reset passwords/toggle status/override subscriptions), system-wide case view, audit logs, billing overview, system config, broadcast notifications, health monitoring |
 
 ## Project Structure
 
 ```
 backend/
   Verdiq.Domain/          # 24 entities, 13 enums, 5 interfaces
-  Verdiq.Application/     # 17 DTO groups, 18 service interfaces, 6 validators
-  Verdiq.Infrastructure/  # EF Core (27 DbSets), 16 services, audit interceptor
-  Verdiq.API/             # 17 controllers, 3 middleware, 2 SignalR hubs
+  Verdiq.Application/     # 18 DTO groups, 19 service interfaces, 6 validators
+  Verdiq.Infrastructure/  # EF Core (27 DbSets), 17 services, audit interceptor
+  Verdiq.API/             # 21 controllers, 3 middleware, 2 SignalR hubs
   tests/
     Verdiq.API.Tests/
 
 frontend/
   src/
-    app/                  # 15 pages (App Router)
+    app/                  # 30 pages (App Router)
     components/           # 21 UI primitives + 15 feature components
     lib/
-      services/           # 18 API service files
-      hooks/              # 20 React Query hook files
+      services/           # 19 API service files
+      hooks/              # 22 React Query hook files
       store/              # Zustand auth store
       api.ts              # Axios with JWT refresh interceptor
     types/                # 20+ TypeScript interfaces

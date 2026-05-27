@@ -132,68 +132,65 @@ Invalidate the current refresh token. Requires auth.
 All endpoints require `[Authorize]`. Base: `/api/cases`
 
 ### GET /api/cases
-List cases with pagination and filtering.
+List cases with pagination, search, sort, and filtering.
 
 **Query Parameters:**
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | page | int | 1 | Page number |
 | pageSize | int | 10 | Items per page |
-| search | string | - | Search title, case number, client name |
-| status | string | - | Filter by status (Active, Pending, Closed, Appeal) |
-| type | string | - | Filter by case type |
-| priority | string | - | Filter by priority (Low, Medium, High) |
-| sortBy | string | createdAt | Sort field |
+| search | string | - | Search across case number, title, court, opponent, client name |
+| status | string | - | Filter by status (Active, Pending, Closed, Appeal, Withdrawn) |
+| priority | string | - | Filter by priority (Low, Medium, High, Urgent) |
+| sortBy | string | createdAt | Sort field (caseNumber, title, status, priority, filingDate) |
 | sortOrder | string | desc | asc or desc |
 
+### GET /api/cases/search?q=keyword
+Search cases by keyword across case number, title, court name, opponent, FIR number, and client name.
+
 ### GET /api/cases/{id}
-Get a single case by ID.
+Get a single case by ID (includes assigned lawyer, clients, hearings count, documents count).
 
 ### POST /api/cases
-Create a new case.
+Create a new case. Case number (VER-YYYY-XXXX) auto-generated. CaseActivity record created automatically.
 
 **Request:**
 ```json
 {
-  "title": "string",
+  "title": "State vs. Md. Karim",
   "caseType": "Criminal",
-  "court": "Dhaka District Court",
-  "courtRoom": "Room 101",
-  "judgeName": "Judge Name",
+  "courtName": "Dhaka District Court",
+  "filingDate": "2026-05-27T00:00:00Z",
+  "opponent": "State of Bangladesh",
+  "priority": "Medium",
+  "description": "Details about the case",
+  "actsAndSections": "Section 302/34 IPC",
   "firNumber": "FIR-2024-001",
   "policeStation": "Gulshan",
-  "actsAndSections": "Section 302/34 IPC",
-  "description": "Details about the case",
-  "priority": "High",
-  "clientId": "guid"
+  "clientIds": ["guid1", "guid2"]
 }
 ```
 
 ### PUT /api/cases/{id}
-Update an existing case. All fields optional.
+Update an existing case. All fields optional. CaseActivity record created automatically.
 
 **Request:**
 ```json
 {
   "title": "Updated Title",
   "caseType": "Civil",
+  "courtName": "Updated Court",
   "status": "Active",
-  "priority": "Medium",
-  "court": "Updated Court",
-  "courtRoom": "Room 202",
-  "judgeName": "New Judge",
-  "firNumber": "FIR-2024-002",
-  "policeStation": "Banani",
+  "priority": "High",
+  "opponent": "Updated Opponent",
+  "description": "Updated description",
   "actsAndSections": "Section 420 IPC",
-  "description": "Updated description"
+  "clientIds": ["guid1", "guid2"]
 }
 ```
 
 ### DELETE /api/cases/{id}
-Soft-delete a case.
-
-### GET /api/cases/search?q=keyword
-Search cases by keyword across title, case number, and client name.
+Soft-delete a case. CaseActivity record created automatically. SignalR notification sent to case group.
 
 ---
 
@@ -459,6 +456,70 @@ Get dashboard statistics. Requires `[Authorize]`.
 
 ### GET /health
 Returns `Healthy` (text/plain). No auth required.
+
+---
+
+## Super Admin
+
+All Super Admin endpoints require `[Authorize(Roles = "SuperAdmin")]`. Base: `/api/super-admin`
+
+### POST /api/super-admin/login
+Authenticate with hardcoded Super Admin credentials.
+
+**Request:**
+```json
+{
+  "userId": "rudra",
+  "password": "rudra"
+}
+```
+
+### GET /api/super-admin/dashboard
+Get aggregated system stats (12 stats: chambers, users, cases, clients, revenue, subscriptions, documents, hearings, payments, new this month) + all chambers + system alerts.
+
+### GET /api/super-admin/cases
+View all cases across all chambers (no chamber scoping).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "caseNumber": "VER-2026-0001",
+      "title": "State vs. Md. Karim",
+      "caseType": "Criminal",
+      "status": "Active",
+      "courtName": "Dhaka District Court",
+      "assignedLawyerName": "Lawyer Name",
+      "filingDate": "2026-05-01T00:00:00Z",
+      "createdAt": "2026-05-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+### GET /api/super-admin/users
+List all users with optional chamber filter and subscription details.
+
+### GET /api/super-admin/subscriptions
+List all subscriptions with plan, status, period dates.
+
+### GET /api/super-admin/permissions
+List all available permissions (module-grouped).
+
+### GET /api/super-admin/audit-logs?page=1&pageSize=50
+Paginated system activity log.
+
+### GET /api/super-admin/billing
+Revenue overview with payment breakdown and recent payments.
+
+### GET /api/super-admin/config
+Get system configuration (self-registration, maintenance mode, AI features, etc.).
+
+### GET /api/super-admin/health
+Database status + system-wide statistics + active alerts.
 
 ---
 

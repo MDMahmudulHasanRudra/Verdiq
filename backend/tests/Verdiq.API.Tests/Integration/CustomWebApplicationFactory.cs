@@ -7,6 +7,7 @@ using Testcontainers.PostgreSql;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
 using Verdiq.Infrastructure.Data;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.API.Tests.Integration;
 
@@ -71,10 +72,21 @@ public class DbMigrationFilter : IStartupFilter
     {
         if (_db.Users.Any()) return;
 
+        var chamberId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
         var adminId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
         var adminSubId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
         var lawyerId = Guid.Parse("e5f6a7b8-c9d0-1234-5678-9abcdef01234");
         var lawyerSubId = Guid.Parse("f6a7b8c9-d0e1-2345-6789-abcdef012345");
+
+        _db.Chambers.Add(new Chamber
+        {
+            Id = chamberId,
+            Name = "Test Chamber",
+            Address = "42 Gulshan Avenue, Dhaka",
+            Phone = "+8801700000000",
+            SubscriptionPlan = SubscriptionPlan.Chamber,
+            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
 
         _db.Users.AddRange(
             new User
@@ -84,8 +96,9 @@ public class DbMigrationFilter : IStartupFilter
                 Email = "admin@verdiq.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                 Phone = "+8801700000000",
-                Role = UserRole.Admin,
+                Role = UserRole.Owner,
                 IsActive = true,
+                ChamberId = chamberId,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new User
@@ -96,9 +109,9 @@ public class DbMigrationFilter : IStartupFilter
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("lawyer123"),
                 Phone = "+8801712345678",
                 BarCouncilId = "BC-2024-001",
-                ChamberAddress = "42 Gulshan Avenue, Dhaka",
-                Role = UserRole.Lawyer,
+                Role = UserRole.SeniorLawyer,
                 IsActive = true,
+                ChamberId = chamberId,
                 CreatedAt = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc)
             }
         );
@@ -107,7 +120,7 @@ public class DbMigrationFilter : IStartupFilter
             new Subscription
             {
                 Id = adminSubId,
-                UserId = adminId,
+                ChamberId = chamberId,
                 Plan = SubscriptionPlan.Chamber,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -117,7 +130,7 @@ public class DbMigrationFilter : IStartupFilter
             new Subscription
             {
                 Id = lawyerSubId,
-                UserId = lawyerId,
+                ChamberId = chamberId,
                 Plan = SubscriptionPlan.Pro,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc),

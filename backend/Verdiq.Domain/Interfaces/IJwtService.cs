@@ -1,4 +1,5 @@
 using Verdiq.Domain.Entities;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.Domain.Interfaces;
 

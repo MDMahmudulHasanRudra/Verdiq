@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Verdiq.API.Models;
 using Verdiq.Application.DTOs.Auth;
 using Verdiq.Domain.Entities;
-using Verdiq.Application.Validators;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
 
@@ -29,10 +28,6 @@ public class AuthController : BaseController
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto)
     {
-        var (isValid, error) = AuthValidators.ValidateRegister(dto);
-        if (!isValid)
-            return BadRequest(new AuthResponseDto { Success = false, Message = error });
-
         var (success, message, user, accessToken, refreshToken) =
             await _authService.RegisterAsync(dto.FullName, dto.Email, dto.Password, dto.Phone, dto.Role, dto.ChamberId);
 
@@ -52,10 +47,6 @@ public class AuthController : BaseController
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto dto)
     {
-        var (isValid, error) = AuthValidators.ValidateLogin(dto);
-        if (!isValid)
-            return BadRequest(new AuthResponseDto { Success = false, Message = error });
-
         var (success, message, user, accessToken, refreshToken) =
             await _authService.LoginAsync(dto.Email, dto.Password);
 
@@ -111,10 +102,6 @@ public class AuthController : BaseController
     [HttpPut("profile")]
     public async Task<ActionResult<AuthResponseDto>> UpdateProfile([FromBody] UpdateProfileDto dto)
     {
-        var (isValid, error) = AuthValidators.ValidateUpdateProfile(dto);
-        if (!isValid)
-            return BadRequest(new AuthResponseDto { Success = false, Message = error });
-
         var userId = GetUserId();
 
         var (success, message, user) =
@@ -135,10 +122,6 @@ public class AuthController : BaseController
     [HttpPost("change-password")]
     public async Task<ActionResult<AuthResponseDto>> ChangePassword([FromBody] ChangePasswordDto dto)
     {
-        var (isValid, error) = AuthValidators.ValidateChangePassword(dto);
-        if (!isValid)
-            return BadRequest(new AuthResponseDto { Success = false, Message = error });
-
         var userId = GetUserId();
 
         var (success, message) =

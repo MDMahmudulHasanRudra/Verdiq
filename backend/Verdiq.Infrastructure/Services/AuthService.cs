@@ -51,7 +51,7 @@ public class AuthService : IAuthService
 
         var subscription = new Subscription
         {
-            UserId = user.Id,
+            ChamberId = chamberId,
             Plan = SubscriptionPlan.Free,
             Status = SubscriptionStatus.Trial,
             CurrentPeriodStart = DateTime.UtcNow,

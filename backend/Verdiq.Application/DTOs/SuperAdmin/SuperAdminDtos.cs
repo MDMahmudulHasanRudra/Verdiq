@@ -38,6 +38,22 @@ public class ChamberManageDto
     public decimal TotalRevenue { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; }
+    public int DocumentsCount { get; set; }
+    public int HearingsCount { get; set; }
+    public int InvoicesCount { get; set; }
+}
+
+public class SubscriptionManageDto
+{
+    public Guid Id { get; set; }
+    public Guid ChamberId { get; set; }
+    public string ChamberName { get; set; } = string.Empty;
+    public string Plan { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime CurrentPeriodStart { get; set; }
+    public DateTime CurrentPeriodEnd { get; set; }
+    public bool CancelAtPeriodEnd { get; set; }
+    public string? UserFullName { get; set; }
 }
 
 public class UpdateChamberPlanDto
@@ -56,6 +72,16 @@ public class SuperAdminUserDto
     public Guid ChamberId { get; set; }
     public string ChamberName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public string? SubscriptionPlan { get; set; }
+    public string? SubscriptionStatus { get; set; }
+    public DateTime? SubscriptionEnd { get; set; }
+}
+
+public class UpdateUserSubscriptionDto
+{
+    public string Plan { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime? CurrentPeriodEnd { get; set; }
 }
 
 public class ResetPasswordDto
@@ -94,8 +120,14 @@ public class SuperAdminDashboardDto
     public int TotalClients { get; set; }
     public int ActiveSubscriptions { get; set; }
     public decimal MonthlyRevenue { get; set; }
+    public decimal TotalRevenueAllTime { get; set; }
     public int NewChambersThisMonth { get; set; }
     public int NewCasesThisMonth { get; set; }
+    public int NewUsersThisMonth { get; set; }
+    public int ExpiredSubscriptions { get; set; }
+    public int TotalDocuments { get; set; }
+    public int TotalHearings { get; set; }
+    public int TotalPayments { get; set; }
     public List<ChamberManageDto> Chambers { get; set; } = new();
     public List<SystemAlert> Alerts { get; set; } = new();
 }
@@ -117,4 +149,108 @@ public class ClearChamberResult
     public int ClientsDeleted { get; set; }
     public int DocumentsDeleted { get; set; }
     public int InvoicesDeleted { get; set; }
+    public int HearingsDeleted { get; set; }
+    public int ExpensesDeleted { get; set; }
+    public int TasksDeleted { get; set; }
+}
+
+public class PermissionDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Module { get; set; } = string.Empty;
+}
+
+public class RolePermissionAssignmentDto
+{
+    public string Role { get; set; } = string.Empty;
+    public List<Guid> PermissionIds { get; set; } = new();
+}
+
+public class RolePermissionsDto
+{
+    public string Role { get; set; } = string.Empty;
+    public List<PermissionDto> Permissions { get; set; } = new();
+}
+
+public class AuditLogDto
+{
+    public Guid Id { get; set; }
+    public string? UserId { get; set; }
+    public string? UserName { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string? Entity { get; set; }
+    public string? EntityId { get; set; }
+    public string? OldValues { get; set; }
+    public string? NewValues { get; set; }
+    public string? IpAddress { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class BillingOverviewDto
+{
+    public int TotalInvoices { get; set; }
+    public int TotalPayments { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal MonthlyRevenue { get; set; }
+    public int PendingPayments { get; set; }
+    public int CompletedPayments { get; set; }
+    public int FailedPayments { get; set; }
+    public decimal PendingAmount { get; set; }
+    public List<RecentPaymentDto> RecentPayments { get; set; } = new();
+}
+
+public class RecentPaymentDto
+{
+    public Guid Id { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string PaymentMethod { get; set; } = string.Empty;
+    public string? ClientName { get; set; }
+    public string? ChamberName { get; set; }
+    public DateTime? PaidAt { get; set; }
+}
+
+public class CreateChamberDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+    public string Plan { get; set; } = "Free";
+}
+
+public class UpdateChamberDto
+{
+    public string? Name { get; set; }
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+}
+
+public class BroadcastNotificationDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string Type { get; set; } = "system";
+    public Guid? TargetChamberId { get; set; }
+}
+
+public class SystemConfigDto
+{
+    public bool AllowSelfRegistration { get; set; } = true;
+    public bool MaintenanceMode { get; set; } = false;
+    public int TrialDays { get; set; } = 14;
+    public int MaxLoginAttempts { get; set; } = 5;
+    public bool RequireEmailVerification { get; set; } = false;
+    public bool EnableAiFeatures { get; set; } = true;
+    public string DefaultCurrency { get; set; } = "BDT";
+}
+
+public class ChamberPermissionDto
+{
+    public Guid ChamberId { get; set; }
+    public string ChamberName { get; set; } = string.Empty;
+    public List<RolePermissionsDto> RolePermissions { get; set; } = new();
 }

@@ -9,15 +9,15 @@ Verdiq follows **Clean Architecture** with 4 layers. Dependencies flow inward: A
 │  Hardcoded credentials: rudra / rudra        │
 ├──────────────────────────────────────────────┤
 │               Verdiq.API                     │
-│  18 Controllers · 3 Middleware · Program.cs  │
+│  21 Controllers · 3 Middleware · Program.cs  │
 │  Depends on: Application, Infrastructure     │
 ├──────────────────────────────────────────────┤
 │           Verdiq.Infrastructure              │
-│  EF Core (27 DbSets) · 17 Services           │
+│  EF Core (27 DbSets) · 18 Services           │
 │  Depends on: Application                     │
 ├──────────────────────────────────────────────┤
 │            Verdiq.Application                │
-│  18 DTO Groups · 19 Interfaces · 6 Validators│
+│  19 DTO Groups · 20 Interfaces · 6 Validators│
 │  Depends on: Domain                          │
 ├──────────────────────────────────────────────┤
 │              Verdiq.Domain                   │
@@ -67,13 +67,17 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 ### API Endpoints
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET/POST | `/api/cases` | List/create cases |
-| GET/PUT/DELETE | `/api/cases/{id}` | Case CRUD |
-| GET | `/api/cases/{id}/activities` | Case timeline |
+| GET/POST | `/api/cases` | List (with search/sort/filter/pagination) / create cases |
+| GET/PUT/DELETE | `/api/cases/{id}` | Case CRUD (CaseActivity created on mutations) |
+| GET | `/api/cases/search?q=` | Search cases by title, case number, court, client name |
+| GET | `/api/cases/{id}/activities` | Case timeline (auto-created on create/update/delete) |
 | GET/POST | `/api/hearings` | Hearing list/create |
 | GET/PUT/DELETE | `/api/hearings/{id}` | Hearing CRUD |
 | GET | `/api/hearings/upcoming` | Upcoming hearings |
 | GET | `/api/hearings/by-case/{caseId}` | Hearings for case |
+
+**Real-time:** Case create/update/delete triggers SignalR notification (`CaseUpdated` event) to all group members.
+**Activity tracking:** `CaseActivity` records (ActivityType: Hearing, Order, Note, Document, StatusChange, Task) are auto-created in the service.
 
 ## Module 3 — Client Management
 
@@ -197,10 +201,18 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for system-wide administration.
 
 ### Super Admin Features
-- **Chamber Management**: View all chambers, upgrade/downgrade subscription plans, clear/delete chambers
-- **User Management**: View all users across all chambers, reset any user's password, toggle user active/inactive status
+- **Chamber Management**: View all chambers, upgrade/downgrade subscription plans, clear/delete chambers, create new chambers
+- **User Management**: View all users across all chambers, reset any user's password, toggle user active/inactive status, override user subscription plan/status/period
+- **Case Management**: View all cases across all chambers with search and pagination
+- **Subscription Management**: View all subscriptions with plan details, period tracking, and filtering
+- **Permission Management**: Assign/remove permissions per role (module-grouped, select/deselect all)
+- **Audit Logs**: Paginated system-wide activity log with search by action and entity
+- **Billing Overview**: Revenue stats, payment breakdown (pending/completed/failed), recent payments table
+- **System Config**: Toggle self-registration, maintenance mode, AI features, email verification, trial days
+- **Broadcast Notifications**: Send system-wide or chamber-targeted notifications
 - **Chamber Impersonation**: Generate a JWT token to log directly into any chamber's admin portal as the Owner (or specified user)
-- **System Health**: Database connection status, system-wide statistics (chambers, users, cases, subscriptions, revenue), active alerts
+- **Health Monitoring**: Database status, system-wide statistics, active alerts with refresh
+- **Charts**: Revenue chart (monthly), chamber growth chart
 
 ### API Endpoints (`/api/super-admin`)
 | Method | Route | Description |
@@ -209,22 +221,46 @@ A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for sy
 | GET | `/api/super-admin/dashboard` | Aggregated system stats + all chambers |
 | GET | `/api/super-admin/chambers` | List all chambers with stats |
 | GET | `/api/super-admin/chambers/{id}` | Chamber details with revenue |
+| POST | `/api/super-admin/chambers` | Create a new chamber |
+| PUT | `/api/super-admin/chambers/{id}` | Update chamber details |
 | PUT | `/api/super-admin/chambers/{id}/plan` | Upgrade/downgrade subscription plan |
 | POST | `/api/super-admin/chambers/{id}/impersonate` | Generate impersonation token |
 | DELETE | `/api/super-admin/chambers/{id}/clear` | Soft-delete all chamber data |
+| DELETE | `/api/super-admin/chambers/{id}` | Delete chamber |
 | GET | `/api/super-admin/users` | List all users (optional chamber filter) |
 | POST | `/api/super-admin/users/{id}/reset-password` | Reset any user's password |
 | POST | `/api/super-admin/users/{id}/toggle-status` | Activate/deactivate user |
+| PUT | `/api/super-admin/users/{id}/subscription` | Override user subscription plan/status/period |
+| GET | `/api/super-admin/subscriptions` | List all subscriptions |
+| GET | `/api/super-admin/subscriptions/{chamberId}` | Chamber subscription details |
+| GET | `/api/super-admin/permissions` | List all permissions |
+| GET | `/api/super-admin/role-permissions` | Role-permission mappings |
+| PUT | `/api/super-admin/role-permissions` | Assign permissions to role |
+| DELETE | `/api/super-admin/role-permissions/{role}/{permissionId}` | Remove permission from role |
+| GET | `/api/super-admin/audit-logs` | Paginated system activity log |
+| GET | `/api/super-admin/billing` | Revenue stats + payment breakdown |
+| POST | `/api/super-admin/broadcast` | Send system-wide notification |
+| GET | `/api/super-admin/config` | Get system configuration |
+| PUT | `/api/super-admin/config` | Update system configuration |
+| GET | `/api/super-admin/cases` | View all cases across all chambers |
 | GET | `/api/super-admin/health` | Database status + system stats + alerts |
+| GET | `/api/super-admin/revenue-chart` | Monthly revenue chart data |
+| GET | `/api/super-admin/chamber-growth` | Chamber growth chart data |
 
 ### Frontend Routes
 | Route | Description |
 |-------|-------------|
 | `/super-admin/login` | Super Admin login page |
-| `/super-admin/dashboard` | Dashboard with stats + chamber table |
-| `/super-admin/dashboard/chambers/{id}` | Chamber detail (plan mgmt, impersonate, clear) |
-| `/super-admin/dashboard/users` | User management (search, reset pwd, toggle status) |
-| `/super-admin/dashboard/health` | System health monitoring |
+| `/super-admin/dashboard` | Dashboard with 12 stat cards + 8 quick actions + chamber table + alerts |
+| `/super-admin/dashboard/chambers/{id}` | Chamber detail (inline edit, plan change, impersonate, clear/delete) |
+| `/super-admin/dashboard/users` | User management (search, reset pwd, toggle status, subscription override modal) |
+| `/super-admin/dashboard/subscriptions` | All subscriptions table with period tracking |
+| `/super-admin/dashboard/permissions` | Role-based permission assignment (module-grouped with select/deselect all) |
+| `/super-admin/dashboard/audit-logs` | Paginated system activity log with search |
+| `/super-admin/dashboard/billing` | Revenue stats + payment breakdown + recent payments |
+| `/super-admin/dashboard/cases` | All cases across chambers with search and pagination |
+| `/super-admin/dashboard/settings` | System config toggles + broadcast notification sender |
+| `/super-admin/dashboard/health` | System health monitoring with refresh |
 
 ### Security
 - Credentials hardcoded & BCrypt-hashed
@@ -238,13 +274,13 @@ A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for sy
 ### AppDbContext (27 DbSets)
 Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, AuditLogs, AiConversations
 
-### Services (17 total)
+### Services (18 total)
 | Service | Key Methods |
 |---------|------------|
 | AuthService | Register/Login/Refresh/Logout with BCrypt + JWT |
 | JwtService | Token generation with ChamberId claim |
 | ChamberService | Chamber CRUD with owner assignment |
-| CaseService | CRUD + auto case number generation + client linking |
+| CaseService | CRUD + search/sort/filter + auto case number generation + client linking + CaseActivity creation |
 | ClientService | CRUD + search by name/phone/company |
 | HearingService | CRUD + upcoming/by-date/by-case queries |
 | DocumentService | Upload/download + version control |
@@ -255,17 +291,18 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | ReminderService | Multi-channel reminder creation |
 | LegalDocumentService | Laws + judgments with search |
 | PermissionService | Role-permission matrix |
-| SuperAdminService | System-wide chamber/user/health management |
+| SuperAdminService | System-wide chamber/user/case/subscription/permission/audit/billing/config/health management |
 | DashboardService | Aggregated stats + charts |
 | AIService | OpenAI integration with Bangla legal fallback |
+| RealtimeNotifier | SignalR push for case updates, notifications, activities |
 
-## API Layer (18 Controllers)
+## API Layer (21 Controllers)
 
 | Controller | Route Prefix | Key Endpoints |
 |-----------|-------------|---------------|
 | AuthController | `/api/auth` | login, register, refresh, logout, me |
 | ChambersController | `/api/chambers` | CRUD + my chamber |
-| CasesController | `/api/cases` | CRUD + paginated list |
+| CasesController | `/api/cases` | CRUD + search + paginated list with sort/filter + realtime notifications via SignalR |
 | ClientsController | `/api/clients` | CRUD + search |
 | HearingsController | `/api/hearings` | CRUD + upcoming + by-date |
 | DocumentsController | `/api/documents` | upload, download, list |
@@ -283,17 +320,17 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | AdminController | `/api/admin` | users, cases, revenue, system |
 | AIController | `/api/ai` | chat, analysis, drafting |
 | SearchController | `/api/search` | global search |
-| SuperAdminController | `/api/super-admin` | system control, impersonation, health |
+| SuperAdminController | `/api/super-admin` | 28 endpoints: system control, chambers CRUD, users, subscriptions, permissions, audit logs, billing, broadcast, config, cases, health, revenue/growth charts |
 
 ## Frontend Architecture
 
-### Pages (15 routes)
+### Pages (30 routes)
 ```
 / → redirect to /login
 /login → login form
 /lawyer → dashboard with stats/charts
-/lawyer/cases → case list + create dialog
-/lawyer/cases/[id] → case detail with timeline
+/lawyer/cases → case list + create dialog with search/sort/filter
+/lawyer/cases/[id] → case detail with timeline, hearings, documents
 /lawyer/clients → client list + create
 /lawyer/clients/[id] → client detail
 /lawyer/hearings → hearing calendar + list
@@ -308,13 +345,25 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 /lawyer/notifications → notification list
 /lawyer/settings → profile settings
 /admin → admin panel (Owner only)
+
+/super-admin/login → Super Admin login
+/super-admin/dashboard → Dashboard with 12 stats + 8 quick actions + chamber table
+/super-admin/dashboard/chambers/[id] → Chamber detail with inline edit, plan, impersonate
+/super-admin/dashboard/users → User management with subscription override modal
+/super-admin/dashboard/cases → All cases across chambers (search, pagination)
+/super-admin/dashboard/subscriptions → All subscriptions table
+/super-admin/dashboard/permissions → Role-based permission assignment
+/super-admin/dashboard/audit-logs → Paginated activity log
+/super-admin/dashboard/billing → Revenue stats + payments
+/super-admin/dashboard/settings → Config toggles + broadcast sender
+/super-admin/dashboard/health → System health monitoring
 ```
 
-### Services (18 files)
-Auth, Chamber, Case, Client, Hearing, Document, Invoice, Expense, Task, Template, Reminder, LegalDocument, Notification, Subscription, Payment, Admin, AI, Search
+### Services (19 files)
+Auth, Chamber, Case, Client, Hearing, Document, Invoice, Expense, Task, Template, Reminder, LegalDocument, Notification, Subscription, Payment, Admin, AI, Search, SuperAdmin
 
-### Hooks (20 files)
-All services have corresponding React Query hooks with cache invalidation. Key patterns: `useQuery` for fetches, `useMutation` for creates/updates, `queryClient.invalidateQueries` on success.
+### Hooks (22 files)
+All services have corresponding React Query hooks with cache invalidation. Key patterns: `useQuery` for fetches, `useMutation` for creates/updates, `queryClient.invalidateQueries` on success. Super admin hooks include: `useSuperAdminDashboard`, `useSuperAdminChambers`, `useSuperAdminChamber`, `useSuperAdminUsers`, `useSuperAdminCases`, `useSubscriptions`, `usePermissions`, `useRolePermissions`, `useAuditLogs`, `useBillingOverview`, `useSystemConfig`, `useSystemHealth`, `useRevenueChart`, `useChamberGrowth`, and mutations for user/subscription/permission changes.
 
 ### State Management
 - **Server state:** TanStack React Query (20 hook files)
@@ -344,3 +393,7 @@ Login → /api/auth/login → stores tokens in localStorage + cookies
 11. **Dual Token Storage** — localStorage for axios + cookies for middleware
 12. **CORS** — `SetIsOriginAllowed(_ => true)` with credentials
 13. **Rate Limiting** — 100 req/min per IP, exempt for `/hubs` and `/health`
+14. **Case Search/Sort** — `GET /api/cases` accepts `search`, `sortBy`, `sortOrder` params; supports multi-column sort (caseNumber, title, status, priority, filingDate)
+15. **Case Activity Tracking** — `CaseActivity` records auto-created on case create/update/delete for full timeline
+16. **Real-Time Case Updates** — SignalR `CaseUpdated` event broadcast to case group on every mutation
+17. **Super Admin Case View** — `GET /api/super-admin/cases` returns all cases across chambers with full details

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
+using Task = System.Threading.Tasks.Task;
 
 namespace Verdiq.Infrastructure.Data;
 
@@ -10,14 +11,24 @@ public static class DatabaseInitializer
     private static readonly Guid AdminId = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private static readonly Guid LawyerId = Guid.Parse("e5f6a7b8-c9d0-1234-5678-9abcdef01234");
     private static readonly Guid SubId = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
+    private static readonly Guid DefaultOrganizationId = Guid.Parse("d0000000-0000-0000-0000-000000000001");
 
     public static async Task InitializeAsync(AppDbContext db)
     {
         if (!await db.Database.CanConnectAsync())
             throw new InvalidOperationException("Cannot connect to the database.");
 
-        if (!await TableExistsAsync(db, "Users"))
+        // EnsureCreatedAsync creates all tables if the database has no tables from the model.
+        // It's a no-op if any model table already exists (a known limitation).
+        await db.Database.EnsureCreatedAsync();
+
+        // If a key table from the current model is still missing, the database was created
+        // with an older schema. Drop and recreate to get the full latest schema.
+        if (!await TableExistsAsync(db, "Chambers"))
+        {
+            await db.Database.EnsureDeletedAsync();
             await db.Database.EnsureCreatedAsync();
+        }
 
         await ApplySchemaUpdatesAsync(db);
         await EnsureDefaultDataAsync(db);
@@ -136,10 +147,38 @@ public static class DatabaseInitializer
             {
                 Id = SubId,
                 ChamberId = DefaultChamberId,
+                UserId = AdminId,
                 Plan = SubscriptionPlan.Chamber,
                 Status = SubscriptionStatus.Active,
                 CurrentPeriodStart = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 CurrentPeriodEnd = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
+        if (!await db.Organizations.IgnoreQueryFilters().AnyAsync(o => o.Id == DefaultOrganizationId))
+        {
+            db.Organizations.Add(new Organization
+            {
+                Id = DefaultOrganizationId,
+                Name = "Verdiq Admin Organization",
+                Slug = "verdiq-admin",
+                Description = "Default organization for Verdiq administration",
+                OwnerId = AdminId,
+                IsActive = true,
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
+        if (!await db.OrganizationMembers.IgnoreQueryFilters()
+            .AnyAsync(om => om.OrganizationId == DefaultOrganizationId && om.UserId == AdminId))
+        {
+            db.OrganizationMembers.Add(new OrganizationMember
+            {
+                Id = Guid.Parse("d0000001-0000-0000-0000-000000000001"),
+                OrganizationId = DefaultOrganizationId,
+                UserId = AdminId,
+                Role = OrganizationRole.Owner,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
         }
