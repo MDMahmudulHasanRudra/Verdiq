@@ -57,7 +57,7 @@ public class SuperAdminService : ISuperAdminService
     public async Task<SuperAdminDashboardDto> GetDashboardAsync()
     {
         var now = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1);
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var chambers = await _context.Chambers
             .Where(c => !c.IsDeleted)
@@ -477,7 +477,7 @@ public class SuperAdminService : ISuperAdminService
     public async Task<SystemHealthDto> GetSystemHealthAsync()
     {
         var now = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1);
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var alerts = new List<string>();
 
         var dbHealthy = true;
@@ -601,7 +601,7 @@ public class SuperAdminService : ISuperAdminService
             subscription.Status = status;
 
         if (dto.CurrentPeriodEnd.HasValue)
-            subscription.CurrentPeriodEnd = dto.CurrentPeriodEnd.Value;
+            subscription.CurrentPeriodEnd = DateTime.SpecifyKind(dto.CurrentPeriodEnd.Value, DateTimeKind.Utc);
 
         subscription.UpdatedAt = DateTime.UtcNow;
 
@@ -744,7 +744,7 @@ public class SuperAdminService : ISuperAdminService
     public async Task<BillingOverviewDto> GetBillingOverviewAsync()
     {
         var now = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1);
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var totalInvoices = await _context.Invoices.CountAsync(i => !i.IsDeleted);
         var totalPayments = await _context.Payments.CountAsync(p => !p.IsDeleted);

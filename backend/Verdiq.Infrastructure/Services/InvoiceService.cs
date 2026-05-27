@@ -31,7 +31,7 @@ public class InvoiceService : IInvoiceService
             InvoiceNumber = invoiceNumber,
             Amount = dto.Amount,
             Description = dto.Description,
-            DueDate = dto.DueDate,
+            DueDate = dto.DueDate.HasValue ? DateTime.SpecifyKind(dto.DueDate.Value, DateTimeKind.Utc) : null,
             Status = PaymentStatus.Pending,
             ClientId = dto.ClientId,
             CaseId = dto.CaseId,

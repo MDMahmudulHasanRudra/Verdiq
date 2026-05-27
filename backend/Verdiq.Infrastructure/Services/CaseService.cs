@@ -33,7 +33,7 @@ public class CaseService : ICaseService
             PoliceStation = dto.PoliceStation,
             ActsAndSections = dto.ActsAndSections,
             Description = dto.Description,
-            FilingDate = dto.FilingDate == default ? DateTime.UtcNow : dto.FilingDate,
+            FilingDate = dto.FilingDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(dto.FilingDate, DateTimeKind.Utc),
             AssignedLawyerId = userId,
             ChamberId = chamberId,
             CreatedAt = DateTime.UtcNow

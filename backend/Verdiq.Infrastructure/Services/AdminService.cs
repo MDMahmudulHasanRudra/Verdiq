@@ -78,7 +78,7 @@ public class AdminService : IAdminService
     public async Task<IEnumerable<AdminRevenueDto>> GetRevenueAsync(int months = 6)
     {
         var now = DateTime.UtcNow;
-        var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-(months - 1));
+        var startDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-(months - 1));
         var results = new List<AdminRevenueDto>();
 
         for (var i = 0; i < months; i++)
@@ -105,7 +105,7 @@ public class AdminService : IAdminService
     public async Task<AdminSystemStatsDto> GetSystemStatsAsync()
     {
         var now = DateTime.UtcNow;
-        var monthStart = new DateTime(now.Year, now.Month, 1);
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var totalChambers = await _context.Chambers.CountAsync(c => !c.IsDeleted);
         var totalUsers = await _context.Users.CountAsync(u => !u.IsDeleted);

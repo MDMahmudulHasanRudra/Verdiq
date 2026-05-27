@@ -26,7 +26,7 @@ public class ExpenseService : IExpenseService
             Description = dto.Description,
             Amount = dto.Amount,
             Category = dto.Category,
-            ExpenseDate = dto.ExpenseDate,
+            ExpenseDate = DateTime.SpecifyKind(dto.ExpenseDate, DateTimeKind.Utc),
             ChamberId = chamberId,
             CaseId = dto.CaseId,
             UserId = userId,

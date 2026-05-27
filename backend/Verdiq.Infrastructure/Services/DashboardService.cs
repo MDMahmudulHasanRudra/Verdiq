@@ -80,7 +80,7 @@ public class DashboardService : IDashboardService
     public async Task<object> GetCaseChartAsync(Guid chamberId, int months = 12)
     {
         var now = DateTime.UtcNow;
-        var startDate = new DateTime(now.Year, now.Month, 1).AddMonths(-(months - 1));
+        var startDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddMonths(-(months - 1));
 
         var cases = await _context.Cases
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted)

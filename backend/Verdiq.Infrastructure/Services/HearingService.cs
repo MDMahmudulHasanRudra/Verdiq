@@ -27,7 +27,7 @@ public class HearingService : IHearingService
         var hearing = new Hearing
         {
             CaseId = dto.CaseId,
-            HearingDate = dto.HearingDate,
+            HearingDate = DateTime.SpecifyKind(dto.HearingDate, DateTimeKind.Utc),
             Courtroom = dto.Courtroom,
             JudgeName = dto.JudgeName,
             Notes = dto.Notes,
@@ -48,11 +48,11 @@ public class HearingService : IHearingService
         if (hearing == null || hearing.IsDeleted)
             return (false, "Hearing not found", null);
 
-        if (dto.HearingDate.HasValue) hearing.HearingDate = dto.HearingDate.Value;
+        if (dto.HearingDate.HasValue) hearing.HearingDate = DateTime.SpecifyKind(dto.HearingDate.Value, DateTimeKind.Utc);
         if (dto.Courtroom != null) hearing.Courtroom = dto.Courtroom;
         if (dto.JudgeName != null) hearing.JudgeName = dto.JudgeName;
         if (dto.Result != null) hearing.Result = dto.Result;
-        if (dto.NextHearingDate.HasValue) hearing.NextHearingDate = dto.NextHearingDate;
+        if (dto.NextHearingDate.HasValue) hearing.NextHearingDate = DateTime.SpecifyKind(dto.NextHearingDate.Value, DateTimeKind.Utc);
         if (dto.Notes != null) hearing.Notes = dto.Notes;
         if (dto.Status != null && Enum.TryParse<Domain.Enums.HearingStatus>(dto.Status, true, out var status))
             hearing.Status = status;

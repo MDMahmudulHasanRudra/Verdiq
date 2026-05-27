@@ -29,7 +29,7 @@ public class TaskService : ITaskService
         {
             Title = dto.Title,
             Description = dto.Description,
-            DueDate = dto.DueDate,
+            DueDate = DateTime.SpecifyKind(dto.DueDate, DateTimeKind.Utc),
             Priority = dto.Priority,
             Status = Domain.Enums.TaskStatus.Pending,
             AssignedTo = dto.AssignedTo,
@@ -53,7 +53,7 @@ public class TaskService : ITaskService
 
         if (dto.Title != null) taskEntity.Title = dto.Title;
         if (dto.Description != null) taskEntity.Description = dto.Description;
-        if (dto.DueDate.HasValue) taskEntity.DueDate = dto.DueDate.Value;
+        if (dto.DueDate.HasValue) taskEntity.DueDate = DateTime.SpecifyKind(dto.DueDate.Value, DateTimeKind.Utc);
         if (dto.Priority != null) taskEntity.Priority = dto.Priority;
         if (dto.Status != null && Enum.TryParse<Domain.Enums.TaskStatus>(dto.Status, true, out var status))
             taskEntity.Status = status;

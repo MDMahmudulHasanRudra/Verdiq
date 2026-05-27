@@ -23,6 +23,7 @@ public class CauseListsController : BaseController
     public async Task<ActionResult<ApiResponse<CauseList>>> Create([FromBody] CauseList causeList)
     {
         causeList.Id = Guid.NewGuid();
+        causeList.HearingDate = DateTime.SpecifyKind(causeList.HearingDate, DateTimeKind.Utc);
         causeList.CreatedAt = DateTime.UtcNow;
 
         _db.CauseLists.Add(causeList);
@@ -37,7 +38,10 @@ public class CauseListsController : BaseController
         var query = _db.CauseLists.AsQueryable();
 
         if (date.HasValue)
-            query = query.Where(c => c.HearingDate.Date == date.Value.Date);
+        {
+            var filterDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
+            query = query.Where(c => c.HearingDate.Date == filterDate);
+        }
 
         var causeLists = await query.OrderBy(c => c.HearingDate).ToListAsync();
         return Ok(ApiResponse<IEnumerable<CauseList>>.Ok(causeLists));

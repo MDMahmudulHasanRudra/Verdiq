@@ -24,7 +24,7 @@ public class ReminderService : IReminderService
             UserId = userId,
             Type = dto.Type,
             Channel = Enum.TryParse<ReminderChannel>(dto.Channel, true, out var channel) ? channel : ReminderChannel.PushNotification,
-            ScheduledAt = dto.ScheduledAt,
+            ScheduledAt = DateTime.SpecifyKind(dto.ScheduledAt, DateTimeKind.Utc),
             Message = dto.Message,
             ReferenceId = dto.ReferenceId,
             SentStatus = false,
