@@ -1,3 +1,6 @@
+#syntax=docker/dockerfile:1
+
+# === Build stage: Compile .NET application ===
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -12,9 +15,13 @@ RUN dotnet restore Verdiq.API/Verdiq.API.csproj
 COPY . .
 RUN dotnet publish Verdiq.API/Verdiq.API.csproj -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+# === Final stage: Create minimal runtime image ===
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 EXPOSE 5000
 ENV ASPNETCORE_URLS=http://+:5000
 COPY --from=build /app .
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 ENTRYPOINT ["dotnet", "Verdiq.API.dll"]
