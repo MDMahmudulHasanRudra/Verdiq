@@ -237,6 +237,20 @@ Soft-delete a client.
 ### GET /api/clients/search?q=keyword
 Search clients.
 
+### POST /api/clients/{id}/portal-access
+Create portal user account linked to this client. Creates a `User` with `Role=Client` and links it to the client record.
+
+```json
+{
+  "email": "client@example.com",
+  "password": "TempPass123!",
+  "fullName": "Client Name"
+}
+```
+
+### POST /api/clients/{id}/revoke-portal
+Revoke portal access for this client. Soft-deletes the linked portal user.
+
 ---
 
 ## Hearings
@@ -447,6 +461,180 @@ Get dashboard statistics. Requires `[Authorize]`.
     "recentCases": [ ... ],
     "upcomingHearings": [ ... ]
   }
+}
+```
+
+---
+
+## Client Portal
+
+All endpoints require `[Authorize(Roles = "Client")]`. Base: `/api/client-portal`
+
+### GET /api/client-portal/dashboard
+Get client dashboard with aggregated stats, recent cases, upcoming hearings, and invoices.
+
+```json
+{
+  "success": true,
+  "data": {
+    "activeCases": 3,
+    "upcomingHearings": 2,
+    "pendingInvoices": 5,
+    "sharedDocuments": 12,
+    "recentCases": [
+      { "id": "guid", "caseNumber": "VER-2026-0012", "caseType": "Civil", "status": "Active", "opponentName": "John Doe", "assignedLawyer": "Jane Smith", "nextHearingDate": "2026-06-15T10:00:00", "lawyerName": "Jane Smith", "hearingCount": 4, "lastActivity": "2026-05-20T14:30:00" }
+    ],
+    "upcomingHearings": [
+      { "id": "guid", "caseNumber": "VER-2026-0012", "caseType": "Civil", "hearingDate": "2026-06-15T10:00:00", "courtName": "Dhaka District Court", "courtRoom": "Room 301", "judgeName": "Judge Rahman", "status": "Scheduled" }
+    ],
+    "recentInvoices": [
+      { "id": "guid", "invoiceNumber": "INV-2026-0042", "amount": 25000, "status": "Pending", "dueDate": "2026-06-30", "description": "Consultation fees" }
+    ]
+  }
+}
+```
+
+### GET /api/client-portal/profile
+Get client profile with chamber info.
+
+### GET /api/client-portal/cases
+List all cases linked to the authenticated client.
+
+### GET /api/client-portal/cases/{id}
+Get case detail with client-visible timeline.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "caseNumber": "VER-2026-0012",
+    "caseType": "Civil",
+    "status": "Active",
+    "filingDate": "2026-01-15",
+    "courtName": "Dhaka District Court",
+    "opponentName": "John Doe",
+    "assignedLawyer": "Jane Smith",
+    "lawyerEmail": "jane@lawfirm.com",
+    "lawyerPhone": "+8801XXXXXXXXX",
+    "hearingCount": 4,
+    "documentCount": 8,
+    "timeline": [
+      { "type": "hearing", "title": "Hearing - Civil", "description": "Argument hearing", "date": "2026-05-20T10:00:00", "actor": "Jane Smith" },
+      { "type": "activity", "title": "Document filed", "description": "Evidence exhibit A submitted", "date": "2026-05-18T14:30:00", "actor": "Jane Smith" }
+    ]
+  }
+}
+```
+
+### GET /api/client-portal/hearings
+List upcoming hearings for the client.
+
+### GET /api/client-portal/documents
+List shared documents (Visibility = SharedWithClient or SharedWithClientId matches client).
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "fileName": "Case_Summary.pdf",
+      "fileType": "pdf",
+      "fileSize": 245000,
+      "category": "Petition",
+      "uploadedAt": "2026-05-10T09:00:00",
+      "uploaderName": "Jane Smith"
+    }
+  ]
+}
+```
+
+### GET /api/client-portal/documents/{id}
+Get single shared document with download URL.
+
+### GET /api/client-portal/invoices
+List client invoices.
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalInvoiceCount": 8,
+    "totalOutstanding": 75000,
+    "totalOverdue": 25000,
+    "totalPaid": 120000,
+    "invoices": [
+      { "id": "guid", "invoiceNumber": "INV-2026-0042", "amount": 25000, "status": "Pending", "dueDate": "2026-06-30", "description": "Consultation fees", "isOverdue": false }
+    ]
+  }
+}
+```
+
+### GET /api/client-portal/tasks
+List tasks assigned to the client.
+
+### POST /api/client-portal/messages
+Send a message. Accessible to Client role.
+
+```json
+{
+  "receiverId": "guid",
+  "caseId": "guid (optional)",
+  "content": "I have a question about my case",
+  "attachmentUrl": "https://... (optional)"
+}
+```
+
+### GET /api/client-portal/messages
+Get client message history.
+
+### GET /api/client-portal/messages/unread-count
+Get unread message count.
+
+```json
+{
+  "success": true,
+  "data": 3
+}
+```
+
+### POST /api/client-portal/messages/{id}/read
+Mark a message as read.
+
+---
+
+## Messages
+
+All endpoints require `[Authorize]`. Base: `/api/messages`
+
+### GET /api/messages/conversation/{userId}
+Get conversation between current user and specified user. Optional query param `?caseId=guid`.
+
+### GET /api/messages/client/{clientId}
+Get conversation with a client (for lawyer users).
+
+### POST /api/messages
+Send a message. Body:
+```json
+{
+  "receiverId": "guid",
+  "caseId": "guid (optional)",
+  "content": "Message text",
+  "attachmentUrl": "https://... (optional)"
+}
+```
+
+### POST /api/messages/{id}/read
+Mark message as read.
+
+### GET /api/messages/unread-count
+Get unread message count.
+
+```json
+{
+  "success": true,
+  "data": 5
 }
 ```
 

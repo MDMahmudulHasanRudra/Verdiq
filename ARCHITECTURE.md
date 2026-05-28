@@ -1,4 +1,4 @@
-# Architecture — 11 + Super Admin Module System
+# Architecture — 12 + Super Admin Module System
 
 Verdiq follows **Clean Architecture** with 4 layers. Dependencies flow inward: API → Infrastructure → Application → Domain. All queries scoped by `ChamberId` for multi-chamber isolation. A **Super Admin** layer sits above all chambers for centralized system control.
 
@@ -13,15 +13,15 @@ Verdiq follows **Clean Architecture** with 4 layers. Dependencies flow inward: A
 │  Depends on: Application, Infrastructure     │
 ├──────────────────────────────────────────────┤
 │           Verdiq.Infrastructure              │
-│  EF Core (27 DbSets) · 18 Services           │
+│  EF Core (28 DbSets) · 19 Services           │
 │  Depends on: Application                     │
 ├──────────────────────────────────────────────┤
 │            Verdiq.Application                │
-│  19 DTO Groups · 20 Interfaces · 6 Validators│
+│  19 DTO Groups · 22 Interfaces · 6 Validators│
 │  Depends on: Domain                          │
 ├──────────────────────────────────────────────┤
 │              Verdiq.Domain                   │
-│  24 Entities · 13 Enums · 5 Interfaces       │
+│  25 Entities · 13 Enums · 5 Interfaces       │
 │  No external dependencies                    │
 └──────────────────────────────────────────────┘
 ```
@@ -196,6 +196,67 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 | GET | `/api/dashboard/lawyer-productivity` | Cases per lawyer, task completion |
 | GET | `/api/dashboard/win-ratio` | Win/loss ratio by lawyer |
 
+## Module 12 — Client Portal & Secure Collaboration
+
+A secure client-facing portal for case tracking, document sharing, messaging, and payments. Clients access via `/client/*` route group.
+
+### Domain Entities
+- `Client` — extended with `UserId` (nullable FK → User) to link CRM clients to portal accounts
+- `User` — extended with `ClientId` (nullable FK → Client), `SentMessages`/`ReceivedMessages` collections
+- `Message` — sender_id, receiver_id, case_id, content, attachment_url, is_read, read_at, is_client_visible
+- `Document` — extended with `Visibility` (`InternalOnly`|`SharedWithClient`) + `SharedWithClientId` FK
+- `CaseActivity` — extended with `IsClientVisible` flag
+
+### API Endpoints — Client Portal (`/api/client-portal`)
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/api/client-portal/dashboard` | Client | Aggregated dashboard (stats + recent cases/hearings/invoices) |
+| GET | `/api/client-portal/profile` | Client | Client profile + chamber info |
+| GET | `/api/client-portal/cases` | Client | All client-linked cases |
+| GET | `/api/client-portal/cases/{id}` | Client | Case detail with client-visible timeline |
+| GET | `/api/client-portal/hearings` | Client | Upcoming hearings |
+| GET | `/api/client-portal/documents` | Client | Shared documents (visibility-filtered) |
+| GET | `/api/client-portal/documents/{id}` | Client | Single shared document |
+| GET | `/api/client-portal/invoices` | Client | Client invoices |
+| GET | `/api/client-portal/tasks` | Client | Tasks assigned to client |
+| POST | `/api/client-portal/messages` | Client | Send message to lawyer |
+| GET | `/api/client-portal/messages` | Client | Message history |
+| GET | `/api/client-portal/messages/unread-count` | Client | Unread message count |
+| POST | `/api/client-portal/messages/{id}/read` | Client | Mark message read |
+
+### API Endpoints — Lawyer Messaging (`/api/messages`)
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/api/messages/conversation/{userId}` | Any | Conversation between two users |
+| GET | `/api/messages/client/{clientId}` | Any | Conversation with a client |
+| POST | `/api/messages` | Any | Send message |
+| POST | `/api/messages/{id}/read` | Any | Mark message read |
+| GET | `/api/messages/unread-count` | Any | Unread count |
+
+### Portal Access Management (`/api/clients`)
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/api/clients/{id}/portal-access` | Any | Create portal User linked to Client |
+| POST | `/api/clients/{id}/revoke-portal` | Any | Revoke portal access |
+
+### Frontend Routes
+| Route | Description |
+|-------|-------------|
+| `/client` | Dashboard — stat cards, recent cases, upcoming hearings, invoices, tasks |
+| `/client/cases` | All linked cases as cards with status/lawyer/next hearing |
+| `/client/cases/[id]` | Case detail with info, lawyer contact, timeline |
+| `/client/documents` | Shared documents grid with search and file type icons |
+| `/client/messages` | Chat UI with lawyer — send/receive, read receipts |
+| `/client/invoices` | Invoice list with amounts, due dates, overdue warnings, pay buttons |
+
+### Security Model
+- All client endpoints require `[Authorize(Roles = "Client")]`
+- Documents filtered by `Visibility = "SharedWithClient"` OR `SharedWithClientId`
+- Activities filtered by `IsClientVisible = true`
+- Messages only visible to sender and receiver
+- Portal access created/revoked by lawyers only
+- Client `User` accounts linked to `Client` CRM record via `ClientId` FK
+
 ## Super Admin System
 
 A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for system-wide administration.
@@ -271,10 +332,10 @@ A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for sy
 
 ## Infrastructure Layer
 
-### AppDbContext (27 DbSets)
-Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, AuditLogs, AiConversations
+### AppDbContext (28 DbSets)
+Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, Messages, AuditLogs, AiConversations, Organizations, OrganizationMembers, Workspaces
 
-### Services (18 total)
+### Services (19 total)
 | Service | Key Methods |
 |---------|------------|
 | AuthService | Register/Login/Refresh/Logout with BCrypt + JWT |
@@ -295,15 +356,17 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | DashboardService | Aggregated stats + charts |
 | AIService | OpenAI integration with Bangla legal fallback |
 | RealtimeNotifier | SignalR push for case updates, notifications, activities |
+| ClientPortalService | Aggregated client dashboard, cases, documents, invoices, tasks with permission filtering |
+| MessageService | Client-lawyer messaging, conversations, unread counts |
 
-## API Layer (21 Controllers)
+## API Layer (23 Controllers)
 
 | Controller | Route Prefix | Key Endpoints |
 |-----------|-------------|---------------|
 | AuthController | `/api/auth` | login, register, refresh, logout, me |
 | ChambersController | `/api/chambers` | CRUD + my chamber |
 | CasesController | `/api/cases` | CRUD + search + paginated list with sort/filter + realtime notifications via SignalR |
-| ClientsController | `/api/clients` | CRUD + search |
+| ClientsController | `/api/clients` | CRUD + search + portal-access/revoke-portal |
 | HearingsController | `/api/hearings` | CRUD + upcoming + by-date |
 | DocumentsController | `/api/documents` | upload, download, list |
 | InvoicesController | `/api/invoices` | CRUD + mark-paid |
@@ -321,6 +384,8 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | AIController | `/api/ai` | chat, analysis, drafting |
 | SearchController | `/api/search` | global search |
 | SuperAdminController | `/api/super-admin` | 28 endpoints: system control, chambers CRUD, users, subscriptions, permissions, audit logs, billing, broadcast, config, cases, health, revenue/growth charts |
+| ClientPortalController | `/api/client-portal` | 13 endpoints for Client role: dashboard, profile, cases, documents, invoices, messages |
+| MessagesController | `/api/messages` | Conversation, send, read, unread count |
 
 ## Frontend Architecture
 

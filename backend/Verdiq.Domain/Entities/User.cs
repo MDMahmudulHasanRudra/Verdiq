@@ -23,10 +23,15 @@ public class User : BaseEntity
     public DateTime? LastLoginAt { get; set; }
     public string? LastLoginIp { get; set; }
 
+    public Guid? ClientId { get; set; }
+    public Client? Client { get; set; }
+
     public Guid ChamberId { get; set; }
     public Chamber Chamber { get; set; } = null!;
     public ICollection<Case> AssignedCases { get; set; } = new List<Case>();
     public ICollection<Document> UploadedDocuments { get; set; } = new List<Document>();
     public ICollection<Task> AssignedTasks { get; set; } = new List<Task>();
+    public ICollection<Message> SentMessages { get; set; } = new List<Message>();
+    public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
     public Subscription? Subscription { get; set; }
 }

@@ -36,6 +36,9 @@ public class AppDbContext : DbContext
     public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+    public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +77,11 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Users)
                 .HasForeignKey(e => e.ChamberId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Client)
+                .WithMany()
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(e => e.Subscription)
                 .WithOne(s => s.User)
@@ -145,6 +153,7 @@ public class AppDbContext : DbContext
             entity.ToTable("CaseActivities");
             entity.Property(e => e.ActivityType).HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.IsClientVisible);
 
             entity.HasOne(e => e.Case)
                 .WithMany(c => c.Activities)
@@ -182,6 +191,11 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Clients)
                 .HasForeignKey(e => e.ChamberId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -237,6 +251,12 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.StorageProvider).HasMaxLength(50);
             entity.Property(e => e.StorageKey).HasMaxLength(500);
+            entity.Property(e => e.Visibility).HasMaxLength(20);
+
+            entity.HasOne(e => e.SharedWithClient)
+                .WithMany()
+                .HasForeignKey(e => e.SharedWithClientId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(e => e.Case)
                 .WithMany(c => c.Documents)
@@ -354,18 +374,87 @@ public class AppDbContext : DbContext
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
+        modelBuilder.Entity<TimeEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("TimeEntries");
+            entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.HourlyRate).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.DurationMinutes).HasColumnType("float");
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Client)
+                .WithMany()
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Case)
+                .WithMany()
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Task)
+                .WithMany()
+                .HasForeignKey(e => e.TaskId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Invoice)
+                .WithMany()
+                .HasForeignKey(e => e.InvoiceId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Lead>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Leads");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.CompanyName).HasMaxLength(255);
+            entity.Property(e => e.CaseType).HasMaxLength(100);
+            entity.Property(e => e.EstimatedValue).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.LeadSource).HasMaxLength(50);
+            entity.Property(e => e.Stage).HasMaxLength(30);
+            entity.Property(e => e.Notes).HasMaxLength(4000);
+            entity.Property(e => e.AttachmentsJson).HasMaxLength(4000);
+            entity.Property(e => e.LostReason).HasMaxLength(500);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.AssignedLawyer)
+                .WithMany()
+                .HasForeignKey(e => e.AssignedLawyerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
         modelBuilder.Entity<Payment>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.ToTable("Payments");
-            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
-            entity.Property(e => e.InvoiceNumber).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.Amount).HasPrecision(18, 2).IsRequired();
-            entity.Property(e => e.Currency).HasMaxLength(10);
-            entity.Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Currency).HasMaxLength(3);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
             entity.Property(e => e.Gateway).HasConversion<string>().HasMaxLength(20);
-            entity.Property(e => e.GatewayReference).HasMaxLength(255);
             entity.Property(e => e.TransactionId).HasMaxLength(100);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.Description).HasMaxLength(2000);
@@ -404,12 +493,47 @@ public class AppDbContext : DbContext
             entity.ToTable("Reminders");
             entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Channel).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Priority).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.RelatedEntityType).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
 
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Messages");
+            entity.Property(e => e.Content).HasMaxLength(5000).IsRequired();
+            entity.Property(e => e.AttachmentUrl).HasMaxLength(1000);
+            entity.Property(e => e.AttachmentFileName).HasMaxLength(500);
+
+            entity.HasOne(e => e.Sender)
+                .WithMany(u => u.SentMessages)
+                .HasForeignKey(e => e.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Receiver)
+                .WithMany(u => u.ReceivedMessages)
+                .HasForeignKey(e => e.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Case)
+                .WithMany()
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

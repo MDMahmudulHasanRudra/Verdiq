@@ -22,5 +22,9 @@ public class Document : BaseEntity
     public string StorageProvider { get; set; } = "Local";
     public string? StorageKey { get; set; }
 
+    public string Visibility { get; set; } = "InternalOnly"; // InternalOnly, SharedWithClient
+    public Guid? SharedWithClientId { get; set; }
+    public Client? SharedWithClient { get; set; }
+
     public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
 }

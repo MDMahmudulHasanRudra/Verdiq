@@ -9,4 +9,5 @@ public class CaseActivity : BaseEntity
     public ActivityType ActivityType { get; set; }
     public string Description { get; set; } = string.Empty;
     public Guid CreatedBy { get; set; }
+    public bool IsClientVisible { get; set; }
 }

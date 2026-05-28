@@ -11,6 +11,9 @@ public class Client : BaseEntity
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
 
+    public Guid? UserId { get; set; }
+    public User? User { get; set; }
+
     public Guid ChamberId { get; set; }
     public Chamber Chamber { get; set; } = null!;
     public ICollection<ClientCase> ClientCases { get; set; } = new List<ClientCase>();

@@ -112,6 +112,8 @@ try
     builder.Services.AddScoped<IExpenseService, ExpenseService>();
     builder.Services.AddScoped<ITaskService, TaskService>();
     builder.Services.AddScoped<ITemplateService, TemplateService>();
+    builder.Services.AddScoped<ILeadService, LeadService>();
+    builder.Services.AddScoped<ITimeEntryService, TimeEntryService>();
     builder.Services.AddScoped<IReminderService, ReminderService>();
     builder.Services.AddScoped<ILegalDocumentService, LegalDocumentService>();
     builder.Services.AddScoped<IPermissionService, PermissionService>();
@@ -121,7 +123,10 @@ try
     builder.Services.AddScoped<ISearchService, SearchService>();
     builder.Services.AddScoped<ISuperAdminService, SuperAdminService>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddHostedService<ReminderAutomationWorker>();
     builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+    builder.Services.AddScoped<IClientPortalService, ClientPortalService>();
+    builder.Services.AddScoped<IMessageService, MessageService>();
 
     builder.Services.AddSignalR();
     builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
