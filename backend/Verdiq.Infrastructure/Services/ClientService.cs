@@ -10,10 +10,7 @@ public class ClientService : IClientService
 {
     private readonly AppDbContext _context;
 
-    public ClientService(AppDbContext context)
-    {
-        _context = context;
-    }
+    public ClientService(AppDbContext context) => _context = context;
 
     public async Task<(bool Success, string Message, ClientResponseDto? Data)> CreateAsync(CreateClientDto dto, Guid chamberId)
     {
@@ -26,15 +23,35 @@ public class ClientService : IClientService
             Nid = dto.Nid,
             CompanyName = dto.CompanyName,
             Notes = dto.Notes,
+            ClientType = dto.ClientType,
+            PassportNumber = dto.PassportNumber,
+            DateOfBirth = dto.DateOfBirth,
+            Gender = dto.Gender,
+            Occupation = dto.Occupation,
+            Nationality = dto.Nationality,
+            TradeLicense = dto.TradeLicense,
+            RegistrationNumber = dto.RegistrationNumber,
+            TaxVatNumber = dto.TaxVatNumber,
+            AuthorizedRepresentative = dto.AuthorizedRepresentative,
+            Tags = dto.Tags,
+            RiskLevel = dto.RiskLevel,
+            ClientCategory = dto.ClientCategory,
+            BillingPreference = dto.BillingPreference,
+            PaymentTerms = dto.PaymentTerms,
+            CreditLimit = dto.CreditLimit,
+            PreferredContactMethod = dto.PreferredContactMethod,
+            WhatsAppNumber = dto.WhatsAppNumber,
+            SecondaryPhone = dto.SecondaryPhone,
+            EmergencyContact = dto.EmergencyContact,
+            ClientCode = await GenerateClientCode(chamberId),
             IsActive = true,
             ChamberId = chamberId,
-            CreatedAt = DateTime.UtcNow
         };
 
         _context.Clients.Add(client);
         await _context.SaveChangesAsync();
 
-        var result = await GetByIdAsync(client.Id);
+        var result = MapToDto(client);
         return (true, "Client created successfully", result);
     }
 
@@ -51,11 +68,33 @@ public class ClientService : IClientService
         if (dto.Nid != null) client.Nid = dto.Nid;
         if (dto.CompanyName != null) client.CompanyName = dto.CompanyName;
         if (dto.Notes != null) client.Notes = dto.Notes;
+        if (dto.ClientType != null) client.ClientType = dto.ClientType;
+        if (dto.PassportNumber != null) client.PassportNumber = dto.PassportNumber;
+        if (dto.DateOfBirth.HasValue) client.DateOfBirth = dto.DateOfBirth;
+        if (dto.Gender != null) client.Gender = dto.Gender;
+        if (dto.Occupation != null) client.Occupation = dto.Occupation;
+        if (dto.Nationality != null) client.Nationality = dto.Nationality;
+        if (dto.TradeLicense != null) client.TradeLicense = dto.TradeLicense;
+        if (dto.RegistrationNumber != null) client.RegistrationNumber = dto.RegistrationNumber;
+        if (dto.TaxVatNumber != null) client.TaxVatNumber = dto.TaxVatNumber;
+        if (dto.AuthorizedRepresentative != null) client.AuthorizedRepresentative = dto.AuthorizedRepresentative;
+        if (dto.Tags != null) client.Tags = dto.Tags;
+        if (dto.RiskLevel != null) client.RiskLevel = dto.RiskLevel;
+        if (dto.ClientCategory != null) client.ClientCategory = dto.ClientCategory;
+        if (dto.BillingPreference != null) client.BillingPreference = dto.BillingPreference;
+        if (dto.PaymentTerms != null) client.PaymentTerms = dto.PaymentTerms;
+        if (dto.CreditLimit.HasValue) client.CreditLimit = dto.CreditLimit;
+        if (dto.PreferredContactMethod != null) client.PreferredContactMethod = dto.PreferredContactMethod;
+        if (dto.WhatsAppNumber != null) client.WhatsAppNumber = dto.WhatsAppNumber;
+        if (dto.SecondaryPhone != null) client.SecondaryPhone = dto.SecondaryPhone;
+        if (dto.EmergencyContact != null) client.EmergencyContact = dto.EmergencyContact;
+        if (dto.IsBlacklisted.HasValue) client.IsBlacklisted = dto.IsBlacklisted.Value;
+        if (dto.IsActive.HasValue) client.IsActive = dto.IsActive.Value;
 
         client.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        var result = await GetByIdAsync(id);
+        var result = MapToDto(client);
         return (true, "Client updated successfully", result);
     }
 
@@ -68,7 +107,6 @@ public class ClientService : IClientService
         client.IsDeleted = true;
         client.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-
         return (true, "Client deleted successfully");
     }
 
@@ -77,11 +115,7 @@ public class ClientService : IClientService
         var client = await _context.Clients
             .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-
-        if (client == null)
-            return null;
-
-        return MapToDto(client);
+        return client == null ? null : MapToDto(client);
     }
 
     public async Task<IEnumerable<ClientResponseDto>> GetAllAsync(Guid chamberId, int page = 1, int pageSize = 10)
@@ -93,7 +127,6 @@ public class ClientService : IClientService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-
         return clients.Select(MapToDto);
     }
 
@@ -103,38 +136,60 @@ public class ClientService : IClientService
         var clients = await _context.Clients
             .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted &&
-                (c.Name.ToLower().Contains(term) ||
-                 c.Email.ToLower().Contains(term) ||
-                 c.Phone.Contains(term) ||
-                 (c.Nid != null && c.Nid.Contains(term)) ||
-                 (c.CompanyName != null && c.CompanyName.ToLower().Contains(term))))
+                (c.Name.ToLower().Contains(term) || c.Email.ToLower().Contains(term) ||
+                 c.Phone.Contains(term) || (c.Nid != null && c.Nid.Contains(term)) ||
+                 (c.CompanyName != null && c.CompanyName.ToLower().Contains(term)) ||
+                 (c.ClientCode != null && c.ClientCode.Contains(term))))
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync();
-
         return clients.Select(MapToDto);
     }
 
     public async Task<int> GetCountAsync(Guid chamberId)
     {
-        return await _context.Clients
-            .CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+        return await _context.Clients.CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
     }
 
-    private static ClientResponseDto MapToDto(Client c)
+    private async Task<string> GenerateClientCode(Guid chamberId)
     {
-        return new ClientResponseDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Phone = c.Phone,
-            Email = c.Email,
-            Address = c.Address,
-            Nid = c.Nid,
-            CompanyName = c.CompanyName,
-            Notes = c.Notes,
-            IsActive = c.IsActive,
-            CasesCount = c.ClientCases.Count,
-            CreatedAt = c.CreatedAt
-        };
+        var count = await _context.Clients.CountAsync(c => c.ChamberId == chamberId) + 1;
+        return $"CL-{DateTime.UtcNow:yyyy}-{count:D4}";
     }
+
+    private static ClientResponseDto MapToDto(Client c) => new()
+    {
+        Id = c.Id,
+        Name = c.Name,
+        Phone = c.Phone,
+        Email = c.Email,
+        Address = c.Address,
+        Nid = c.Nid,
+        CompanyName = c.CompanyName,
+        Notes = c.Notes,
+        IsActive = c.IsActive,
+        CasesCount = c.ClientCases.Count,
+        CreatedAt = c.CreatedAt,
+        ClientType = c.ClientType,
+        ClientCode = c.ClientCode,
+        PassportNumber = c.PassportNumber,
+        DateOfBirth = c.DateOfBirth,
+        Gender = c.Gender,
+        Occupation = c.Occupation,
+        Nationality = c.Nationality,
+        TradeLicense = c.TradeLicense,
+        RegistrationNumber = c.RegistrationNumber,
+        TaxVatNumber = c.TaxVatNumber,
+        AuthorizedRepresentative = c.AuthorizedRepresentative,
+        Tags = c.Tags,
+        RiskLevel = c.RiskLevel,
+        ClientCategory = c.ClientCategory,
+        BillingPreference = c.BillingPreference,
+        PaymentTerms = c.PaymentTerms,
+        CreditLimit = c.CreditLimit,
+        PreferredContactMethod = c.PreferredContactMethod,
+        WhatsAppNumber = c.WhatsAppNumber,
+        SecondaryPhone = c.SecondaryPhone,
+        EmergencyContact = c.EmergencyContact,
+        IsBlacklisted = c.IsBlacklisted,
+    };
 }

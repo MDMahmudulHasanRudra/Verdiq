@@ -39,6 +39,13 @@ public class AppDbContext : DbContext
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<LegalSection> LegalSections => Set<LegalSection>();
+    public DbSet<LegalProcedure> LegalProcedures => Set<LegalProcedure>();
+    public DbSet<CaseLegalSection> CaseLegalSections => Set<CaseLegalSection>();
+    public DbSet<CaseLegalProcedure> CaseLegalProcedures => Set<CaseLegalProcedure>();
+    public DbSet<ChamberSettings> ChamberSettings => Set<ChamberSettings>();
+    public DbSet<WorkflowTemplate> WorkflowTemplates => Set<WorkflowTemplate>();
+    public DbSet<WorkflowTemplateSection> WorkflowTemplateSections => Set<WorkflowTemplateSection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -133,6 +140,19 @@ public class AppDbContext : DbContext
             entity.Property(e => e.ActsAndSections).HasMaxLength(500);
             entity.Property(e => e.FirNumber).HasMaxLength(50);
             entity.Property(e => e.PoliceStation).HasMaxLength(100);
+            entity.Property(e => e.GdNumber).HasMaxLength(50);
+            entity.Property(e => e.JudgeName).HasMaxLength(255);
+            entity.Property(e => e.Bench).HasMaxLength(100);
+            entity.Property(e => e.Prosecutor).HasMaxLength(255);
+            entity.Property(e => e.OpposingLawyer).HasMaxLength(255);
+            entity.Property(e => e.Jurisdiction).HasMaxLength(100);
+            entity.Property(e => e.AppealStatus).HasMaxLength(50);
+            entity.Property(e => e.RiskLevel).HasMaxLength(20);
+            entity.Property(e => e.PracticeArea).HasMaxLength(100);
+            entity.Property(e => e.Department).HasMaxLength(100);
+            entity.Property(e => e.InternalNotes).HasMaxLength(4000);
+            entity.Property(e => e.BillingMethod).HasMaxLength(50);
+            entity.Property(e => e.CriticalDeadlines).HasMaxLength(2000);
 
             entity.HasOne(e => e.AssignedLawyer)
                 .WithMany(u => u.AssignedCases)
@@ -143,6 +163,16 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Cases)
                 .HasForeignKey(e => e.ChamberId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.CaseLegalSections)
+                .WithOne(cls => cls.Case)
+                .HasForeignKey(cls => cls.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.WorkflowTemplate)
+                .WithMany()
+                .HasForeignKey(e => e.WorkflowTemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -179,13 +209,33 @@ public class AppDbContext : DbContext
             entity.ToTable("Clients");
             entity.HasIndex(e => e.Phone);
             entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.ClientCode).IsUnique().HasFilter("[ClientCode] IS NOT NULL");
             entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Phone).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.Nid).HasMaxLength(50);
             entity.Property(e => e.CompanyName).HasMaxLength(255);
-            entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.Property(e => e.Notes).HasMaxLength(4000);
+            entity.Property(e => e.ClientType).HasMaxLength(50);
+            entity.Property(e => e.ClientCode).HasMaxLength(50);
+            entity.Property(e => e.PassportNumber).HasMaxLength(50);
+            entity.Property(e => e.Gender).HasMaxLength(20);
+            entity.Property(e => e.Occupation).HasMaxLength(100);
+            entity.Property(e => e.Nationality).HasMaxLength(100);
+            entity.Property(e => e.TradeLicense).HasMaxLength(100);
+            entity.Property(e => e.RegistrationNumber).HasMaxLength(100);
+            entity.Property(e => e.TaxVatNumber).HasMaxLength(100);
+            entity.Property(e => e.AuthorizedRepresentative).HasMaxLength(255);
+            entity.Property(e => e.Tags).HasMaxLength(1000);
+            entity.Property(e => e.RiskLevel).HasMaxLength(20);
+            entity.Property(e => e.ClientCategory).HasMaxLength(100);
+            entity.Property(e => e.BillingPreference).HasMaxLength(50);
+            entity.Property(e => e.PaymentTerms).HasMaxLength(200);
+            entity.Property(e => e.PreferredContactMethod).HasMaxLength(50);
+            entity.Property(e => e.WhatsAppNumber).HasMaxLength(20);
+            entity.Property(e => e.SecondaryPhone).HasMaxLength(20);
+            entity.Property(e => e.EmergencyContact).HasMaxLength(255);
 
             entity.HasOne(e => e.Chamber)
                 .WithMany(c => c.Clients)
@@ -205,6 +255,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.ToTable("ClientCases");
             entity.HasIndex(e => new { e.ClientId, e.CaseId }).IsUnique();
+            entity.Property(e => e.Role).HasMaxLength(50);
 
             entity.HasOne(e => e.Client)
                 .WithMany(c => c.ClientCases)
@@ -215,6 +266,95 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.ClientCases)
                 .HasForeignKey(e => e.CaseId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<LegalSection>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("LegalSections");
+            entity.HasIndex(e => e.SectionCode);
+            entity.Property(e => e.SectionCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.SectionTitle).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.LawName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Country).HasMaxLength(100);
+            entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(4000);
+            entity.Property(e => e.Severity).HasMaxLength(20);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Procedures)
+                .WithOne(p => p.LegalSection)
+                .HasForeignKey(p => p.LegalSectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<LegalProcedure>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("LegalProcedures");
+            entity.Property(e => e.Title).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(4000);
+            entity.Property(e => e.RequiredDocuments).HasMaxLength(2000);
+            entity.Property(e => e.RecommendedTimeline).HasMaxLength(200);
+            entity.Property(e => e.ResponsibleRole).HasMaxLength(50);
+
+            entity.HasOne(e => e.LegalSection)
+                .WithMany(s => s.Procedures)
+                .HasForeignKey(e => e.LegalSectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<CaseLegalSection>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("CaseLegalSections");
+            entity.HasIndex(e => new { e.CaseId, e.LegalSectionId }).IsUnique();
+
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.CaseLegalSections)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.LegalSection)
+                .WithMany(ls => ls.CaseLegalSections)
+                .HasForeignKey(e => e.LegalSectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.CaseProcedures)
+                .WithOne(cp => cp.CaseLegalSection)
+                .HasForeignKey(cp => cp.CaseLegalSectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<CaseLegalProcedure>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("CaseLegalProcedures");
+            entity.HasIndex(e => new { e.CaseLegalSectionId, e.LegalProcedureId }).IsUnique();
+            entity.Property(e => e.CompletedBy).HasMaxLength(255);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+
+            entity.HasOne(e => e.CaseLegalSection)
+                .WithMany(cls => cls.CaseProcedures)
+                .HasForeignKey(e => e.CaseLegalSectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.LegalProcedure)
+                .WithMany(lp => lp.CaseProcedures)
+                .HasForeignKey(e => e.LegalProcedureId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -687,6 +827,67 @@ public class AppDbContext : DbContext
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
+        modelBuilder.Entity<ChamberSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("ChamberSettings");
+            entity.HasIndex(e => e.ChamberId).IsUnique();
+            entity.Property(e => e.SettingsJson)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Updater)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<WorkflowTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("WorkflowTemplates");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Sections)
+                .WithOne(s => s.Template)
+                .HasForeignKey(s => s.TemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<WorkflowTemplateSection>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("WorkflowTemplateSections");
+            entity.HasIndex(e => new { e.TemplateId, e.LegalSectionId }).IsUnique();
+
+            entity.HasOne(e => e.Template)
+                .WithMany(t => t.Sections)
+                .HasForeignKey(e => e.TemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.LegalSection)
+                .WithMany()
+                .HasForeignKey(e => e.LegalSectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
         ApplyDateTimeUtcConverters(modelBuilder);
         SeedData(modelBuilder);
     }
@@ -797,7 +998,17 @@ public class AppDbContext : DbContext
             ("task.assign", "Assign tasks", "Tasks"),
             ("task.view", "View tasks", "Tasks"),
             ("report.view", "View reports", "Reports"),
-            ("settings.manage", "Manage settings", "Settings")
+            ("settings.manage", "Manage settings", "Settings"),
+            ("legalsection.create", "Create legal sections", "Legal"),
+            ("legalsection.view", "View legal sections", "Legal"),
+            ("legalsection.edit", "Edit legal sections", "Legal"),
+            ("legalsection.delete", "Delete legal sections", "Legal"),
+            ("legalprocedure.create", "Create legal procedures", "Legal"),
+            ("legalprocedure.view", "View legal procedures", "Legal"),
+            ("legalprocedure.edit", "Edit legal procedures", "Legal"),
+            ("legalprocedure.delete", "Delete legal procedures", "Legal"),
+            ("configuration.manage", "Manage chamber configuration", "Configuration"),
+            ("workflow.manage", "Manage workflow templates", "Workflow")
         };
 
         var id = Guid.Parse("f0000000-0000-0000-0000-000000000001");

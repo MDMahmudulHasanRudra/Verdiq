@@ -11,10 +11,7 @@ public class CaseService : ICaseService
 {
     private readonly AppDbContext _context;
 
-    public CaseService(AppDbContext context)
-    {
-        _context = context;
-    }
+    public CaseService(AppDbContext context) => _context = context;
 
     public async Task<(bool Success, string Message, CaseResponseDto? Data)> CreateAsync(CreateCaseDto dto, Guid userId, Guid chamberId)
     {
@@ -31,25 +28,38 @@ public class CaseService : ICaseService
             Opponent = dto.Opponent,
             FirNumber = dto.FirNumber,
             PoliceStation = dto.PoliceStation,
+            GdNumber = dto.GdNumber,
+            JudgeName = dto.JudgeName,
+            Bench = dto.Bench,
+            Prosecutor = dto.Prosecutor,
+            OpposingLawyer = dto.OpposingLawyer,
+            Jurisdiction = dto.Jurisdiction,
+            AppealStatus = dto.AppealStatus,
+            RiskLevel = dto.RiskLevel,
+            ComplexityScore = dto.ComplexityScore,
+            PracticeArea = dto.PracticeArea,
+            Department = dto.Department,
+            InternalNotes = dto.InternalNotes,
+            RetainerAmount = dto.RetainerAmount,
+            BillingMethod = dto.BillingMethod,
+            FixedFee = dto.FixedFee,
+            HourlyRate = dto.HourlyRate,
+            BudgetLimit = dto.BudgetLimit,
+            ExpenseBudget = dto.ExpenseBudget,
+            NextHearingDate = dto.NextHearingDate.HasValue ? DateTime.SpecifyKind(dto.NextHearingDate.Value, DateTimeKind.Utc) : null,
+            CriticalDeadlines = dto.CriticalDeadlines,
+            LimitationExpiry = dto.LimitationExpiry.HasValue ? DateTime.SpecifyKind(dto.LimitationExpiry.Value, DateTimeKind.Utc) : null,
             ActsAndSections = dto.ActsAndSections,
             Description = dto.Description,
             FilingDate = dto.FilingDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(dto.FilingDate, DateTimeKind.Utc),
             AssignedLawyerId = userId,
             ChamberId = chamberId,
-            CreatedAt = DateTime.UtcNow
         };
 
         _context.Cases.Add(caseEntity);
 
-        foreach (var clientId in dto.ClientIds)
-        {
-            _context.ClientCases.Add(new ClientCase
-            {
-                ClientId = clientId,
-                CaseId = caseEntity.Id,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
+        await LinkClients(caseEntity.Id, dto.ClientIds, dto.ClientRoles);
+        await LinkLegalSections(caseEntity.Id, dto.LegalSectionIds);
 
         _context.CaseActivities.Add(new CaseActivity
         {
@@ -57,11 +67,9 @@ public class CaseService : ICaseService
             ActivityType = ActivityType.Note,
             Description = $"Case created: {dto.Title}",
             CreatedBy = userId,
-            CreatedAt = DateTime.UtcNow
         });
 
         await _context.SaveChangesAsync();
-
         var result = await GetByIdAsync(caseEntity.Id);
         return (true, "Case created successfully", result);
     }
@@ -70,10 +78,10 @@ public class CaseService : ICaseService
     {
         var caseEntity = await _context.Cases
             .Include(c => c.ClientCases)
+            .Include(c => c.CaseLegalSections)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
 
-        if (caseEntity == null)
-            return (false, "Case not found", null);
+        if (caseEntity == null) return (false, "Case not found", null);
 
         if (dto.Title != null) caseEntity.Title = dto.Title;
         if (dto.CourtName != null) caseEntity.CourtName = dto.CourtName;
@@ -85,35 +93,59 @@ public class CaseService : ICaseService
         if (dto.Opponent != null) caseEntity.Opponent = dto.Opponent;
         if (dto.Description != null) caseEntity.Description = dto.Description;
         if (dto.ActsAndSections != null) caseEntity.ActsAndSections = dto.ActsAndSections;
+        if (dto.FirNumber != null) caseEntity.FirNumber = dto.FirNumber;
+        if (dto.PoliceStation != null) caseEntity.PoliceStation = dto.PoliceStation;
+        if (dto.GdNumber != null) caseEntity.GdNumber = dto.GdNumber;
+        if (dto.JudgeName != null) caseEntity.JudgeName = dto.JudgeName;
+        if (dto.Bench != null) caseEntity.Bench = dto.Bench;
+        if (dto.Prosecutor != null) caseEntity.Prosecutor = dto.Prosecutor;
+        if (dto.OpposingLawyer != null) caseEntity.OpposingLawyer = dto.OpposingLawyer;
+        if (dto.Jurisdiction != null) caseEntity.Jurisdiction = dto.Jurisdiction;
+        if (dto.AppealStatus != null) caseEntity.AppealStatus = dto.AppealStatus;
+        if (dto.RiskLevel != null) caseEntity.RiskLevel = dto.RiskLevel;
+        if (dto.ComplexityScore.HasValue) caseEntity.ComplexityScore = dto.ComplexityScore;
+        if (dto.PracticeArea != null) caseEntity.PracticeArea = dto.PracticeArea;
+        if (dto.Department != null) caseEntity.Department = dto.Department;
+        if (dto.InternalNotes != null) caseEntity.InternalNotes = dto.InternalNotes;
+        if (dto.RetainerAmount.HasValue) caseEntity.RetainerAmount = dto.RetainerAmount;
+        if (dto.BillingMethod != null) caseEntity.BillingMethod = dto.BillingMethod;
+        if (dto.FixedFee.HasValue) caseEntity.FixedFee = dto.FixedFee;
+        if (dto.HourlyRate.HasValue) caseEntity.HourlyRate = dto.HourlyRate;
+        if (dto.BudgetLimit.HasValue) caseEntity.BudgetLimit = dto.BudgetLimit;
+        if (dto.ExpenseBudget.HasValue) caseEntity.ExpenseBudget = dto.ExpenseBudget;
+        if (dto.NextHearingDate.HasValue) caseEntity.NextHearingDate = DateTime.SpecifyKind(dto.NextHearingDate.Value, DateTimeKind.Utc);
+        if (dto.CriticalDeadlines != null) caseEntity.CriticalDeadlines = dto.CriticalDeadlines;
+        if (dto.LimitationExpiry.HasValue) caseEntity.LimitationExpiry = DateTime.SpecifyKind(dto.LimitationExpiry.Value, DateTimeKind.Utc);
 
         if (caseEntity.Status == CaseStatus.Closed)
             caseEntity.ClosingDate = DateTime.UtcNow;
-
-        _context.CaseActivities.Add(new CaseActivity
-        {
-            CaseId = caseEntity.Id,
-            ActivityType = ActivityType.StatusChange,
-            Description = $"Case updated: {(dto.Title ?? caseEntity.Title)}",
-            CreatedBy = caseEntity.AssignedLawyerId,
-            CreatedAt = DateTime.UtcNow
-        });
 
         if (dto.ClientIds != null)
         {
             var existingIds = caseEntity.ClientCases.Select(cc => cc.ClientId).ToHashSet();
             var newIds = dto.ClientIds.ToHashSet();
-
             foreach (var cc in caseEntity.ClientCases.Where(cc => !newIds.Contains(cc.ClientId)).ToList())
                 _context.ClientCases.Remove(cc);
-
+            var roleMap = dto.ClientRoles?.ToDictionary(r => r.ClientId, r => r.Role) ?? new();
             foreach (var clientId in newIds.Where(id => !existingIds.Contains(id)))
             {
                 _context.ClientCases.Add(new ClientCase
                 {
-                    ClientId = clientId,
-                    CaseId = caseEntity.Id,
-                    CreatedAt = DateTime.UtcNow
+                    ClientId = clientId, CaseId = caseEntity.Id,
+                    Role = roleMap.GetValueOrDefault(clientId),
                 });
+            }
+        }
+
+        if (dto.LegalSectionIds != null)
+        {
+            var existingSectionIds = caseEntity.CaseLegalSections.Select(cls => cls.LegalSectionId).ToHashSet();
+            var newSectionIds = dto.LegalSectionIds.ToHashSet();
+            foreach (var cls in caseEntity.CaseLegalSections.Where(cls => !newSectionIds.Contains(cls.LegalSectionId)).ToList())
+                _context.CaseLegalSections.Remove(cls);
+            foreach (var sectionId in newSectionIds.Where(id => !existingSectionIds.Contains(id)))
+            {
+                _context.CaseLegalSections.Add(new CaseLegalSection { CaseId = caseEntity.Id, LegalSectionId = sectionId });
             }
         }
 
@@ -127,23 +159,10 @@ public class CaseService : ICaseService
     public async Task<(bool Success, string Message)> DeleteAsync(Guid id)
     {
         var caseEntity = await _context.Cases.FindAsync(id);
-        if (caseEntity == null || caseEntity.IsDeleted)
-            return (false, "Case not found");
-
+        if (caseEntity == null || caseEntity.IsDeleted) return (false, "Case not found");
         caseEntity.IsDeleted = true;
         caseEntity.UpdatedAt = DateTime.UtcNow;
-
-        _context.CaseActivities.Add(new CaseActivity
-        {
-            CaseId = caseEntity.Id,
-            ActivityType = ActivityType.Note,
-            Description = $"Case deleted: {caseEntity.Title}",
-            CreatedBy = caseEntity.AssignedLawyerId,
-            CreatedAt = DateTime.UtcNow
-        });
-
         await _context.SaveChangesAsync();
-
         return (true, "Case deleted successfully");
     }
 
@@ -152,14 +171,12 @@ public class CaseService : ICaseService
         var caseEntity = await _context.Cases
             .Include(c => c.AssignedLawyer)
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
+            .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
+            .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.CaseProcedures).ThenInclude(cp => cp.LegalProcedure)
             .Include(c => c.Hearings)
             .Include(c => c.Documents)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-
-        if (caseEntity == null)
-            return null;
-
-        return MapToDto(caseEntity);
+        return caseEntity == null ? null : MapToDto(caseEntity);
     }
 
     public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, string? search = null, string? sortBy = null, string? sortOrder = null, int page = 1, int pageSize = 10)
@@ -167,24 +184,21 @@ public class CaseService : ICaseService
         var query = _context.Cases
             .Include(c => c.AssignedLawyer)
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
+            .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
             .Include(c => c.Hearings)
             .Include(c => c.Documents)
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted);
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<CaseStatus>(status, true, out var caseStatus))
             query = query.Where(c => c.Status == caseStatus);
-
         if (!string.IsNullOrEmpty(priority) && Enum.TryParse<CasePriority>(priority, true, out var casePriority))
             query = query.Where(c => c.Priority == casePriority);
-
         if (!string.IsNullOrEmpty(search))
         {
             var term = search.ToLower();
             query = query.Where(c =>
-                c.CaseNumber.ToLower().Contains(term) ||
-                c.Title.ToLower().Contains(term) ||
-                c.CourtName.ToLower().Contains(term) ||
-                (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
+                c.CaseNumber.ToLower().Contains(term) || c.Title.ToLower().Contains(term) ||
+                c.CourtName.ToLower().Contains(term) || (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
                 c.ClientCases.Any(cc => cc.Client.Name.ToLower().Contains(term)));
         }
 
@@ -203,12 +217,7 @@ public class CaseService : ICaseService
             _ => query.OrderByDescending(c => c.CreatedAt)
         };
 
-        var cases = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return cases.Select(MapToDto);
+        return (await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync()).Select(MapToDto);
     }
 
     public async Task<IEnumerable<CaseResponseDto>> SearchAsync(string query, Guid chamberId)
@@ -217,64 +226,124 @@ public class CaseService : ICaseService
         var cases = await _context.Cases
             .Include(c => c.AssignedLawyer)
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
-            .Include(c => c.Hearings)
-            .Include(c => c.Documents)
+            .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
+            .Include(c => c.Hearings).Include(c => c.Documents)
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted &&
-                (c.CaseNumber.ToLower().Contains(term) ||
-                 c.Title.ToLower().Contains(term) ||
-                 c.CourtName.ToLower().Contains(term) ||
-                 (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
+                (c.CaseNumber.ToLower().Contains(term) || c.Title.ToLower().Contains(term) ||
+                 c.CourtName.ToLower().Contains(term) || (c.Opponent != null && c.Opponent.ToLower().Contains(term)) ||
                  (c.FirNumber != null && c.FirNumber.ToLower().Contains(term)) ||
                  c.ClientCases.Any(cc => cc.Client.Name.ToLower().Contains(term))))
-            .OrderByDescending(c => c.CreatedAt)
-            .ToListAsync();
-
+            .OrderByDescending(c => c.CreatedAt).ToListAsync();
         return cases.Select(MapToDto);
     }
 
     public async Task<int> GetCountAsync(Guid chamberId)
     {
-        return await _context.Cases
-            .CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+        return await _context.Cases.CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+    }
+
+    private async System.Threading.Tasks.Task LinkClients(Guid caseId, List<Guid> clientIds, List<ClientRoleDto>? clientRoles)
+    {
+        var roleMap = clientRoles?.ToDictionary(r => r.ClientId, r => r.Role) ?? new();
+        foreach (var clientId in clientIds)
+        {
+            _context.ClientCases.Add(new ClientCase
+            {
+                ClientId = clientId,
+                CaseId = caseId,
+                Role = roleMap.GetValueOrDefault(clientId),
+            });
+        }
+    }
+
+    private async System.Threading.Tasks.Task LinkLegalSections(Guid caseId, List<Guid>? legalSectionIds)
+    {
+        if (legalSectionIds == null) return;
+        var caseLegalSections = legalSectionIds.Select(sectionId => new CaseLegalSection
+        {
+            CaseId = caseId,
+            LegalSectionId = sectionId,
+        }).ToList();
+        _context.CaseLegalSections.AddRange(caseLegalSections);
+        var sectionIds = legalSectionIds.ToHashSet();
+        var procedures = await _context.LegalProcedures
+            .Where(p => sectionIds.Contains(p.LegalSectionId) && !p.IsDeleted)
+            .ToListAsync();
+        foreach (var cls in caseLegalSections)
+        {
+            foreach (var proc in procedures.Where(p => p.LegalSectionId == cls.LegalSectionId))
+            {
+                _context.CaseLegalProcedures.Add(new CaseLegalProcedure
+                {
+                    CaseLegalSectionId = cls.Id,
+                    LegalProcedureId = proc.Id,
+                });
+            }
+        }
     }
 
     private async Task<string> GenerateCaseNumberAsync()
     {
         var year = DateTime.UtcNow.Year;
-        var count = await _context.Cases
-            .CountAsync(c => c.CreatedAt.Year == year) + 1;
+        var count = await _context.Cases.CountAsync(c => c.CreatedAt.Year == year) + 1;
         return $"VER-{year}-{count:D4}";
     }
 
-    private static CaseResponseDto MapToDto(Case c)
+    private static CaseResponseDto MapToDto(Case c) => new()
     {
-        return new CaseResponseDto
+        Id = c.Id,
+        CaseNumber = c.CaseNumber,
+        Title = c.Title,
+        CourtName = c.CourtName,
+        CaseType = c.CaseType,
+        FilingDate = c.FilingDate,
+        Opponent = c.Opponent,
+        Status = c.Status.ToString(),
+        Priority = c.Priority.ToString(),
+        Description = c.Description,
+        ActsAndSections = c.ActsAndSections,
+        ClosingDate = c.ClosingDate,
+        AssignedLawyerId = c.AssignedLawyerId,
+        AssignedLawyerName = c.AssignedLawyer.FullName,
+        FirNumber = c.FirNumber,
+        PoliceStation = c.PoliceStation,
+        GdNumber = c.GdNumber,
+        JudgeName = c.JudgeName,
+        Bench = c.Bench,
+        Prosecutor = c.Prosecutor,
+        OpposingLawyer = c.OpposingLawyer,
+        Jurisdiction = c.Jurisdiction,
+        AppealStatus = c.AppealStatus,
+        RiskLevel = c.RiskLevel,
+        ComplexityScore = c.ComplexityScore,
+        PracticeArea = c.PracticeArea,
+        Department = c.Department,
+        InternalNotes = c.InternalNotes,
+        RetainerAmount = c.RetainerAmount,
+        BillingMethod = c.BillingMethod,
+        FixedFee = c.FixedFee,
+        HourlyRate = c.HourlyRate,
+        BudgetLimit = c.BudgetLimit,
+        ExpenseBudget = c.ExpenseBudget,
+        NextHearingDate = c.NextHearingDate,
+        CriticalDeadlines = c.CriticalDeadlines,
+        LimitationExpiry = c.LimitationExpiry,
+        Clients = c.ClientCases.Where(cc => !cc.IsDeleted).Select(cc => new ClientInfo
         {
-            Id = c.Id,
-            CaseNumber = c.CaseNumber,
-            Title = c.Title,
-            CourtName = c.CourtName,
-            CaseType = c.CaseType,
-            FilingDate = c.FilingDate,
-            Opponent = c.Opponent,
-            Status = c.Status.ToString(),
-            Priority = c.Priority.ToString(),
-            Description = c.Description,
-            ActsAndSections = c.ActsAndSections,
-            ClosingDate = c.ClosingDate,
-            AssignedLawyerId = c.AssignedLawyerId,
-            AssignedLawyerName = c.AssignedLawyer.FullName,
-            Clients = c.ClientCases
-                .Where(cc => !cc.IsDeleted)
-                .Select(cc => new ClientInfo
-                {
-                    Id = cc.Client.Id,
-                    Name = cc.Client.Name,
-                    Phone = cc.Client.Phone
-                }).ToList(),
-            HearingsCount = c.Hearings.Count(h => !h.IsDeleted),
-            DocumentsCount = c.Documents.Count(d => !d.IsDeleted),
-            CreatedAt = c.CreatedAt
-        };
-    }
+            Id = cc.Client.Id,
+            Name = cc.Client.Name,
+            Phone = cc.Client.Phone,
+            Role = cc.Role,
+        }).ToList(),
+        HearingsCount = c.Hearings.Count(h => !h.IsDeleted),
+        DocumentsCount = c.Documents.Count(d => !d.IsDeleted),
+        CreatedAt = c.CreatedAt,
+        LegalSections = c.CaseLegalSections.Where(cls => !cls.IsDeleted).Select(cls => new LegalSectionInfo
+        {
+            Id = cls.LegalSection.Id,
+            SectionCode = cls.LegalSection.SectionCode,
+            SectionTitle = cls.LegalSection.SectionTitle,
+            LawName = cls.LegalSection.LawName,
+        }).ToList(),
+    };
 }

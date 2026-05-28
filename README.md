@@ -51,6 +51,69 @@ npm install
 npm run dev
 ```
 
+## Phase 7 — Advanced Case/Client Fields, Chamber Config, Workflow (Latest)
+
+**May 2026** — Major expansion of data models and configuration system.
+
+### New/Updated Backend Entities
+| Entity | Changes |
+|--------|---------|
+| `Case` | +30 fields: actsAndSections, firNumber, policeStation, gdNumber, judgeName, bench, prosecutor, opposingLawyer, jurisdiction, appealStatus, riskLevel, complexityScore, practiceArea, department, internalNotes, retainerAmount, billingMethod, fixedFee, hourlyRate, budgetLimit, expenseBudget, nextHearingDate, criticalDeadlines, limitationExpiry, plus many-to-many linking to Clients (with roles) and LegalSections |
+| `Client` | +25 fields: passportNumber, dateOfBirth, gender, occupation, nationality, tradeLicense, registrationNumber, taxVatNumber, authorizedRepresentative, tags, riskLevel, clientCategory, billingPreference, paymentTerms, creditLimit, preferredContactMethod, whatsAppNumber, secondaryPhone, emergencyContact |
+| `ChamberSettings` | **New** — Key-value settings store (general, appearance, case defaults, document, billing, notification, workflow, security, integrations) per chamber |
+| `WorkflowTemplate` | **New** — Configurable workflow templates with status transitions per entity type |
+| `WorkflowTemplateSection` | **New** — Ordered status steps within a workflow template |
+| `LegalSection` | **New** — Legal sections/acts reference table, linkable to Cases |
+
+### New API Endpoints
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/PUT | `/api/configuration` | Read/write chamber configuration settings |
+| GET/PUT | `/api/configuration/{subsection}` | Read/write specific settings subsection |
+| GET/POST | `/api/workflow-templates` | List/create workflow templates |
+| GET/PUT/DELETE | `/api/workflow-templates/{id}` | Workflow template CRUD |
+| GET/POST | `/api/legal-sections` | List/create legal sections |
+| GET/PUT/DELETE | `/api/legal-sections/{id}` | Legal section CRUD |
+
+### New Frontend Pages
+| Route | Description |
+|-------|-------------|
+| `/lawyer/configuration` | 12-tab configuration page (General, Appearance, Case Defaults, Document, Billing, Notification, Workflow, Legal Sections, Users, Security, Integrations, Data) |
+| Configuration/Workflow tab | Drag-and-drop workflow builder with status transition editor |
+
+### Key UI Changes
+- **CaseDialog** — Complete rewrite with progressive disclosure: 20+ fields across 3 groups (Basic → Legal → Financial)
+- **ClientDialog** — Complete rewrite with progressive disclosure: 25+ fields across 3 groups (Basic → Legal → Financial)
+- **Cases list page** — Uses new CaseDialog for creation
+- **Clients list page** — Uses new ClientDialog for creation
+- **Client detail page** — Passes all 25+ fields to edit dialog
+- **Navbar** — Company name reads from dynamic chamber settings
+- **Sidebar** — Configuration link added
+
+### New Frontend Files
+```
+src/lib/services/
+  configuration-service.ts    — Chamber configuration CRUD
+  legal-section-service.ts    — Legal sections CRUD
+
+src/lib/hooks/
+  use-configuration.ts        — Chamber settings hooks
+  use-workflow-templates.ts   — Workflow template hooks
+  use-legal-sections.ts       — Legal section hooks
+
+src/components/configuration/  — 12 tab components
+  ConfigurationPage.tsx
+  GeneralTab.tsx, AppearanceTab.tsx, CaseDefaultsTab.tsx, ...
+  WorkflowTab.tsx             — Drag-and-drop builder
+  LegalSectionsTab.tsx
+
+src/components/cases/
+  CaseDialog.tsx              — Advanced dialog with progressive disclosure
+
+src/components/clients/
+  ClientDialog.tsx            — Advanced dialog with progressive disclosure
+```
+
 ### Seed Users
 
 | Email | Password | Role |
@@ -64,7 +127,7 @@ npm run dev
 |---------|----------|-----|
 | rudra | rudra | `/super-admin/login` |
 
-## 12 Modules
+## 14 Modules
 
 | # | Module | Description |
 |---|--------|-------------|
@@ -80,32 +143,34 @@ npm run dev
 | 10 | Court & Legal Database | Laws (Penal Code/CPC/CrPC/Constitution), judgment search (citation/judge/keyword) |
 | 11 | Analytics Dashboard | Active cases, win ratio, upcoming hearings, pending bills, lawyer productivity |
 | 12 | Client Portal | Secure client login, case tracking with timeline, shared document center, lawyer messaging (chat UI), invoice viewing & payment, task management, real-time notifications |
+| 13 | Chamber Configuration | ... |
+| 14 | Legal Sections Database | ... |
 | SA | Super Admin System | Centralized control: chamber management (upgrade/downgrade/clear/impersonate), user management (reset passwords/toggle status/override subscriptions), system-wide case view, audit logs, billing overview, system config, broadcast notifications, health monitoring |
 
 ## Project Structure
 
 ```
 backend/
-  Verdiq.Domain/          # 25 entities, 13 enums, 5 interfaces
-  Verdiq.Application/     # 19 DTO groups, 22 service interfaces, 6 validators
-  Verdiq.Infrastructure/  # EF Core (28 DbSets), 19 services, audit interceptor
-  Verdiq.API/             # 23 controllers, 3 middleware, 2 SignalR hubs
+  Verdiq.Domain/          # 28 entities (added ChamberSettings, WorkflowTemplate, WorkflowTemplateSection, LegalSection), 13 enums, 5 interfaces
+  Verdiq.Application/     # 22 DTO groups, 26 service interfaces, 8 validators
+  Verdiq.Infrastructure/  # EF Core (32 DbSets), 23 services, audit interceptor
+  Verdiq.API/             # 26 controllers, 3 middleware, 2 SignalR hubs
   tests/
     Verdiq.API.Tests/
 
 frontend/
   src/
-    app/                  # 35 pages (App Router: /lawyer/* + /client/* + /super-admin/*)
-    components/           # 21 UI primitives + 15 feature components
+    app/                  # 36 pages (added /lawyer/configuration)
+    components/           # 21 UI primitives + 18 feature components (added CaseDialog, ClientDialog, 12 config tabs)
     lib/
-      services/           # 21 API service files
-      hooks/              # 24 React Query hook files
+      services/           # 24 API service files (added configuration, legal-section services)
+      hooks/              # 27 React Query hook files (added use-configuration, use-workflow-templates, use-legal-sections)
       store/              # Zustand auth store
       api.ts              # Axios with JWT refresh interceptor
-    types/                # 30+ TypeScript interfaces
+    types/                # 35+ TypeScript interfaces
 ```
 
-## Database Schema (28 Tables)
+## Database Schema (32 Tables)
 
 - `Chambers` — Multi-chamber support with subscription plan
 - `Users` — 6 roles, linked to chamber, optional `ClientId` FK for portal users
@@ -126,6 +191,9 @@ frontend/
 - `LegalDocuments` — Laws & judgment database
 - `Notifications` — User notifications
 - `AuditLogs` — Entity change audit trail
+- `ChamberSettings` — Key-value settings per chamber (general, case defaults, billing, etc.)
+- `WorkflowTemplates`, `WorkflowTemplateSections` — Configurable status transition workflows
+- `LegalSections` — Legal acts/sections reference table
 - `AiConversations` — AI chat history
 
 ## Key Conventions

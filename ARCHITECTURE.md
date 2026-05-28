@@ -4,24 +4,20 @@ Verdiq follows **Clean Architecture** with 4 layers. Dependencies flow inward: A
 
 ```
 ┌──────────────────────────────────────────────┐
-│           Super Admin System                 │
-│  SuperAdminController · SuperAdminService    │
-│  Hardcoded credentials: rudra / rudra        │
-├──────────────────────────────────────────────┤
 │               Verdiq.API                     │
-│  21 Controllers · 3 Middleware · Program.cs  │
+│  26 Controllers · 3 Middleware · Program.cs  │
 │  Depends on: Application, Infrastructure     │
 ├──────────────────────────────────────────────┤
 │           Verdiq.Infrastructure              │
-│  EF Core (28 DbSets) · 19 Services           │
+│  EF Core (32 DbSets) · 23 Services           │
 │  Depends on: Application                     │
 ├──────────────────────────────────────────────┤
 │            Verdiq.Application                │
-│  19 DTO Groups · 22 Interfaces · 6 Validators│
+│  22 DTO Groups · 26 Interfaces · 8 Validators│
 │  Depends on: Domain                          │
 ├──────────────────────────────────────────────┤
 │              Verdiq.Domain                   │
-│  25 Entities · 13 Enums · 5 Interfaces       │
+│  28 Entities · 13 Enums · 5 Interfaces       │
 │  No external dependencies                    │
 └──────────────────────────────────────────────┘
 ```
@@ -59,7 +55,9 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 ## Module 2 — Case Management
 
 ### Entities
-- `Case` — title, case_number, court_name, case_type, filing_date, opponent, status (Active|Pending|Closed|Appeal|Withdrawn), priority, chamber_id, assigned_lawyer_id
+- `Case` — title, case_number, court_name, case_type, filing_date, opponent, status (Active|Pending|Closed|Appeal|Withdrawn), priority, chamber_id, assigned_lawyer_id, acts_and_sections, fir_number, police_station, gd_number, judge_name, bench, prosecutor, opposing_lawyer, jurisdiction, appeal_status, risk_level, complexity_score, practice_area, department, internal_notes, retainer_amount, billing_method, fixed_fee, hourly_rate, budget_limit, expense_budget, next_hearing_date, critical_deadlines, limitation_expiry
+- `ClientCase` — client_id, case_id, role (optional role label for a client in a case)
+- `CaseLegalSection` — case_id, legal_section_id (many-to-many with LegalSections)
 - `CaseActivity` — case_id, activity_type (Hearing|Order|Note|Document|StatusChange|Task), description, created_by
 - `Hearing` — case_id, hearing_date, courtroom, judge_name, result, next_hearing_date, status (Scheduled|Completed|Adjourned|Cancelled)
 - `CauseList` — court_name, case_number, hearing_date, status
@@ -67,7 +65,7 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 ### API Endpoints
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET/POST | `/api/cases` | List (with search/sort/filter/pagination) / create cases |
+| GET/POST | `/api/cases` | List (with search/sort/filter/pagination) / create cases (30+ advanced fields) |
 | GET/PUT/DELETE | `/api/cases/{id}` | Case CRUD (CaseActivity created on mutations) |
 | GET | `/api/cases/search?q=` | Search cases by title, case number, court, client name |
 | GET | `/api/cases/{id}/activities` | Case timeline (auto-created on create/update/delete) |
@@ -82,7 +80,7 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 ## Module 3 — Client Management
 
 ### Entities
-- `Client` — name, phone, email, address, nid, company_name, chamber_id
+- `Client` — name, phone, email, address, nid, company_name, chamber_id, passport_number, date_of_birth, gender, occupation, nationality, trade_license, registration_number, tax_vat_number, authorized_representative, tags, risk_level, client_category, billing_preference, payment_terms, credit_limit, preferred_contact_method, whatsapp_number, secondary_phone, emergency_contact
 - `ClientCase` — client_id, case_id (many-to-many join)
 
 ### API Endpoints
@@ -257,6 +255,40 @@ A secure client-facing portal for case tracking, document sharing, messaging, an
 - Portal access created/revoked by lawyers only
 - Client `User` accounts linked to `Client` CRM record via `ClientId` FK
 
+## Module 13 — Chamber Configuration & Settings
+
+### Entities
+- `ChamberSettings` — id, chamber_id, settings_json (jsonb blob containing all subsections), updated_by, created_at, updated_at
+- `WorkflowTemplate` — id, chamber_id, name, description, is_default, created_at
+- `WorkflowTemplateSection` — id, template_id, legal_section_id (FK), display_order
+
+### API Endpoints
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/configuration` | Get all chamber settings |
+| GET | `/api/configuration/{subsection}` | Get settings for a subsection |
+| PUT | `/api/configuration` | Update settings (partial merge) |
+| PUT | `/api/configuration/{subsection}` | Update settings for a subsection |
+| GET/POST | `/api/workflow-templates` | List/create workflow templates |
+| GET/PUT/DELETE | `/api/workflow-templates/{id}` | Workflow template CRUD |
+
+### Frontend  
+| Route | Description |
+|-------|-------------|
+| `/lawyer/configuration` | 12-tab configuration page (General, Appearance, Case Defaults, Document, Billing, Notification, Workflow, Legal Sections, Users, Security, Integrations, Data) |
+| Configuration/Workflow tab | Drag-and-drop workflow builder with status transition editor |
+
+## Module 14 — Legal Sections Database
+
+### Entities
+- `LegalSection` — id, chamber_id, title, description, act_name, category (PenalCode|CPC|CrPC|Evidence|Special|Other), is_active, created_at
+
+### API Endpoints
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/POST | `/api/legal-sections` | List/create legal sections |
+| GET/PUT/DELETE | `/api/legal-sections/{id}` | Legal section CRUD |
+
 ## Super Admin System
 
 A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for system-wide administration.
@@ -332,16 +364,16 @@ A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for sy
 
 ## Infrastructure Layer
 
-### AppDbContext (28 DbSets)
-Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, Messages, AuditLogs, AiConversations, Organizations, OrganizationMembers, Workspaces
+### AppDbContext (32 DbSets)
+Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, Messages, AuditLogs, AiConversations, Organizations, OrganizationMembers, Workspaces, ChamberSettings, WorkflowTemplates, WorkflowTemplateSections, LegalSections
 
-### Services (19 total)
+### Services (23 total)
 | Service | Key Methods |
 |---------|------------|
 | AuthService | Register/Login/Refresh/Logout with BCrypt + JWT |
 | JwtService | Token generation with ChamberId claim |
 | ChamberService | Chamber CRUD with owner assignment |
-| CaseService | CRUD + search/sort/filter + auto case number generation + client linking + CaseActivity creation |
+| CaseService | CRUD + search/sort/filter + auto case number generation + client linking + CaseActivity creation + legal section linking |
 | ClientService | CRUD + search by name/phone/company |
 | HearingService | CRUD + upcoming/by-date/by-case queries |
 | DocumentService | Upload/download + version control |
@@ -358,8 +390,11 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | RealtimeNotifier | SignalR push for case updates, notifications, activities |
 | ClientPortalService | Aggregated client dashboard, cases, documents, invoices, tasks with permission filtering |
 | MessageService | Client-lawyer messaging, conversations, unread counts |
+| ChamberSettingsService | CRUD for per-chamber key-value settings sections |
+| WorkflowTemplateService | CRUD for workflow templates with ordered sections |
+| LegalSectionService | CRUD for legal acts/sections reference data |
 
-## API Layer (23 Controllers)
+## API Layer (26 Controllers)
 
 | Controller | Route Prefix | Key Endpoints |
 |-----------|-------------|---------------|
@@ -386,10 +421,13 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | SuperAdminController | `/api/super-admin` | 28 endpoints: system control, chambers CRUD, users, subscriptions, permissions, audit logs, billing, broadcast, config, cases, health, revenue/growth charts |
 | ClientPortalController | `/api/client-portal` | 13 endpoints for Client role: dashboard, profile, cases, documents, invoices, messages |
 | MessagesController | `/api/messages` | Conversation, send, read, unread count |
+| ConfigurationController | `/api/configuration` | Get/update settings sections |
+| WorkflowTemplatesController | `/api/workflow-templates` | CRUD for workflow templates with ordered sections |
+| LegalSectionsController | `/api/legal-sections` | CRUD for legal acts/sections reference |
 
 ## Frontend Architecture
 
-### Pages (30 routes)
+### Pages (36 routes)
 ```
 / → redirect to /login
 /login → login form
@@ -409,6 +447,7 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 /lawyer/ai-assistant → AI chat interface
 /lawyer/notifications → notification list
 /lawyer/settings → profile settings
+/lawyer/configuration → 12-tab chamber configuration (General, Appearance, Case Defaults, Document, Billing, Notification, Workflow, Legal Sections, Users, Security, Integrations, Data)
 /admin → admin panel (Owner only)
 
 /super-admin/login → Super Admin login
@@ -424,11 +463,11 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 /super-admin/dashboard/health → System health monitoring
 ```
 
-### Services (19 files)
-Auth, Chamber, Case, Client, Hearing, Document, Invoice, Expense, Task, Template, Reminder, LegalDocument, Notification, Subscription, Payment, Admin, AI, Search, SuperAdmin
+### Services (24 files)
+Auth, Chamber, Case, Client, Hearing, Document, Invoice, Expense, Task, Template, Reminder, LegalDocument, Notification, Subscription, Payment, Admin, AI, Search, SuperAdmin, ChamberSettings, LegalSection, ClientPortal, Message
 
-### Hooks (22 files)
-All services have corresponding React Query hooks with cache invalidation. Key patterns: `useQuery` for fetches, `useMutation` for creates/updates, `queryClient.invalidateQueries` on success. Super admin hooks include: `useSuperAdminDashboard`, `useSuperAdminChambers`, `useSuperAdminChamber`, `useSuperAdminUsers`, `useSuperAdminCases`, `useSubscriptions`, `usePermissions`, `useRolePermissions`, `useAuditLogs`, `useBillingOverview`, `useSystemConfig`, `useSystemHealth`, `useRevenueChart`, `useChamberGrowth`, and mutations for user/subscription/permission changes.
+### Hooks (28 files)
+All services have corresponding React Query hooks with cache invalidation. Key patterns: `useQuery` for fetches, `useMutation` for creates/updates, `queryClient.invalidateQueries` on success. Super admin hooks include: `useSuperAdminDashboard`, `useSuperAdminChambers`, `useSuperAdminChamber`, `useSuperAdminUsers`, `useSuperAdminCases`, `useSubscriptions`, `usePermissions`, `useRolePermissions`, `useAuditLogs`, `useBillingOverview`, `useSystemConfig`, `useSystemHealth`, `useRevenueChart`, `useChamberGrowth`, and mutations for user/subscription/permission changes. Chamber hooks include: `useChamberSettings`, `useUpdateChamberSettings`, `useWorkflowTemplates`, `useCreateWorkflowTemplate`, `useUpdateWorkflowTemplate`, `useDeleteWorkflowTemplate`, `useLegalSections`, `useCreateLegalSection`, `useUpdateLegalSection`, `useDeleteLegalSection`.
 
 ### State Management
 - **Server state:** TanStack React Query (20 hook files)
@@ -462,3 +501,8 @@ Login → /api/auth/login → stores tokens in localStorage + cookies
 15. **Case Activity Tracking** — `CaseActivity` records auto-created on case create/update/delete for full timeline
 16. **Real-Time Case Updates** — SignalR `CaseUpdated` event broadcast to case group on every mutation
 17. **Super Admin Case View** — `GET /api/super-admin/cases` returns all cases across chambers with full details
+18. **Progressive Disclosure Dialogs** — CaseDialog/ClientDialog show basic fields first, advanced fields revealed on demand, reducing cognitive load
+19. **Case-Client Roles** — `ClientCases` join table extended with `Role` column for per-case client role labeling
+20. **Chamber Key-Value Settings** — `ChamberSettings` stores sections as JSON blobs, enabling flexible per-chamber configuration without schema changes
+21. **Workflow Template Engine** — Ordered status transitions with color/icon per step, entity-type scoped, enabling configurable lifecycle management
+22. **Legal Sections as Reference Data** — `LegalSections` table acts as a reusable reference for legal acts/sections linked to cases via many-to-many

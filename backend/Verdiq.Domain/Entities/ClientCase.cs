@@ -6,4 +6,5 @@ public class ClientCase : BaseEntity
     public Client Client { get; set; } = null!;
     public Guid CaseId { get; set; }
     public Case Case { get; set; } = null!;
+    public string? Role { get; set; }
 }

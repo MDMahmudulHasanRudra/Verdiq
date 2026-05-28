@@ -139,11 +139,14 @@ List cases with pagination, search, sort, and filtering.
 |-------|------|---------|-------------|
 | page | int | 1 | Page number |
 | pageSize | int | 10 | Items per page |
-| search | string | - | Search across case number, title, court, opponent, client name |
+| search | string | - | Search across case number, title, court, opponent, client name, FIR number |
 | status | string | - | Filter by status (Active, Pending, Closed, Appeal, Withdrawn) |
 | priority | string | - | Filter by priority (Low, Medium, High, Urgent) |
 | sortBy | string | createdAt | Sort field (caseNumber, title, status, priority, filingDate) |
 | sortOrder | string | desc | asc or desc |
+| assignedLawyerId | guid | - | Filter by assigned lawyer |
+| practiceArea | string | - | Filter by practice area |
+| clientId | guid | - | Filter by linked client ID |
 
 ### GET /api/cases/search?q=keyword
 Search cases by keyword across case number, title, court name, opponent, FIR number, and client name.
@@ -167,7 +170,33 @@ Create a new case. Case number (VER-YYYY-XXXX) auto-generated. CaseActivity reco
   "actsAndSections": "Section 302/34 IPC",
   "firNumber": "FIR-2024-001",
   "policeStation": "Gulshan",
-  "clientIds": ["guid1", "guid2"]
+  "gdNumber": "GD-2024-042",
+  "judgeName": "Md. Rahman",
+  "bench": "Bench 2",
+  "prosecutor": "Mr. Kamal",
+  "opposingLawyer": "Mr. Hasan",
+  "jurisdiction": "Dhaka",
+  "appealStatus": "First Appeal",
+  "riskLevel": "Medium",
+  "complexityScore": 7,
+  "practiceArea": "Criminal",
+  "department": "Litigation",
+  "internalNotes": "Sensitive case",
+  "retainerAmount": 50000,
+  "billingMethod": "Fixed",
+  "fixedFee": 100000,
+  "hourlyRate": 3000,
+  "budgetLimit": 200000,
+  "expenseBudget": 50000,
+  "nextHearingDate": "2026-06-15T10:00:00Z",
+  "criticalDeadlines": "2026-07-01 - Evidence submission",
+  "limitationExpiry": "2026-12-31",
+  "clientIds": ["guid1", "guid2"],
+  "clientRoles": [
+    { "clientId": "guid1", "role": "Plaintiff" },
+    { "clientId": "guid2", "role": "Witness" }
+  ],
+  "legalSectionIds": ["guid3", "guid4"]
 }
 ```
 
@@ -185,7 +214,33 @@ Update an existing case. All fields optional. CaseActivity record created automa
   "opponent": "Updated Opponent",
   "description": "Updated description",
   "actsAndSections": "Section 420 IPC",
-  "clientIds": ["guid1", "guid2"]
+  "firNumber": "FIR-2024-002",
+  "policeStation": "Banani",
+  "judgeName": "Updated Judge",
+  "bench": "Bench 1",
+  "prosecutor": "Updated Prosecutor",
+  "opposingLawyer": "Updated Opposing Counsel",
+  "jurisdiction": "Dhaka",
+  "appealStatus": "Second Appeal",
+  "riskLevel": "High",
+  "complexityScore": 8,
+  "practiceArea": "Criminal",
+  "department": "Litigation",
+  "internalNotes": "Updated notes",
+  "retainerAmount": 75000,
+  "billingMethod": "Hourly",
+  "fixedFee": 0,
+  "hourlyRate": 5000,
+  "budgetLimit": 300000,
+  "expenseBudget": 75000,
+  "nextHearingDate": "2026-07-10T10:00:00Z",
+  "criticalDeadlines": "2026-08-01 - Filing deadline",
+  "limitationExpiry": "2027-01-15",
+  "clientIds": ["guid1", "guid2"],
+  "clientRoles": [
+    { "clientId": "guid1", "role": "Plaintiff" }
+  ],
+  "legalSectionIds": ["guid3"]
 }
 ```
 
@@ -224,7 +279,26 @@ Create a new client.
   "phone": "+8801XXXXXXXXX",
   "address": "Dhaka, Bangladesh",
   "nationalId": "1234567890",
-  "notes": "Referred by..."
+  "notes": "Referred by...",
+  "passportNumber": "AB123456",
+  "dateOfBirth": "1990-01-15",
+  "gender": "Male",
+  "occupation": "Businessman",
+  "nationality": "Bangladeshi",
+  "tradeLicense": "TL-2024-001",
+  "registrationNumber": "REG-2024-001",
+  "taxVatNumber": "TAX-123456",
+  "authorizedRepresentative": "Md. Ali",
+  "tags": "VIP, Urgent",
+  "riskLevel": "Medium",
+  "clientCategory": "Individual",
+  "billingPreference": "Monthly",
+  "paymentTerms": "Net 30",
+  "creditLimit": 100000,
+  "preferredContactMethod": "Phone",
+  "whatsAppNumber": "+8801XXXXXXXXX",
+  "secondaryPhone": "+8801XXXXXXXXY",
+  "emergencyContact": "Wife - +8801XXXXXXXXZ"
 }
 ```
 
@@ -708,6 +782,250 @@ Get system configuration (self-registration, maintenance mode, AI features, etc.
 
 ### GET /api/super-admin/health
 Database status + system-wide statistics + active alerts.
+
+---
+
+## Chamber Configuration
+
+All endpoints require `[Authorize]`. Base: `/api/configuration`
+
+### GET /api/configuration
+Get all chamber settings with defaults.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Settings retrieved",
+  "data": {
+    "id": "guid",
+    "chamberId": "guid",
+    "settings": {
+      "general": {
+        "companyName": "Verdiq Law Chamber",
+        "companyNameBn": "",
+        "logoUrl": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "timezone": "Asia/Dhaka",
+        "dateFormat": "DD-MM-YYYY",
+        "currency": "BDT",
+        "language": "en"
+      },
+      "caseDefaults": {
+        "caseNumberPrefix": "VER",
+        "caseNumberFormat": "{PREFIX}-{YYYY}-{XXXX}",
+        "caseTypes": ["Criminal","Civil","Family","Corporate","Tax","Labor","Property"],
+        "priorityLevels": ["Low","Medium","High","Urgent"],
+        "statuses": ["Active","Pending","Closed","Appeal","Withdrawn"],
+        "courtPresets": ["Dhaka District Court","High Court Division","Supreme Court"]
+      },
+      "clientManagement": {
+        "clientTypes": ["Individual","Company","NGO","Government"],
+        "enablePortalAccess": true,
+        "portalRegistrationApproval": false,
+        "defaultDocumentSharing": false
+      },
+      "billing": {
+        "taxRatePercent": 15,
+        "invoicePrefix": "INV",
+        "paymentMethods": ["Bkash","Nagad","Card","Bank Transfer","Cash"],
+        "expenseCategories": ["Court Fees","Stamp Fees","Transport","Stationery","Admin","Other"]
+      },
+      "documentManagement": {
+        "categories": ["Pleading","Evidence","Correspondence","Court Order","Contract","Other"],
+        "maxFileSizeMb": 25,
+        "allowedMimeTypes": ["application/pdf","image/jpeg","image/png","application/msword"],
+        "enableOcr": false,
+        "storageProvider": "local"
+      },
+      "hearingsReminders": {
+        "hearingTypes": ["Appearance","Argument","Order","Judgment"],
+        "reminderOffsetsDays": [1,3,7],
+        "enableEmailReminders": true,
+        "enableSmsReminders": false,
+        "enableWhatsAppReminders": false,
+        "defaultReminderChannel": "email"
+      },
+      "legalDrafting": {
+        "templateCategories": ["Petition","Affidavit","Contract","Notice","Deed"],
+        "enableSmartVariables": true
+      },
+      "notifications": {
+        "enableEmailNotifications": true,
+        "enablePushNotifications": true,
+        "smtpConfigured": false,
+        "smsConfigured": false,
+        "whatsappConfigured": false
+      },
+      "aiAssistant": {
+        "enabled": true,
+        "apiKeyConfigured": false,
+        "model": "gpt-4o-mini"
+      },
+      "securitySession": {
+        "enableMfa": false,
+        "sessionTimeoutMinutes": 60,
+        "maxLoginAttempts": 5,
+        "lockoutDurationMinutes": 15
+      },
+      "dashboardUi": {
+        "companyName": "Verdiq Law Chamber",
+        "showWelcomeWidget": true,
+        "showCaseStats": true,
+        "showHearingWidget": true,
+        "defaultWidgets": ["caseStats","upcomingHearings","recentActivities","invoiceSummary"]
+      }
+    },
+    "updatedAt": "2026-05-28T13:07:45.8430271Z"
+  }
+}
+```
+
+### PUT /api/configuration
+Update all chamber settings at once. Supports partial updates — only non-null sections are merged.
+
+**Request Body** (`UpdateChamberSettingsDto`):
+```json
+{
+  "general": { "companyName": "Updated Chamber Name", "timezone": "Asia/Dhaka" },
+  "caseDefaults": { "caseNumberPrefix": "VER" },
+  "clientManagement": { "enablePortalAccess": true },
+  "billing": { "taxRatePercent": 10 },
+  "documentManagement": { "maxFileSizeMb": 50 },
+  "hearingsReminders": { "enableEmailReminders": true },
+  "legalDrafting": { "enableSmartVariables": true },
+  "notifications": { "enablePushNotifications": false },
+  "aiAssistant": { "enabled": true },
+  "securitySession": { "sessionTimeoutMinutes": 120 },
+  "dashboardUi": { "showWelcomeWidget": false }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Settings updated",
+  "data": { "...": "..." }
+}
+```
+
+### GET /api/configuration/{subsection}
+Get a single subsection (general, caseDefaults, clientManagement, billing, documentManagement, hearingsReminders, legalDrafting, notifications, aiAssistant, securitySession, dashboardUi).
+
+### PUT /api/configuration/{subsection}
+Update a single subsection. Body is a flat JSON object of the subsection fields to update.
+
+---
+
+## Workflow Templates
+
+All endpoints require `[Authorize]`. Base: `/api/workflow-templates`
+
+### GET /api/workflow-templates
+List all workflow templates for the chamber.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "name": "Criminal Case Workflow",
+      "description": "Standard criminal case workflow",
+      "isDefault": true,
+      "sections": [
+        { "id": "guid", "legalSectionId": "guid", "sectionCode": "302", "sectionTitle": "Punishment for Murder", "lawName": "Penal Code, 1860", "displayOrder": 1 },
+        { "id": "guid", "legalSectionId": "guid", "sectionCode": "CrPC-161", "sectionTitle": "Examination of Witnesses", "lawName": "CrPC", "displayOrder": 2 }
+      ],
+      "createdAt": "2026-05-28T00:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/workflow-templates
+Create a workflow template linked to legal sections.
+
+**Request:**
+```json
+{
+  "name": "Criminal Case Workflow",
+  "description": "Standard criminal case workflow",
+  "isDefault": false,
+  "legalSectionIds": ["guid1", "guid2", "guid3"]
+}
+```
+
+### PUT /api/workflow-templates/{id}
+Update a workflow template.
+
+```json
+{
+  "name": "Updated Workflow",
+  "description": "Updated description",
+  "isDefault": true,
+  "legalSectionIds": ["guid1", "guid2"]
+}
+```
+
+### DELETE /api/workflow-templates/{id}
+Delete a workflow template (cascades to sections).
+
+---
+
+## Legal Sections
+
+All endpoints require `[Authorize]`. Base: `/api/legal-sections`
+
+### GET /api/legal-sections
+List all legal sections for the chamber.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "sectionCode": "302",
+      "sectionTitle": "Punishment for Murder",
+      "lawName": "Penal Code, 1860",
+      "country": "Bangladesh",
+      "category": "PenalCode",
+      "description": "Whoever commits murder shall be punished with death...",
+      "severity": "High",
+      "isActive": true,
+      "procedureCount": 3,
+      "createdAt": "2026-05-28T00:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/legal-sections
+Create a legal section.
+
+```json
+{
+  "sectionCode": "420",
+  "sectionTitle": "Cheating",
+  "lawName": "Penal Code, 1860",
+  "country": "Bangladesh",
+  "category": "PenalCode",
+  "description": "Whoever cheats and thereby dishonestly induces...",
+  "severity": "Medium"
+}
+```
+
+### PUT /api/legal-sections/{id}
+Update a legal section.
+
+### DELETE /api/legal-sections/{id}
+Soft-delete a legal section.
 
 ---
 

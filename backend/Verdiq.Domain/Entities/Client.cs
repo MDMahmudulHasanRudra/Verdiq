@@ -11,6 +11,29 @@ public class Client : BaseEntity
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
 
+    public string? ClientType { get; set; }
+    public string? ClientCode { get; set; }
+    public string? PassportNumber { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? Gender { get; set; }
+    public string? Occupation { get; set; }
+    public string? Nationality { get; set; }
+    public string? TradeLicense { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? TaxVatNumber { get; set; }
+    public string? AuthorizedRepresentative { get; set; }
+    public string? Tags { get; set; }
+    public string? RiskLevel { get; set; }
+    public string? ClientCategory { get; set; }
+    public string? BillingPreference { get; set; }
+    public string? PaymentTerms { get; set; }
+    public decimal? CreditLimit { get; set; }
+    public string? PreferredContactMethod { get; set; }
+    public string? WhatsAppNumber { get; set; }
+    public string? SecondaryPhone { get; set; }
+    public string? EmergencyContact { get; set; }
+    public bool IsBlacklisted { get; set; }
+
     public Guid? UserId { get; set; }
     public User? User { get; set; }
 

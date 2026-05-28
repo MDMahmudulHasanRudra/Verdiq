@@ -127,6 +127,10 @@ try
     builder.Services.AddScoped<IOrganizationService, OrganizationService>();
     builder.Services.AddScoped<IClientPortalService, ClientPortalService>();
     builder.Services.AddScoped<IMessageService, MessageService>();
+    builder.Services.AddScoped<ILegalSectionService, LegalSectionService>();
+    builder.Services.AddScoped<ILegalProcedureService, LegalProcedureService>();
+    builder.Services.AddScoped<IChamberSettingsService, ChamberSettingsService>();
+    builder.Services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
 
     builder.Services.AddSignalR();
     builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
