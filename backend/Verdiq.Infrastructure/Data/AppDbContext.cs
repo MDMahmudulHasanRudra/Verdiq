@@ -46,6 +46,7 @@ public class AppDbContext : DbContext
     public DbSet<ChamberSettings> ChamberSettings => Set<ChamberSettings>();
     public DbSet<WorkflowTemplate> WorkflowTemplates => Set<WorkflowTemplate>();
     public DbSet<WorkflowTemplateSection> WorkflowTemplateSections => Set<WorkflowTemplateSection>();
+    public DbSet<Bail> Bails => Set<Bail>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -884,6 +885,29 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.LegalSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Bail>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Bails");
+            entity.Property(e => e.BailAmount).HasPrecision(18, 2);
+            entity.Property(e => e.BailConditions).HasMaxLength(2000);
+            entity.Property(e => e.BondNumber).HasMaxLength(100);
+            entity.Property(e => e.SuretyName).HasMaxLength(255);
+            entity.Property(e => e.SuretyAddress).HasMaxLength(500);
+            entity.Property(e => e.SuretyContact).HasMaxLength(50);
+            entity.Property(e => e.RevokedReason).HasMaxLength(2000);
+            entity.Property(e => e.GrantedBy).HasMaxLength(255);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasOne(e => e.Case)
+                .WithMany()
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

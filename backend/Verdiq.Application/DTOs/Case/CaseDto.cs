@@ -141,7 +141,37 @@ public class ClientInfo
 public class LegalSectionInfo
 {
     public Guid Id { get; set; }
+    public Guid LegalSectionId { get; set; }
     public string SectionCode { get; set; } = string.Empty;
     public string SectionTitle { get; set; } = string.Empty;
     public string LawName { get; set; } = string.Empty;
+    public List<CaseProcedureInfo> Procedures { get; set; } = new();
+}
+
+public class BulkStatusChangeDto
+{
+    public List<Guid> CaseIds { get; set; } = new();
+    public string Status { get; set; } = string.Empty;
+}
+
+public class BulkDeleteDto
+{
+    public List<Guid> CaseIds { get; set; } = new();
+}
+
+public class CaseProcedureInfo
+{
+    public Guid Id { get; set; }
+    public Guid LegalProcedureId { get; set; }
+    public string ProcedureTitle { get; set; } = string.Empty;
+    public int StepNumber { get; set; }
+    public string? Description { get; set; }
+    public string? RequiredDocuments { get; set; }
+    public string? RecommendedTimeline { get; set; }
+    public string? ResponsibleRole { get; set; }
+    public bool IsMandatory { get; set; }
+    public bool IsCompleted { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public string? CompletedBy { get; set; }
+    public string? Notes { get; set; }
 }

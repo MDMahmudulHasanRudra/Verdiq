@@ -179,7 +179,7 @@ public class CaseService : ICaseService
         return caseEntity == null ? null : MapToDto(caseEntity);
     }
 
-    public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, string? search = null, string? sortBy = null, string? sortOrder = null, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<CaseResponseDto>> GetAllAsync(Guid chamberId, string? status = null, string? priority = null, string? search = null, string? sortBy = null, string? sortOrder = null, int page = 1, int pageSize = 10, string? type = null, string? courtName = null, DateTime? dateFrom = null, DateTime? dateTo = null)
     {
         var query = _context.Cases
             .Include(c => c.AssignedLawyer)
@@ -193,6 +193,14 @@ public class CaseService : ICaseService
             query = query.Where(c => c.Status == caseStatus);
         if (!string.IsNullOrEmpty(priority) && Enum.TryParse<CasePriority>(priority, true, out var casePriority))
             query = query.Where(c => c.Priority == casePriority);
+        if (!string.IsNullOrEmpty(type))
+            query = query.Where(c => c.CaseType != null && c.CaseType.ToLower().Contains(type.ToLower()));
+        if (!string.IsNullOrEmpty(courtName))
+            query = query.Where(c => c.CourtName.ToLower().Contains(courtName.ToLower()));
+        if (dateFrom.HasValue)
+            query = query.Where(c => c.FilingDate >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(c => c.FilingDate <= dateTo.Value);
         if (!string.IsNullOrEmpty(search))
         {
             var term = search.ToLower();
@@ -237,9 +245,76 @@ public class CaseService : ICaseService
         return cases.Select(MapToDto);
     }
 
-    public async Task<int> GetCountAsync(Guid chamberId)
+    public async Task<(int SuccessCount, int FailCount, string Message)> BulkStatusChangeAsync(BulkStatusChangeDto dto, Guid chamberId)
     {
-        return await _context.Cases.CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+        var caseIds = dto.CaseIds.ToHashSet();
+        var cases = await _context.Cases
+            .Where(c => caseIds.Contains(c.Id) && c.ChamberId == chamberId && !c.IsDeleted)
+            .ToListAsync();
+
+        if (cases.Count == 0)
+            return (0, dto.CaseIds.Count, "No matching cases found");
+
+        if (!Enum.TryParse<CaseStatus>(dto.Status, true, out var status))
+            return (0, dto.CaseIds.Count, "Invalid status");
+
+        foreach (var c in cases)
+        {
+            c.Status = status;
+            c.UpdatedAt = DateTime.UtcNow;
+            if (status == CaseStatus.Closed)
+                c.ClosingDate = DateTime.UtcNow;
+
+            _context.CaseActivities.Add(new CaseActivity
+            {
+                CaseId = c.Id,
+                ActivityType = ActivityType.StatusChange,
+                Description = $"Bulk status changed to {status}",
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return (cases.Count, dto.CaseIds.Count - cases.Count, $"Updated {cases.Count} case(s) to {status}");
+    }
+
+    public async Task<(int SuccessCount, int FailCount, string Message)> BulkDeleteAsync(BulkDeleteDto dto, Guid chamberId)
+    {
+        var caseIds = dto.CaseIds.ToHashSet();
+        var cases = await _context.Cases
+            .Where(c => caseIds.Contains(c.Id) && c.ChamberId == chamberId && !c.IsDeleted)
+            .ToListAsync();
+
+        if (cases.Count == 0)
+            return (0, dto.CaseIds.Count, "No matching cases found");
+
+        foreach (var c in cases)
+        {
+            c.IsDeleted = true;
+            c.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return (cases.Count, dto.CaseIds.Count - cases.Count, $"Deleted {cases.Count} case(s)");
+    }
+
+    public async Task<int> GetCountAsync(Guid chamberId, string? status = null, string? priority = null, string? type = null, string? courtName = null, DateTime? dateFrom = null, DateTime? dateTo = null)
+    {
+        var query = _context.Cases.Where(c => c.ChamberId == chamberId && !c.IsDeleted);
+
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<CaseStatus>(status, true, out var caseStatus))
+            query = query.Where(c => c.Status == caseStatus);
+        if (!string.IsNullOrEmpty(priority) && Enum.TryParse<CasePriority>(priority, true, out var casePriority))
+            query = query.Where(c => c.Priority == casePriority);
+        if (!string.IsNullOrEmpty(type))
+            query = query.Where(c => c.CaseType != null && c.CaseType.ToLower().Contains(type.ToLower()));
+        if (!string.IsNullOrEmpty(courtName))
+            query = query.Where(c => c.CourtName.ToLower().Contains(courtName.ToLower()));
+        if (dateFrom.HasValue)
+            query = query.Where(c => c.FilingDate >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(c => c.FilingDate <= dateTo.Value);
+
+        return await query.CountAsync();
     }
 
     private async System.Threading.Tasks.Task LinkClients(Guid caseId, List<Guid> clientIds, List<ClientRoleDto>? clientRoles)
@@ -340,10 +415,27 @@ public class CaseService : ICaseService
         CreatedAt = c.CreatedAt,
         LegalSections = c.CaseLegalSections.Where(cls => !cls.IsDeleted).Select(cls => new LegalSectionInfo
         {
-            Id = cls.LegalSection.Id,
+            Id = cls.Id,
+            LegalSectionId = cls.LegalSectionId,
             SectionCode = cls.LegalSection.SectionCode,
             SectionTitle = cls.LegalSection.SectionTitle,
             LawName = cls.LegalSection.LawName,
+            Procedures = cls.CaseProcedures.Where(cp => !cp.IsDeleted).Select(cp => new CaseProcedureInfo
+            {
+                Id = cp.Id,
+                LegalProcedureId = cp.LegalProcedureId,
+                ProcedureTitle = cp.LegalProcedure.Title,
+                StepNumber = cp.LegalProcedure.StepNumber,
+                Description = cp.LegalProcedure.Description,
+                RequiredDocuments = cp.LegalProcedure.RequiredDocuments,
+                RecommendedTimeline = cp.LegalProcedure.RecommendedTimeline,
+                ResponsibleRole = cp.LegalProcedure.ResponsibleRole,
+                IsMandatory = cp.LegalProcedure.IsMandatory,
+                IsCompleted = cp.IsCompleted,
+                CompletedAt = cp.CompletedAt,
+                CompletedBy = cp.CompletedBy,
+                Notes = cp.Notes,
+            }).ToList(),
         }).ToList(),
     };
 }

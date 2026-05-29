@@ -6,5 +6,6 @@ public enum CaseStatus
     Pending,
     Closed,
     Appeal,
-    Withdrawn
+    Withdrawn,
+    BailClosed
 }

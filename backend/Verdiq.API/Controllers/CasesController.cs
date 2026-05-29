@@ -29,11 +29,15 @@ public class CasesController : BaseController
         [FromQuery] string? priority = null,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] string? sortOrder = null)
+        [FromQuery] string? sortOrder = null,
+        [FromQuery] string? type = null,
+        [FromQuery] string? courtName = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null)
     {
         var chamberId = GetChamberId();
-        var cases = await _caseService.GetAllAsync(chamberId, status, priority, search, sortBy, sortOrder, page, pageSize);
-        var totalCount = await _caseService.GetCountAsync(chamberId);
+        var cases = await _caseService.GetAllAsync(chamberId, status, priority, search, sortBy, sortOrder, page, pageSize, type, courtName, dateFrom, dateTo);
+        var totalCount = await _caseService.GetCountAsync(chamberId, status, priority, type, courtName, dateFrom, dateTo);
 
         return Ok(new PagedResponse<CaseResponseDto>
         {
@@ -90,6 +94,20 @@ public class CasesController : BaseController
         await _notifier.NotifyCaseGroupAsync(id.ToString(), "CaseUpdated", data);
 
         return Ok(ApiResponse<CaseResponseDto>.Ok(data));
+    }
+
+    [HttpPost("bulk-status")]
+    public async Task<ActionResult<ApiResponse<object>>> BulkStatusChange([FromBody] BulkStatusChangeDto dto)
+    {
+        var (successCount, failCount, message) = await _caseService.BulkStatusChangeAsync(dto, GetChamberId());
+        return Ok(ApiResponse<object>.Ok(new { successCount, failCount, message }));
+    }
+
+    [HttpPost("bulk-delete")]
+    public async Task<ActionResult<ApiResponse<object>>> BulkDelete([FromBody] BulkDeleteDto dto)
+    {
+        var (successCount, failCount, message) = await _caseService.BulkDeleteAsync(dto, GetChamberId());
+        return Ok(ApiResponse<object>.Ok(new { successCount, failCount, message }));
     }
 
     [HttpDelete("{id}")]

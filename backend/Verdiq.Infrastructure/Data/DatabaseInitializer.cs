@@ -227,16 +227,32 @@ public static class DatabaseInitializer
             CREATE UNIQUE INDEX IF NOT EXISTS "IX_CaseLegalSections_CaseId_LegalSectionId" ON "CaseLegalSections"("CaseId", "LegalSectionId");
             """);
 
+        // LegalProcedures — add columns the entity model needs (handles old schema from earlier EnsureCreated)
+        await db.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "LegalProcedures" ADD COLUMN IF NOT EXISTS "StepNumber" integer NOT NULL DEFAULT 0;
+            ALTER TABLE "LegalProcedures" ADD COLUMN IF NOT EXISTS "Title" character varying(500) NOT NULL DEFAULT '';
+            ALTER TABLE "LegalProcedures" ADD COLUMN IF NOT EXISTS "RecommendedTimeline" character varying(200);
+            ALTER TABLE "LegalProcedures" ADD COLUMN IF NOT EXISTS "ResponsibleRole" character varying(50);
+            ALTER TABLE "LegalProcedures" ADD COLUMN IF NOT EXISTS "IsMandatory" boolean NOT NULL DEFAULT false;
+            """);
+
+        // Migrate data from old column names if they exist and new ones are empty
+        await db.Database.ExecuteSqlRawAsync("""
+            UPDATE "LegalProcedures" SET "Title" = "Name" WHERE "Title" = '' AND "Name" IS NOT NULL AND "Name" <> '';
+            UPDATE "LegalProcedures" SET "RecommendedTimeline" = "Timeline" WHERE "RecommendedTimeline" IS NULL AND "Timeline" IS NOT NULL;
+            """);
+
         await db.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS "LegalProcedures" (
                 "Id" uuid NOT NULL,
                 "LegalSectionId" uuid NOT NULL,
-                "Name" character varying(500) NOT NULL,
+                "StepNumber" integer NOT NULL DEFAULT 0,
+                "Title" character varying(500) NOT NULL,
                 "Description" character varying(4000),
-                "ProcedureType" character varying(100),
-                "Timeline" character varying(1000),
                 "RequiredDocuments" character varying(2000),
-                "IsActive" boolean NOT NULL DEFAULT true,
+                "RecommendedTimeline" character varying(200),
+                "ResponsibleRole" character varying(50),
+                "IsMandatory" boolean NOT NULL DEFAULT false,
                 "CreatedAt" timestamp with time zone NOT NULL,
                 "UpdatedAt" timestamp with time zone,
                 "IsDeleted" boolean NOT NULL DEFAULT false,
@@ -245,20 +261,54 @@ public static class DatabaseInitializer
             );
             """);
 
+        // CaseLegalProcedures — add columns the entity model needs
+        await db.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "CaseLegalProcedures" ADD COLUMN IF NOT EXISTS "LegalProcedureId" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';
+            ALTER TABLE "CaseLegalProcedures" ADD COLUMN IF NOT EXISTS "IsCompleted" boolean NOT NULL DEFAULT false;
+            ALTER TABLE "CaseLegalProcedures" ADD COLUMN IF NOT EXISTS "CompletedBy" character varying(200);
+            """);
+
         await db.Database.ExecuteSqlRawAsync("""
             CREATE TABLE IF NOT EXISTS "CaseLegalProcedures" (
                 "Id" uuid NOT NULL,
                 "CaseLegalSectionId" uuid NOT NULL,
-                "ProcedureName" character varying(500) NOT NULL,
-                "Status" character varying(50) NOT NULL DEFAULT 'Pending',
-                "StartedAt" timestamp with time zone,
+                "LegalProcedureId" uuid NOT NULL,
+                "IsCompleted" boolean NOT NULL DEFAULT false,
                 "CompletedAt" timestamp with time zone,
+                "CompletedBy" character varying(200),
                 "Notes" character varying(4000),
                 "CreatedAt" timestamp with time zone NOT NULL,
                 "UpdatedAt" timestamp with time zone,
                 "IsDeleted" boolean NOT NULL DEFAULT false,
                 CONSTRAINT "PK_CaseLegalProcedures" PRIMARY KEY ("Id"),
-                CONSTRAINT "FK_CaseLegalProcedures_CaseLegalSections_CaseLegalSectionId" FOREIGN KEY ("CaseLegalSectionId") REFERENCES "CaseLegalSections"("Id") ON DELETE CASCADE
+                CONSTRAINT "FK_CaseLegalProcedures_CaseLegalSections_CaseLegalSectionId" FOREIGN KEY ("CaseLegalSectionId") REFERENCES "CaseLegalSections"("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_CaseLegalProcedures_LegalProcedures_LegalProcedureId" FOREIGN KEY ("LegalProcedureId") REFERENCES "LegalProcedures"("Id") ON DELETE RESTRICT
+            );
+            """);
+
+        // Bails table — Phase 7 Bail Management
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "Bails" (
+                "Id" uuid NOT NULL,
+                "CaseId" uuid NOT NULL,
+                "Status" character varying(20) NOT NULL DEFAULT 'Pending',
+                "BailAmount" numeric(18,2),
+                "BailConditions" character varying(2000),
+                "BailGrantedAt" timestamp with time zone,
+                "BailHearingDate" timestamp with time zone,
+                "BondNumber" character varying(100),
+                "SuretyName" character varying(255),
+                "SuretyAddress" character varying(500),
+                "SuretyContact" character varying(50),
+                "RevokedAt" timestamp with time zone,
+                "RevokedReason" character varying(2000),
+                "GrantedBy" character varying(255),
+                "Notes" character varying(2000),
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "UpdatedAt" timestamp with time zone,
+                "IsDeleted" boolean NOT NULL DEFAULT false,
+                CONSTRAINT "PK_Bails" PRIMARY KEY ("Id"),
+                CONSTRAINT "FK_Bails_Cases_CaseId" FOREIGN KEY ("CaseId") REFERENCES "Cases"("Id") ON DELETE CASCADE
             );
             """);
 
