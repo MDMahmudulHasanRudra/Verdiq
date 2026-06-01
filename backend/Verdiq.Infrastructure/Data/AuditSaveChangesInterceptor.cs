@@ -78,9 +78,9 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
         return userIdClaim is not null ? Guid.Parse(userIdClaim) : null;
     }
 
-    private static string GetIpAddress()
+    private string GetIpAddress()
     {
-        var httpContext = new HttpContextAccessor().HttpContext;
+        var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext is null) return "unknown";
 
         var forwarded = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();

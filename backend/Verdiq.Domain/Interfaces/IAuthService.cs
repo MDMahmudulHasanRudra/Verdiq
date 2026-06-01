@@ -6,7 +6,7 @@ namespace Verdiq.Domain.Interfaces;
 public interface IAuthService
 {
     Task<(bool Success, string Message, User? User, string? AccessToken, string? RefreshToken)>
-        RegisterAsync(string fullName, string email, string password, string phone, string role, Guid chamberId);
+        RegisterAsync(string fullName, string email, string password, string phone, string role, Guid chamberId, string? barCouncilId = null);
 
     Task<(bool Success, string Message, User? User, string? AccessToken, string? RefreshToken)>
         LoginAsync(string email, string password);

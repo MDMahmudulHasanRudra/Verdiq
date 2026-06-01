@@ -22,7 +22,7 @@ public class AuthService : IAuthService
     }
 
     public async Task<(bool Success, string Message, User? User, string? AccessToken, string? RefreshToken)>
-        RegisterAsync(string fullName, string email, string password, string phone, string role, Guid chamberId)
+        RegisterAsync(string fullName, string email, string password, string phone, string role, Guid chamberId, string? barCouncilId = null)
     {
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (existingUser != null)
@@ -44,6 +44,7 @@ public class AuthService : IAuthService
             Role = userRole,
             ChamberId = chamberId,
             IsActive = true,
+            BarCouncilId = barCouncilId,
             CreatedAt = DateTime.UtcNow
         };
 

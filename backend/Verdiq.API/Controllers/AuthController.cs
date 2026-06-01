@@ -29,7 +29,7 @@ public class AuthController : BaseController
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto)
     {
         var (success, message, user, accessToken, refreshToken) =
-            await _authService.RegisterAsync(dto.FullName, dto.Email, dto.Password, dto.Phone, dto.Role, dto.ChamberId);
+            await _authService.RegisterAsync(dto.FullName, dto.Email, dto.Password, dto.Phone, dto.Role, dto.ChamberId, dto.BarCouncilId);
 
         if (!success)
             return BadRequest(new AuthResponseDto { Success = false, Message = message });

@@ -98,7 +98,7 @@ public class JwtService : IJwtService
                 ValidIssuer = _configuration["Jwt:Issuer"] ?? "Verdiq",
                 ValidateAudience = true,
                 ValidAudience = _configuration["Jwt:Audience"] ?? "VerdiqApp",
-                ValidateLifetime = true,
+                ValidateLifetime = false,
                 ClockSkew = TimeSpan.Zero
             }, out _);
 
