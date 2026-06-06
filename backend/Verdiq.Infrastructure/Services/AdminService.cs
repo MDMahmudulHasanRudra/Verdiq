@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Verdiq.Application.DTOs.Admin;
 using Verdiq.Application.Interfaces;
+using Verdiq.Domain.Entities;
 using Verdiq.Domain.Enums;
 using Verdiq.Infrastructure.Data;
 
@@ -127,5 +128,126 @@ public class AdminService : IAdminService
             ActiveSubscriptions = activeSubscriptions,
             MonthlyRevenue = monthlyRevenue
         };
+    }
+
+    public async Task<AdminUserDto> CreateSubUserAsync(CreateSubUserDto dto, Guid currentUserId)
+    {
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            throw new ArgumentException("Full name is required");
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            throw new ArgumentException("Email is required");
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 4)
+            throw new ArgumentException("Password must be at least 4 characters");
+        if (!Enum.TryParse<UserRole>(dto.Role, true, out var role)
+            || role == UserRole.SuperAdmin || role == UserRole.Owner || role == UserRole.Client)
+            throw new ArgumentException("Invalid role. Valid: SeniorLawyer, JuniorLawyer, Assistant, Accountant");
+
+        var currentUser = await _context.Users.FindAsync(currentUserId)
+            ?? throw new UnauthorizedAccessException("Current user not found");
+
+        var existingEmail = await _context.Users.AnyAsync(u => u.Email == dto.Email && !u.IsDeleted);
+        if (existingEmail)
+            throw new InvalidOperationException("A user with this email already exists");
+
+        var user = new User
+        {
+            FullName = dto.FullName,
+            Email = dto.Email,
+            Phone = dto.Phone ?? string.Empty,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Role = role,
+            ChamberId = currentUser.ChamberId,
+            IsActive = true,
+            Status = "Active",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = currentUserId,
+            Action = $"Admin created sub-user '{dto.FullName}' ({role})",
+            Entity = "User",
+            EntityId = user.Id.ToString(),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return new AdminUserDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Phone = user.Phone,
+            Role = user.Role.ToString(),
+            IsActive = user.IsActive,
+            BarCouncilId = user.BarCouncilId,
+            ChamberId = user.ChamberId,
+            ChamberName = currentUser.Chamber?.Name ?? "",
+            CasesCount = 0,
+            CreatedAt = user.CreatedAt
+        };
+    }
+
+    public async Task<IEnumerable<UserActivityDto>> GetUserActivityAsync(Guid userId, int page = 1, int pageSize = 50)
+    {
+        return await _context.AuditLogs
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => new UserActivityDto
+            {
+                Id = a.Id,
+                Action = a.Action,
+                Entity = a.Entity,
+                EntityId = a.EntityId,
+                OldValues = a.OldValues,
+                NewValues = a.NewValues,
+                CreatedAt = a.CreatedAt
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<UserActivitySummaryDto>> GetUsersActivitySummaryAsync()
+    {
+        var now = DateTime.UtcNow;
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var activityGroups = await _context.AuditLogs
+            .Where(a => a.CreatedAt >= monthStart)
+            .GroupBy(a => a.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                TotalActions = g.Count(),
+                ActionsByModule = g.GroupBy(a => a.Entity)
+                    .ToDictionary(sub => sub.Key, sub => sub.Count()),
+                LastActivityAt = g.Max(a => a.CreatedAt)
+            })
+            .ToListAsync();
+
+        var userIds = activityGroups.Select(g => g.UserId).ToList();
+        var users = await _context.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id);
+
+        return activityGroups.Select(g =>
+        {
+            users.TryGetValue(g.UserId, out var user);
+            return new UserActivitySummaryDto
+            {
+                UserId = g.UserId,
+                UserFullName = user?.FullName ?? "Unknown",
+                UserEmail = user?.Email ?? "",
+                UserRole = user?.Role.ToString() ?? "",
+                TotalActions = g.TotalActions,
+                ActionsByModule = g.ActionsByModule,
+                LastActivityAt = g.LastActivityAt
+            };
+        }).OrderByDescending(s => s.TotalActions);
     }
 }

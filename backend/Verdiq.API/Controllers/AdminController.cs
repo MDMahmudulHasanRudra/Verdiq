@@ -8,7 +8,7 @@ namespace Verdiq.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Owner")]
 public class AdminController : BaseController
 {
     private readonly IAdminService _adminService;
@@ -83,5 +83,44 @@ public class AdminController : BaseController
     {
         var stats = await _adminService.GetSystemStatsAsync();
         return Ok(ApiResponse<AdminSystemStatsDto>.Ok(stats));
+    }
+
+    [HttpPost("users")]
+    public async Task<ActionResult<ApiResponse<AdminUserDto>>> CreateSubUser(
+        [FromBody] CreateSubUserDto dto)
+    {
+        try
+        {
+            var currentUserId = GetUserId();
+            var user = await _adminService.CreateSubUserAsync(dto, currentUserId);
+            return Ok(ApiResponse<AdminUserDto>.Ok(user, "User created successfully"));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<AdminUserDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ApiResponse<AdminUserDto>.Fail(ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ApiResponse<AdminUserDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpGet("users/activity-summary")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<UserActivitySummaryDto>>>> GetUsersActivitySummary()
+    {
+        var summary = await _adminService.GetUsersActivitySummaryAsync();
+        return Ok(ApiResponse<IEnumerable<UserActivitySummaryDto>>.Ok(summary));
+    }
+
+    [HttpGet("users/{userId:guid}/activity")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<UserActivityDto>>>> GetUserActivity(
+        Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        var activity = await _adminService.GetUserActivityAsync(userId, page, pageSize);
+        return Ok(ApiResponse<IEnumerable<UserActivityDto>>.Ok(activity));
     }
 }

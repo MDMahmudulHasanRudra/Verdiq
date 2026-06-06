@@ -49,3 +49,35 @@ public class UpdateUserStatusDto
 {
     public bool IsActive { get; set; }
 }
+
+public class CreateSubUserDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string? BarCouncilId { get; set; }
+}
+
+public class UserActivityDto
+{
+    public Guid Id { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string Entity { get; set; } = string.Empty;
+    public string? EntityId { get; set; }
+    public string? OldValues { get; set; }
+    public string? NewValues { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class UserActivitySummaryDto
+{
+    public Guid UserId { get; set; }
+    public string UserFullName { get; set; } = string.Empty;
+    public string UserEmail { get; set; } = string.Empty;
+    public string UserRole { get; set; } = string.Empty;
+    public int TotalActions { get; set; }
+    public Dictionary<string, int> ActionsByModule { get; set; } = new();
+    public DateTime? LastActivityAt { get; set; }
+}
