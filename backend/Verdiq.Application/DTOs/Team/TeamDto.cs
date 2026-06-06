@@ -27,18 +27,24 @@ public class TeamResponseDto
 public class TeamMemberDto
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string UserEmail { get; set; } = string.Empty;
     public string UserRole { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string TeamRole { get; set; } = "Member";
     public DateTime JoinedAt { get; set; }
+    public bool IsPending { get; set; }
+    public string? InvitedName { get; set; }
 }
 
 public class AddTeamMemberDto
 {
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
+    public string? Email { get; set; }
+    public string? InvitedName { get; set; }
+    public string? Password { get; set; }
+    public string? UserRole { get; set; }
     public string Role { get; set; } = "Member";
 }
 

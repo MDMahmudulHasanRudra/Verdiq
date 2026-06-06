@@ -123,4 +123,19 @@ public class AdminController : BaseController
         var activity = await _adminService.GetUserActivityAsync(userId, page, pageSize);
         return Ok(ApiResponse<IEnumerable<UserActivityDto>>.Ok(activity));
     }
+
+    [HttpGet("users/{userId:guid}/modules")]
+    public async Task<ActionResult<ApiResponse<List<string>>>> GetUserModules(Guid userId)
+    {
+        var modules = await _adminService.GetUserModulesAsync(userId);
+        return Ok(ApiResponse<List<string>>.Ok(modules));
+    }
+
+    [HttpPut("users/{userId:guid}/modules")]
+    public async Task<ActionResult<ApiResponse<object>>> SetUserModules(Guid userId, [FromBody] SetUserModulesDto dto)
+    {
+        await _adminService.SetUserModulesAsync(userId, dto.Modules);
+        return Ok(ApiResponse<object>.Ok(null!, "Modules updated"));
+    }
+
 }

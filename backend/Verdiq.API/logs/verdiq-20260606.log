@@ -3424,3 +3424,662 @@ WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_
 SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
 FROM "TimeEntries" AS t
 WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:41:31.395 +06:00 [INF] Executed DbCommand (41ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-06 17:41:32.160 +06:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2026-06-06 17:41:32.184 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2026-06-06 17:41:32.189 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2026-06-06 17:41:32.194 +06:00 [INF] No migrations were applied. The database is already up to date.
+2026-06-06 17:41:32.516 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Chambers" AS c
+    WHERE c."Id" = 'c0000000-0000-0000-0000-000000000001')
+2026-06-06 17:41:32.611 +06:00 [INF] Executed DbCommand (10ms) [Parameters=[@seed_Email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE u."Email" = @seed_Email
+LIMIT 1
+2026-06-06 17:41:32.780 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@seed_Email='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE u."Email" = @seed_Email
+LIMIT 1
+2026-06-06 17:41:32.792 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Subscriptions" AS s
+    WHERE s."Id" = 'b2c3d4e5-f6a7-8901-bcde-f12345678901')
+2026-06-06 17:41:32.800 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "Organizations" AS o
+    WHERE o."Id" = 'd0000000-0000-0000-0000-000000000001')
+2026-06-06 17:41:32.814 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT EXISTS (
+    SELECT 1
+    FROM "OrganizationMembers" AS o
+    WHERE o."OrganizationId" = 'd0000000-0000-0000-0000-000000000001' AND o."UserId" = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')
+2026-06-06 17:41:32.911 +06:00 [INF] User profile is available. Using 'C:\Users\mdmah\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-06-06 17:41:32.933 +06:00 [INF] Reminder automation worker started
+2026-06-06 17:41:33.004 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 17:41:33.008 +06:00 [INF] Now listening on: http://localhost:5001
+2026-06-06 17:41:33.009 +06:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-06-06 17:41:33.009 +06:00 [INF] Hosting environment: Development
+2026-06-06 17:41:33.010 +06:00 [INF] Content root path: C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.API
+2026-06-06 17:41:33.028 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 17:41:33.127 +06:00 [INF] Executed DbCommand (9ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:41:33.147 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:41:33.178 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:41:33.199 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:41:33.243 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:41:33.274 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:41:33.285 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:41:33.290 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:41:33.296 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:41:33.301 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:41:33.309 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:41:33.314 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:41:33.319 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:41:33.322 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:46:33.573 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 17:46:33.585 +06:00 [INF] Executed DbCommand (7ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 17:46:33.604 +06:00 [INF] Executed DbCommand (14ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:46:33.617 +06:00 [INF] Executed DbCommand (8ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:46:33.626 +06:00 [INF] Executed DbCommand (6ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:46:33.637 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:46:33.642 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:46:33.652 +06:00 [INF] Executed DbCommand (6ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:46:33.657 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:46:33.665 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:46:33.675 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:46:33.682 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:46:33.691 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:46:33.697 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:46:33.705 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:46:33.711 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:51:33.734 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 17:51:33.745 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 17:51:33.754 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:51:33.762 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:51:33.821 +06:00 [INF] Executed DbCommand (56ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:51:33.830 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:51:33.835 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:51:33.841 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:51:33.846 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:51:33.852 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:51:33.860 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:51:33.866 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:51:33.874 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:51:33.878 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:51:33.885 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:51:33.890 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:56:33.900 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 17:56:33.904 +06:00 [INF] Executed DbCommand (1ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 17:56:33.911 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:56:33.917 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:56:33.922 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:56:33.928 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:56:33.932 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:56:33.936 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:56:33.939 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 17:56:33.944 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 17:56:33.951 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 17:56:33.956 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 17:56:33.962 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 17:56:33.966 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 17:56:33.971 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 17:56:33.974 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:01:34.016 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 18:01:34.024 +06:00 [INF] Executed DbCommand (6ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 18:01:34.037 +06:00 [INF] Executed DbCommand (10ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:01:34.047 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:01:34.058 +06:00 [INF] Executed DbCommand (7ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:01:34.074 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:01:34.081 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:01:34.096 +06:00 [INF] Executed DbCommand (7ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:01:34.105 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:01:34.114 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:01:34.132 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:01:34.155 +06:00 [INF] Executed DbCommand (17ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:01:34.179 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:01:34.184 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:01:34.189 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:01:34.196 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:06:34.211 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 18:06:34.215 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 18:06:34.220 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:06:34.227 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:06:34.232 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:06:34.239 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:06:34.243 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:06:34.248 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:06:34.250 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:06:34.254 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:06:34.259 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:06:34.263 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:06:34.267 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:06:34.270 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:06:34.274 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:06:34.279 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:11:34.312 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id"
+FROM "Chambers" AS c
+WHERE NOT (c."IsDeleted")
+2026-06-06 18:11:34.317 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AvatarUrl", u."BarCouncilId", u."ChamberId", u."ClientId", u."CreatedAt", u."Email", u."FullName", u."IsActive", u."IsDeleted", u."LastLoginAt", u."LastLoginIp", u."LockoutEnd", u."LoginAttempts", u."PasswordHash", u."Phone", u."RefreshToken", u."RefreshTokenExpiry", u."Role", u."Status", u."TwoFactorEnabled", u."TwoFactorSecret", u."TwoFactorVerifiedAt", u."UpdatedAt"
+FROM "Users" AS u
+WHERE NOT (u."IsDeleted") AND u."ChamberId" = @chamberId AND u."IsActive" AND NOT (u."IsDeleted")
+2026-06-06 18:11:34.334 +06:00 [INF] Executed DbCommand (12ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:11:34.344 +06:00 [INF] Executed DbCommand (5ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:11:34.350 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:11:34.357 +06:00 [INF] Executed DbCommand (4ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:11:34.360 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:11:34.365 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:11:34.368 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:11:34.372 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT h."Id", h."CaseId", h."Courtroom", h."CreatedAt", h."HearingDate", h."IsDeleted", h."JudgeName", h."NextHearingDate", h."Notes", h."ReminderSent", h."Result", h."Status", h."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Hearings" AS h
+INNER JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON h."CaseId" = c0."Id"
+WHERE NOT (h."IsDeleted") AND c0."ChamberId" = @chamberId AND c0."AssignedLawyerId" = @user_Id AND NOT (h."IsDeleted") AND h."HearingDate" > @now
+2026-06-06 18:11:34.377 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT t."Id", t."ActualHours", t."AssignedBy", t."AssignedTo", t."CaseId", t."ChamberId", t."CompletedAt", t."CreatedAt", t."Description", t."DueDate", t."EstimatedHours", t."IsDeleted", t."IsRecurring", t."Priority", t."RecurrenceInterval", t."RecurrencePattern", t."SortOrder", t."Status", t."Title", t."UpdatedAt"
+FROM "Tasks" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND NOT (t."IsDeleted") AND t."AssignedTo" = @user_Id AND t."Status" = 'Pending' AND t."DueDate" < @now
+2026-06-06 18:11:34.382 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @now='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Amount", i."CaseId", i."ClientId", i."CreatedAt", i."Currency", i."Description", i."DueDate", i."InvoiceNumber", i."IsDeleted", i."PaidAt", i."Status", i."UpdatedAt", c0."Id", c0."ActsAndSections", c0."AppealStatus", c0."AssignedLawyerId", c0."Bench", c0."BillingMethod", c0."BudgetLimit", c0."CaseNumber", c0."CaseTemplateId", c0."CaseType", c0."ChamberId", c0."ClosingDate", c0."ComplexityScore", c0."CourtName", c0."CreatedAt", c0."CriticalDeadlines", c0."Department", c0."Description", c0."ExpenseBudget", c0."FilingDate", c0."FirNumber", c0."FixedFee", c0."GdNumber", c0."HourlyRate", c0."InternalNotes", c0."IsDeleted", c0."JudgeName", c0."Jurisdiction", c0."LimitationExpiry", c0."NextHearingDate", c0."Opponent", c0."OpposingLawyer", c0."PoliceStation", c0."PracticeArea", c0."Priority", c0."Prosecutor", c0."RetainerAmount", c0."RiskLevel", c0."Status", c0."TeamId", c0."Title", c0."UpdatedAt", c0."WorkflowTemplateId"
+FROM "Invoices" AS i
+LEFT JOIN (
+    SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+    FROM "Cases" AS c
+    WHERE NOT (c."IsDeleted")
+) AS c0 ON i."CaseId" = c0."Id"
+WHERE NOT (i."IsDeleted") AND c0."Id" IS NOT NULL AND c0."ChamberId" = @chamberId AND NOT (i."IsDeleted") AND i."DueDate" IS NOT NULL AND i."DueDate" < @now AND i."Status" = 'Pending'
+2026-06-06 18:11:34.390 +06:00 [INF] Executed DbCommand (3ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT l."Id", l."AssignedLawyerId", l."AttachmentsJson", l."CaseType", l."ChamberId", l."CompanyName", l."ConvertedAt", l."CreatedAt", l."Email", l."EstimatedValue", l."FollowUpDate", l."IsDeleted", l."LastContactedAt", l."LeadSource", l."LostReason", l."Name", l."Notes", l."Phone", l."Score", l."Stage", l."UpdatedAt"
+FROM "Leads" AS l
+WHERE NOT (l."IsDeleted") AND l."ChamberId" = @chamberId AND NOT (l."IsDeleted") AND l."AssignedLawyerId" = @user_Id AND l."Stage" <> 'ConvertedToClient' AND l."Stage" <> 'LostLead' AND l."LastContactedAt" IS NOT NULL
+2026-06-06 18:11:34.393 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT c."Id", c."ActsAndSections", c."AppealStatus", c."AssignedLawyerId", c."Bench", c."BillingMethod", c."BudgetLimit", c."CaseNumber", c."CaseTemplateId", c."CaseType", c."ChamberId", c."ClosingDate", c."ComplexityScore", c."CourtName", c."CreatedAt", c."CriticalDeadlines", c."Department", c."Description", c."ExpenseBudget", c."FilingDate", c."FirNumber", c."FixedFee", c."GdNumber", c."HourlyRate", c."InternalNotes", c."IsDeleted", c."JudgeName", c."Jurisdiction", c."LimitationExpiry", c."NextHearingDate", c."Opponent", c."OpposingLawyer", c."PoliceStation", c."PracticeArea", c."Priority", c."Prosecutor", c."RetainerAmount", c."RiskLevel", c."Status", c."TeamId", c."Title", c."UpdatedAt", c."WorkflowTemplateId"
+FROM "Cases" AS c
+WHERE NOT (c."IsDeleted") AND c."ChamberId" = @chamberId AND NOT (c."IsDeleted") AND c."AssignedLawyerId" = @user_Id AND c."Status" <> 'Closed'
+2026-06-06 18:11:34.397 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @todayStart='?' (DbType = DateTime), @AddDays='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @todayStart AND t."StartTime" < @AddDays
+2026-06-06 18:11:34.401 +06:00 [INF] Executed DbCommand (2ms) [Parameters=[@chamberId='?' (DbType = Guid), @user_Id='?' (DbType = Guid), @weekStart='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(sum(t."DurationMinutes"), 0.0)
+FROM "TimeEntries" AS t
+WHERE NOT (t."IsDeleted") AND t."ChamberId" = @chamberId AND t."UserId" = @user_Id AND t."StartTime" >= @weekStart
+2026-06-06 18:14:16.851 +06:00 [FTL] Application terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.API\Program.cs:line 184
+2026-06-06 19:03:33.082 +06:00 [FTL] Application terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Program.<Main>$(String[] args) in C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.API\Program.cs:line 184

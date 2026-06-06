@@ -32,6 +32,7 @@ public class UserInfoDto
     public string? AvatarUrl { get; set; }
     public Guid ChamberId { get; set; }
     public string ChamberName { get; set; } = string.Empty;
+    public List<string> Modules { get; set; } = new();
 }
 
 public class UpdateProfileDto

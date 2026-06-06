@@ -1,5 +1,37 @@
 # Session Log — June 6, 2026
 
+## Session 2 — Module-Based Access Control & Admin Enhancements
+
+### Changes Made
+
+**Backend — New Entity**
+- Created `UserModule` entity (UserId, ModuleName) in `backend/Verdiq.Domain/Entities/UserModule.cs`
+- Added DbSet + fluent config in `AppDbContext.cs` with unique index on (UserId, ModuleName) + query filter
+- Created EF Core migration `AddUserModule`
+
+**Backend — Admin API**
+- Added `GetUserModulesAsync` / `SetUserModulesAsync` to `IAdminService` and `AdminService`
+- Added `GET /api/admin/users/{id}/modules` and `PUT /api/admin/users/{id}/modules` to `AdminController`
+- Added `SetUserModulesDto` to `AdminDtos.cs`
+
+**Backend — Auth Response**
+- Added `Modules` property to `UserInfoDto`
+- `AuthController.MapUserInfo` now queries and includes user's assigned modules
+
+**Frontend — Types & Auth**
+- Added `modules?: string[]` to `User` type in `types/index.ts`
+- Updated `mapUser` in `auth-service.ts` to map `raw.modules`
+
+**Frontend — Sidebar**
+- Added `module` field to each `mainNav` item
+- Filter logic: if user has assigned modules, only show items whose `module` is in that list; no assigned modules = show everything (backward compatible)
+
+**Frontend — Admin Page**
+- Added "Modules" button in user table actions column
+- Added module assignment dialog with checkboxes for all 23 modules
+- Added `useUserModules` / `useSetUserModules` hooks
+- Fixed "Platform Settings" tab: connected static toggles to real `useSettings` / `useUpdateSettings` API (General subsection fields: maintenanceMode, allowRegistration, auditLogging)
+
 ## What Was Done
 
 ### Database Migration (Team & Accounting Modules)

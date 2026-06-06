@@ -81,3 +81,8 @@ public class UserActivitySummaryDto
     public Dictionary<string, int> ActionsByModule { get; set; } = new();
     public DateTime? LastActivityAt { get; set; }
 }
+
+public class SetUserModulesDto
+{
+    public List<string> Modules { get; set; } = new();
+}

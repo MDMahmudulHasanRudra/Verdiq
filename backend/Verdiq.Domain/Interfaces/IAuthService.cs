@@ -21,4 +21,7 @@ public interface IAuthService
 
     Task<(bool Success, string Message)> ChangePasswordAsync(
         Guid userId, string currentPassword, string newPassword);
+
+    Task<(bool Success, string Message, User? User)> UpdateAvatarAsync(
+        Guid userId, string avatarUrl);
 }

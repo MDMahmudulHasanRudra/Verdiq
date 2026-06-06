@@ -198,6 +198,18 @@ try
         app.UseSwaggerUI();
     }
 
+    var docsConfig = builder.Configuration["DocumentStorage:Path"] ?? "Documents";
+    var uploadsPath = Path.GetFullPath(docsConfig);
+    if (!Directory.Exists(uploadsPath))
+        Directory.CreateDirectory(uploadsPath);
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads",
+        ServeUnknownFileTypes = true
+    });
+
     app.UseCors("AllowFrontend");
     app.UseAuthentication();
     app.UseAuthorization();

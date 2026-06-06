@@ -91,12 +91,12 @@ public class TeamsController : BaseController
         }
     }
 
-    [HttpDelete("{id}/members/{userId}")]
-    public async Task<ActionResult<ApiResponse<object>>> RemoveMember(Guid id, Guid userId)
+    [HttpDelete("{id}/members/{memberId}")]
+    public async Task<ActionResult<ApiResponse<object>>> RemoveMember(Guid id, Guid memberId)
     {
         try
         {
-            await _teamService.RemoveMemberAsync(id, userId);
+            await _teamService.RemoveMemberAsync(id, memberId);
             return Ok(ApiResponse<object>.Ok(null!, "Member removed"));
         }
         catch (KeyNotFoundException ex)
@@ -105,12 +105,12 @@ public class TeamsController : BaseController
         }
     }
 
-    [HttpPut("{id}/members/{userId}/role")]
-    public async Task<ActionResult<ApiResponse<TeamMemberDto>>> UpdateMemberRole(Guid id, Guid userId, [FromBody] UpdateTeamMemberRoleDto dto)
+    [HttpPut("{id}/members/{memberId}/role")]
+    public async Task<ActionResult<ApiResponse<TeamMemberDto>>> UpdateMemberRole(Guid id, Guid memberId, [FromBody] UpdateTeamMemberRoleDto dto)
     {
         try
         {
-            var member = await _teamService.UpdateMemberRoleAsync(id, userId, dto);
+            var member = await _teamService.UpdateMemberRoleAsync(id, memberId, dto);
             return Ok(ApiResponse<TeamMemberDto>.Ok(member));
         }
         catch (KeyNotFoundException ex)

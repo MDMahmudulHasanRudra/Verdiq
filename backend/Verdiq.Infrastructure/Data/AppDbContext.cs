@@ -69,6 +69,7 @@ public class AppDbContext : DbContext
     public DbSet<WorkflowTemplate> WorkflowTemplates => Set<WorkflowTemplate>();
     public DbSet<WorkflowTemplateSection> WorkflowTemplateSections => Set<WorkflowTemplateSection>();
     public DbSet<Bail> Bails => Set<Bail>();
+    public DbSet<UserModule> UserModules => Set<UserModule>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -241,6 +242,8 @@ public class AppDbContext : DbContext
             entity.ToTable("TeamMembers");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.InvitedName).HasMaxLength(255);
 
             entity.HasOne(e => e.Team)
                 .WithMany(t => t.Members)
@@ -250,9 +253,16 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasIndex(e => new { e.TeamId, e.UserId }).IsUnique();
+            entity.HasIndex(e => new { e.TeamId, e.UserId })
+                .IsUnique()
+                .HasFilter("\"UserId\" IS NOT NULL");
+
+            entity.HasIndex(e => new { e.TeamId, e.Email })
+                .IsUnique()
+                .HasFilter("\"Email\" IS NOT NULL");
+
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
@@ -1416,6 +1426,21 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Case)
                 .WithMany()
                 .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<UserModule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("UserModules");
+            entity.Property(e => e.ModuleName).HasMaxLength(100).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.ModuleName }).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasQueryFilter(e => !e.IsDeleted);

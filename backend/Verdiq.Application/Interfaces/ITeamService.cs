@@ -10,6 +10,6 @@ public interface ITeamService
     Task<TeamResponseDto?> GetByIdAsync(Guid id);
     Task<IEnumerable<TeamResponseDto>> GetAllAsync(Guid chamberId);
     Task<TeamMemberDto> AddMemberAsync(Guid teamId, AddTeamMemberDto dto);
-    Task RemoveMemberAsync(Guid teamId, Guid userId);
-    Task<TeamMemberDto> UpdateMemberRoleAsync(Guid teamId, Guid userId, UpdateTeamMemberRoleDto dto);
+    Task RemoveMemberAsync(Guid teamId, Guid memberId);
+    Task<TeamMemberDto> UpdateMemberRoleAsync(Guid teamId, Guid memberId, UpdateTeamMemberRoleDto dto);
 }

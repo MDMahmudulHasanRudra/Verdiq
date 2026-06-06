@@ -250,4 +250,34 @@ public class AdminService : IAdminService
             };
         }).OrderByDescending(s => s.TotalActions);
     }
+
+    public async Task<List<string>> GetUserModulesAsync(Guid userId)
+    {
+        return await _context.Set<UserModule>()
+            .Where(m => m.UserId == userId)
+            .Select(m => m.ModuleName)
+            .ToListAsync();
+    }
+
+    public async System.Threading.Tasks.Task SetUserModulesAsync(Guid userId, List<string> modules)
+    {
+        var existing = await _context.Set<UserModule>()
+            .Where(m => m.UserId == userId)
+            .ToListAsync();
+
+        _context.Set<UserModule>().RemoveRange(existing);
+
+        foreach (var module in modules.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            _context.Set<UserModule>().Add(new UserModule
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                ModuleName = module,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

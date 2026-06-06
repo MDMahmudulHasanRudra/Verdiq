@@ -13,4 +13,7 @@ public interface IAdminService
     Task<AdminUserDto> CreateSubUserAsync(CreateSubUserDto dto, Guid currentUserId);
     Task<IEnumerable<UserActivityDto>> GetUserActivityAsync(Guid userId, int page = 1, int pageSize = 50);
     Task<IEnumerable<UserActivitySummaryDto>> GetUsersActivitySummaryAsync();
+
+    Task<List<string>> GetUserModulesAsync(Guid userId);
+    Task SetUserModulesAsync(Guid userId, List<string> modules);
 }

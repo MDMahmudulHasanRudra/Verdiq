@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Verdiq.API.Models;
 using Verdiq.Application.DTOs.Auth;
+using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
 using Verdiq.Domain.Interfaces;
 using Verdiq.Infrastructure.Data;
@@ -16,13 +17,16 @@ public class AuthController : BaseController
     private readonly IAuthService _authService;
     private readonly IJwtService _jwtService;
     private readonly AppDbContext _context;
+    private readonly ICloudStorageService _storage;
 
     public AuthController(IAuthService authService,
-        IJwtService jwtService, AppDbContext context)
+        IJwtService jwtService, AppDbContext context,
+        ICloudStorageService storage)
     {
         _authService = authService;
         _jwtService = jwtService;
         _context = context;
+        _storage = storage;
     }
 
     [HttpPost("register")]
@@ -99,6 +103,40 @@ public class AuthController : BaseController
     }
 
     [Authorize]
+    [HttpPost("avatar")]
+    [RequestSizeLimit(5_000_000)]
+    public async Task<ActionResult<AuthResponseDto>> UploadAvatar(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new AuthResponseDto { Success = false, Message = "No file provided" });
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType))
+            return BadRequest(new AuthResponseDto { Success = false, Message = "Only JPEG, PNG, GIF, and WebP images are allowed" });
+
+        var userId = GetUserId();
+        var ext = Path.GetExtension(file.FileName);
+        var fileName = $"avatar_{userId:N}_{Guid.NewGuid():N}{ext}";
+        var key = $"Uploads/Avatars/{fileName}";
+
+        await using var stream = file.OpenReadStream();
+        await _storage.UploadAsync(key, stream, file.ContentType);
+
+        var url = $"{Request.Scheme}://{Request.Host}/uploads/avatars/{fileName}";
+        var (success, message, user) = await _authService.UpdateAvatarAsync(userId, url);
+
+        if (!success)
+            return BadRequest(new AuthResponseDto { Success = false, Message = message });
+
+        return Ok(new AuthResponseDto
+        {
+            Success = true,
+            Message = "Avatar uploaded",
+            User = user != null ? MapUserInfo(user) : null
+        });
+    }
+
+    [Authorize]
     [HttpPut("profile")]
     public async Task<ActionResult<AuthResponseDto>> UpdateProfile([FromBody] UpdateProfileDto dto)
     {
@@ -150,6 +188,11 @@ public class AuthController : BaseController
             ?? _context.Chambers.Where(c => c.Id == user.ChamberId).Select(c => c.Name).FirstOrDefault()
             ?? "";
 
+        var modules = _context.Set<UserModule>()
+            .Where(m => m.UserId == user.Id)
+            .Select(m => m.ModuleName)
+            .ToList();
+
         return new UserInfoDto
         {
             Id = user.Id,
@@ -160,7 +203,8 @@ public class AuthController : BaseController
             AvatarUrl = user.AvatarUrl,
             BarCouncilId = user.BarCouncilId,
             ChamberId = user.ChamberId,
-            ChamberName = chamberName
+            ChamberName = chamberName,
+            Modules = modules
         };
     }
 }

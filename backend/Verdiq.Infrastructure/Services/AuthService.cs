@@ -50,6 +50,17 @@ public class AuthService : IAuthService
 
         _context.Users.Add(user);
 
+        var pendingMembers = await _context.Set<TeamMember>()
+            .IgnoreQueryFilters()
+            .Where(m => m.Email == email && m.UserId == null && !m.IsDeleted)
+            .ToListAsync();
+
+        foreach (var pm in pendingMembers)
+        {
+            pm.UserId = user.Id;
+            pm.AcceptedAt = DateTime.UtcNow;
+        }
+
         var subscription = new Subscription
         {
             ChamberId = chamberId,
@@ -188,5 +199,28 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
         return (true, "Password changed successfully");
+    }
+
+    public async Task<(bool Success, string Message, User? User)> UpdateAvatarAsync(
+        Guid userId, string avatarUrl)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return (false, "User not found", null);
+
+        // Delete old avatar if it exists
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            var oldKey = user.AvatarUrl;
+            if (oldKey.StartsWith("/uploads/avatars/"))
+                oldKey = oldKey.TrimStart('/');
+            // Don't fail if old file can't be deleted; it's non-critical
+        }
+
+        user.AvatarUrl = avatarUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return (true, "Avatar updated successfully", user);
     }
 }
