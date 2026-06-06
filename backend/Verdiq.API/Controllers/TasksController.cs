@@ -22,7 +22,7 @@ public class TasksController : BaseController
     public async Task<ActionResult<ApiResponse<TaskResponseDto>>> Create([FromBody] CreateTaskDto dto)
     {
         var userId = GetUserId();
-        var chamberId = userId;
+        var chamberId = GetChamberId();
         var (success, message, data) = await _taskService.CreateAsync(dto, userId, chamberId);
 
         if (!success)
@@ -33,37 +33,124 @@ public class TasksController : BaseController
     }
 
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<TaskResponseDto>>>> GetAll()
+    public async Task<ActionResult<ApiResponse<List<TaskResponseDto>>>> GetAll(
+        string? status = null, string? priority = null, Guid? assignedTo = null)
     {
-        var chamberId = GetUserId();
-        var tasks = await _taskService.GetAllAsync(chamberId);
-        return Ok(ApiResponse<IEnumerable<TaskResponseDto>>.Ok(tasks));
+        var chamberId = GetChamberId();
+        var tasks = await _taskService.GetAllAsync(chamberId, status, priority, assignedTo);
+        return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
     }
 
     [HttpGet("my")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<TaskResponseDto>>>> GetMyTasks()
+    public async Task<ActionResult<ApiResponse<List<TaskResponseDto>>>> GetMyTasks()
     {
         var userId = GetUserId();
         var tasks = await _taskService.GetMyTasksAsync(userId);
-        return Ok(ApiResponse<IEnumerable<TaskResponseDto>>.Ok(tasks));
+        return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
     }
 
     [HttpGet("by-case/{caseId}")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<TaskResponseDto>>>> GetByCase(Guid caseId)
+    public async Task<ActionResult<ApiResponse<List<TaskResponseDto>>>> GetByCase(Guid caseId)
     {
         var tasks = await _taskService.GetByCaseIdAsync(caseId);
-        return Ok(ApiResponse<IEnumerable<TaskResponseDto>>.Ok(tasks));
+        return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<TaskResponseDto>>> GetById(Guid id)
     {
-        var tasks = await _taskService.GetAllAsync(Guid.Empty);
-        var task = tasks.FirstOrDefault(t => t.Id == id);
-
+        var task = await _taskService.GetByIdAsync(id);
         if (task is null)
             return NotFound(ApiResponse<TaskResponseDto>.Fail("Task not found"));
-
         return Ok(ApiResponse<TaskResponseDto>.Ok(task));
     }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ApiResponse<TaskResponseDto>>> Update(Guid id, [FromBody] UpdateTaskDto dto)
+    {
+        var (success, message, data) = await _taskService.UpdateAsync(id, dto);
+        if (!success)
+            return NotFound(ApiResponse<TaskResponseDto>.Fail(message));
+        return Ok(ApiResponse<TaskResponseDto>.Ok(data!));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id)
+    {
+        var (success, message) = await _taskService.DeleteAsync(id);
+        if (!success)
+            return NotFound(ApiResponse<object>.Fail(message));
+        return Ok(ApiResponse<object>.Ok(null!, message));
+    }
+
+    [HttpGet("overdue")]
+    public async Task<ActionResult<ApiResponse<List<TaskResponseDto>>>> GetOverdue()
+    {
+        var chamberId = GetChamberId();
+        var tasks = await _taskService.GetOverdueAsync(chamberId);
+        return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
+    }
+
+    [HttpPost("reorder")]
+    public async Task<ActionResult<ApiResponse<object>>> Reorder([FromBody] ReorderTasksDto dto)
+    {
+        await _taskService.ReorderAsync(dto);
+        return Ok(ApiResponse<object>.Ok(null!, "Tasks reordered"));
+    }
+
+    [HttpPost("{id}/comments")]
+    public async Task<ActionResult<ApiResponse<TaskCommentDto>>> AddComment(Guid id, [FromBody] AddTaskCommentDto dto)
+    {
+        var userId = GetUserId();
+        var comment = await _taskService.AddCommentAsync(id, dto, userId);
+        return Ok(ApiResponse<TaskCommentDto>.Ok(comment));
+    }
+
+    [HttpGet("{id}/comments")]
+    public async Task<ActionResult<ApiResponse<List<TaskCommentDto>>>> GetComments(Guid id)
+    {
+        var comments = await _taskService.GetCommentsAsync(id);
+        return Ok(ApiResponse<List<TaskCommentDto>>.Ok(comments.ToList()));
+    }
+
+    [HttpPost("{id}/watchers")]
+    public async Task<ActionResult<ApiResponse<object>>> ToggleWatcher(Guid id)
+    {
+        var userId = GetUserId();
+        var isWatching = await _taskService.ToggleWatcherAsync(id, userId);
+        return Ok(ApiResponse<object>.Ok(null!, isWatching ? "Now watching" : "No longer watching"));
+    }
+
+    [HttpPost("{id}/start-timer")]
+    public async Task<ActionResult<ApiResponse<TaskResponseDto>>> StartTimer(Guid id)
+    {
+        try
+        {
+            var task = await _taskService.StartTimeTrackingAsync(id);
+            return Ok(ApiResponse<TaskResponseDto>.Ok(task));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<TaskResponseDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpPost("{id}/stop-timer")]
+    public async Task<ActionResult<ApiResponse<TaskResponseDto>>> StopTimer(Guid id, [FromBody] StopTimerDto dto)
+    {
+        try
+        {
+            var task = await _taskService.StopTimeTrackingAsync(id, dto.Minutes);
+            return Ok(ApiResponse<TaskResponseDto>.Ok(task));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<TaskResponseDto>.Fail(ex.Message));
+        }
+    }
+}
+
+public class StopTimerDto
+{
+    public double Minutes { get; set; }
 }

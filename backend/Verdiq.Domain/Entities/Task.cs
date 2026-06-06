@@ -18,4 +18,16 @@ public class Task : BaseEntity
     public Case? Case { get; set; }
     public Guid ChamberId { get; set; }
     public Chamber Chamber { get; set; } = null!;
+
+    public int SortOrder { get; set; }
+    public bool IsRecurring { get; set; }
+    public string? RecurrencePattern { get; set; }
+    public int? RecurrenceInterval { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public double? EstimatedHours { get; set; }
+    public double? ActualHours { get; set; }
+
+    public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
+    public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
+    public ICollection<TaskWatcher> Watchers { get; set; } = new List<TaskWatcher>();
 }

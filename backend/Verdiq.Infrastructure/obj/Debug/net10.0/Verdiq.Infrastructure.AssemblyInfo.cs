@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Verdiq.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4c2d902bdc44b074281798b702c0c56000ee12d7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+65772ec10a1ed36d0e2256b99d3127e9bd402f83")]
 [assembly: System.Reflection.AssemblyProductAttribute("Verdiq.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Verdiq.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

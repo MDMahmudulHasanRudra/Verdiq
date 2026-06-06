@@ -38,6 +38,14 @@ public class AppDbContext : DbContext
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+    public DbSet<DocumentFavorite> DocumentFavorites => Set<DocumentFavorite>();
+    public DbSet<DocumentShare> DocumentShares => Set<DocumentShare>();
+    public DbSet<DocumentComment> DocumentComments => Set<DocumentComment>();
+    public DbSet<DocumentActivity> DocumentActivities => Set<DocumentActivity>();
+    public DbSet<DocumentTemplate> DocumentTemplates => Set<DocumentTemplate>();
+    public DbSet<TaskComment> TaskComments => Set<TaskComment>();
+    public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
+    public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<LegalSection> LegalSections => Set<LegalSection>();
     public DbSet<LegalProcedure> LegalProcedures => Set<LegalProcedure>();
@@ -409,9 +417,38 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.UploadedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.Property(e => e.Tags).HasMaxLength(500);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.ApprovalStatus).HasMaxLength(20);
+
+            entity.HasOne(e => e.ApprovedBy)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasMany(e => e.Versions)
                 .WithOne(v => v.Document)
                 .HasForeignKey(v => v.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Favorites)
+                .WithOne(f => f.Document)
+                .HasForeignKey(f => f.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Shares)
+                .WithOne(s => s.Document)
+                .HasForeignKey(s => s.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Comments)
+                .WithOne(c => c.Document)
+                .HasForeignKey(c => c.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Activities)
+                .WithOne(a => a.Document)
+                .HasForeignKey(a => a.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
@@ -448,6 +485,88 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<DocumentFavorite>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentFavorites");
+            entity.HasIndex(e => new { e.DocumentId, e.UserId }).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DocumentShare>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentShares");
+            entity.Property(e => e.Permissions).HasMaxLength(50);
+
+            entity.HasOne(e => e.SharedWithUser)
+                .WithMany()
+                .HasForeignKey(e => e.SharedWithUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DocumentComment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentComments");
+            entity.Property(e => e.Content).HasMaxLength(5000).IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ParentComment)
+                .WithMany(c => c.Replies)
+                .HasForeignKey(e => e.ParentCommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<DocumentActivity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentActivities");
+            entity.Property(e => e.Action).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Details).HasMaxLength(2000);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DocumentTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentTemplates");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.FileName).HasMaxLength(500);
+            entity.Property(e => e.FileType).HasMaxLength(100);
+            entity.Property(e => e.Tags).HasMaxLength(500);
+            entity.Property(e => e.StorageKey).HasMaxLength(500);
+            entity.Property(e => e.FilePath).HasMaxLength(1000);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
@@ -708,7 +827,65 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.ChamberId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.Property(e => e.RecurrencePattern).HasMaxLength(20);
+            entity.Property(e => e.EstimatedHours).HasPrecision(8, 2);
+            entity.Property(e => e.ActualHours).HasPrecision(8, 2);
+
+            entity.HasMany(e => e.Comments)
+                .WithOne(c => c.Task)
+                .HasForeignKey(c => c.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Attachments)
+                .WithOne(a => a.Task)
+                .HasForeignKey(a => a.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Watchers)
+                .WithOne(w => w.Task)
+                .HasForeignKey(w => w.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<TaskComment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("TaskComments");
+            entity.Property(e => e.Content).HasMaxLength(5000).IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TaskAttachment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("TaskAttachments");
+            entity.Property(e => e.FileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.OriginalFileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.FilePath).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.FileType).HasMaxLength(100);
+
+            entity.HasOne(e => e.UploadedBy)
+                .WithMany()
+                .HasForeignKey(e => e.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TaskWatcher>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("TaskWatchers");
+            entity.HasIndex(e => new { e.TaskId, e.UserId }).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<LegalDocument>(entity =>
