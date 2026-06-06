@@ -45,6 +45,8 @@ public class Case : BaseEntity
 
     public Guid AssignedLawyerId { get; set; }
     public User AssignedLawyer { get; set; } = null!;
+    public Guid? TeamId { get; set; }
+    public Team? Team { get; set; }
     public Guid ChamberId { get; set; }
     public Chamber Chamber { get; set; } = null!;
     public ICollection<Hearing> Hearings { get; set; } = new List<Hearing>();

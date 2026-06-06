@@ -52,7 +52,8 @@ public class CaseService : ICaseService
             ActsAndSections = dto.ActsAndSections,
             Description = dto.Description,
             FilingDate = dto.FilingDate == default ? DateTime.UtcNow : DateTime.SpecifyKind(dto.FilingDate, DateTimeKind.Utc),
-            AssignedLawyerId = userId,
+            AssignedLawyerId = dto.AssignedLawyerId ?? userId,
+            TeamId = dto.TeamId,
             ChamberId = chamberId,
         };
 
@@ -79,6 +80,7 @@ public class CaseService : ICaseService
         var caseEntity = await _context.Cases
             .Include(c => c.ClientCases)
             .Include(c => c.CaseLegalSections)
+            .Include(c => c.Team)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
 
         if (caseEntity == null) return (false, "Case not found", null);
@@ -173,6 +175,7 @@ public class CaseService : ICaseService
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
             .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
             .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.CaseProcedures).ThenInclude(cp => cp.LegalProcedure)
+            .Include(c => c.Team)
             .Include(c => c.Hearings)
             .Include(c => c.Documents)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
@@ -185,6 +188,7 @@ public class CaseService : ICaseService
             .Include(c => c.AssignedLawyer)
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
             .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
+            .Include(c => c.Team)
             .Include(c => c.Hearings)
             .Include(c => c.Documents)
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted);
@@ -235,6 +239,7 @@ public class CaseService : ICaseService
             .Include(c => c.AssignedLawyer)
             .Include(c => c.ClientCases).ThenInclude(cc => cc.Client)
             .Include(c => c.CaseLegalSections).ThenInclude(cls => cls.LegalSection)
+            .Include(c => c.Team)
             .Include(c => c.Hearings).Include(c => c.Documents)
             .Where(c => c.ChamberId == chamberId && !c.IsDeleted &&
                 (c.CaseNumber.ToLower().Contains(term) || c.Title.ToLower().Contains(term) ||
@@ -380,6 +385,8 @@ public class CaseService : ICaseService
         ClosingDate = c.ClosingDate,
         AssignedLawyerId = c.AssignedLawyerId,
         AssignedLawyerName = c.AssignedLawyer.FullName,
+        TeamId = c.TeamId,
+        TeamName = c.Team != null ? c.Team.Name : null,
         FirNumber = c.FirNumber,
         PoliceStation = c.PoliceStation,
         GdNumber = c.GdNumber,

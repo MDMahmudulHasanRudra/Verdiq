@@ -13,6 +13,8 @@ public class CreateCaseDto
     public string? ActsAndSections { get; set; }
     public string? FirNumber { get; set; }
     public string? PoliceStation { get; set; }
+    public Guid? AssignedLawyerId { get; set; }
+    public Guid? TeamId { get; set; }
     public List<Guid> ClientIds { get; set; } = new();
 
     public string? GdNumber { get; set; }
@@ -58,6 +60,8 @@ public class UpdateCaseDto
     public string? ActsAndSections { get; set; }
     public string? FirNumber { get; set; }
     public string? PoliceStation { get; set; }
+    public Guid? AssignedLawyerId { get; set; }
+    public Guid? TeamId { get; set; }
     public List<Guid>? ClientIds { get; set; }
     public string? GdNumber { get; set; }
     public string? JudgeName { get; set; }
@@ -100,6 +104,8 @@ public class CaseResponseDto
     public DateTime? ClosingDate { get; set; }
     public Guid AssignedLawyerId { get; set; }
     public string AssignedLawyerName { get; set; } = string.Empty;
+    public Guid? TeamId { get; set; }
+    public string? TeamName { get; set; }
     public List<ClientInfo> Clients { get; set; } = new();
     public int HearingsCount { get; set; }
     public int DocumentsCount { get; set; }

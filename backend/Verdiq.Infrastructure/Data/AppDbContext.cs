@@ -36,6 +36,7 @@ public class AppDbContext : DbContext
     public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+    public DbSet<Team> Teams => Set<Team>();
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
     public DbSet<DocumentFavorite> DocumentFavorites => Set<DocumentFavorite>();
@@ -183,6 +184,62 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.WorkflowTemplateId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasOne(e => e.Team)
+                .WithMany(t => t.Cases)
+                .HasForeignKey(e => e.TeamId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Team
+        modelBuilder.Entity<Team>(entity =>
+        {
+            entity.ToTable("Teams");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Members)
+                .WithOne(m => m.Team)
+                .HasForeignKey(m => m.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Cases)
+                .WithOne(c => c.Team)
+                .HasForeignKey(c => c.TeamId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<TeamMember>(entity =>
+        {
+            entity.ToTable("TeamMembers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Role).HasMaxLength(50).IsRequired();
+
+            entity.HasOne(e => e.Team)
+                .WithMany(t => t.Members)
+                .HasForeignKey(e => e.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.TeamId, e.UserId }).IsUnique();
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 

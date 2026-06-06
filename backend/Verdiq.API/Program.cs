@@ -132,6 +132,7 @@ try
     builder.Services.AddScoped<IChamberSettingsService, ChamberSettingsService>();
     builder.Services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
     builder.Services.AddScoped<IBailService, BailService>();
+    builder.Services.AddScoped<ITeamService, TeamService>();
 
     builder.Services.AddSignalR();
     builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
