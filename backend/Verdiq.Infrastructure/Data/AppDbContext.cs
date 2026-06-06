@@ -210,7 +210,7 @@ public class AppDbContext : DbContext
             entity.ToTable("Clients");
             entity.HasIndex(e => e.Phone);
             entity.HasIndex(e => e.Email);
-            entity.HasIndex(e => e.ClientCode).IsUnique().HasFilter("[ClientCode] IS NOT NULL");
+            entity.HasIndex(e => e.ClientCode).IsUnique().HasFilter("\"ClientCode\" IS NOT NULL");
             entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Phone).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(255).IsRequired();

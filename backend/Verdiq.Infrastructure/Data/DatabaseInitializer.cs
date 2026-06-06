@@ -238,8 +238,15 @@ public static class DatabaseInitializer
 
         // Migrate data from old column names if they exist and new ones are empty
         await db.Database.ExecuteSqlRawAsync("""
-            UPDATE "LegalProcedures" SET "Title" = "Name" WHERE "Title" = '' AND "Name" IS NOT NULL AND "Name" <> '';
-            UPDATE "LegalProcedures" SET "RecommendedTimeline" = "Timeline" WHERE "RecommendedTimeline" IS NULL AND "Timeline" IS NOT NULL;
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'LegalProcedures' AND column_name = 'Name') THEN
+                    UPDATE "LegalProcedures" SET "Title" = "Name" WHERE "Title" = '' AND "Name" IS NOT NULL AND "Name" <> '';
+                END IF;
+                IF EXISTS (SELECT FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'LegalProcedures' AND column_name = 'Timeline') THEN
+                    UPDATE "LegalProcedures" SET "RecommendedTimeline" = "Timeline" WHERE "RecommendedTimeline" IS NULL AND "Timeline" IS NOT NULL;
+                END IF;
+            END $$;
             """);
 
         await db.Database.ExecuteSqlRawAsync("""

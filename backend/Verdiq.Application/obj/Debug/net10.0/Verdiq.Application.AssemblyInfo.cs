@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Verdiq.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f045ae64bc05e74b172b0d1531a1deb145c6807d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6a991520f53e770300eed75b34790e133412beb6")]
 [assembly: System.Reflection.AssemblyProductAttribute("Verdiq.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Verdiq.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

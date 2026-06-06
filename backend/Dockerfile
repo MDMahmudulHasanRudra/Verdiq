@@ -19,7 +19,10 @@ WORKDIR /app
 EXPOSE 5000
 ENV ASPNETCORE_URLS=http://+:5000
 COPY --from=build /app .
-RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r appuser && useradd -r -g appuser appuser && \
     chown -R appuser:appuser /app
 USER appuser
 ENTRYPOINT ["dotnet", "Verdiq.API.dll"]
