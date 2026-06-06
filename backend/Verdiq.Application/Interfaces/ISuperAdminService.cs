@@ -38,6 +38,8 @@ public interface ISuperAdminService
     Task<(bool Success, string Message)> UpdateChamberAsync(Guid chamberId, UpdateChamberDto dto);
     Task<(bool Success, string Message)> DeleteChamberAsync(Guid chamberId);
 
+    Task<(bool Success, string Message)> CreateAdminUserAsync(CreateAdminUserDto dto);
+
     Task<IEnumerable<AdminCaseDto>> GetAllCasesAsync();
     Task<IEnumerable<object>> GetRevenueChartDataAsync(int months = 12);
     Task<IEnumerable<object>> GetChamberGrowthDataAsync(int months = 12);

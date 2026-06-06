@@ -572,6 +572,51 @@ public class SuperAdminService : ISuperAdminService
         };
     }
 
+    public async Task<(bool Success, string Message)> CreateAdminUserAsync(CreateAdminUserDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            return (false, "Full name is required");
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return (false, "Email is required");
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 4)
+            return (false, "Password must be at least 4 characters");
+        if (!Enum.TryParse<UserRole>(dto.Role, true, out var role) || role == UserRole.SuperAdmin || role == UserRole.Client)
+            return (false, "Invalid role. Valid: Owner, SeniorLawyer, JuniorLawyer, Assistant, Accountant");
+
+        var chamber = await _context.Chambers.FindAsync(dto.ChamberId);
+        if (chamber == null || chamber.IsDeleted)
+            return (false, "Chamber not found");
+
+        var existingEmail = await _context.Users.AnyAsync(u => u.Email == dto.Email && !u.IsDeleted);
+        if (existingEmail)
+            return (false, "A user with this email already exists");
+
+        var user = new User
+        {
+            FullName = dto.FullName,
+            Email = dto.Email,
+            Phone = dto.Phone ?? string.Empty,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Role = role,
+            ChamberId = dto.ChamberId,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            Action = $"SuperAdmin created user '{dto.FullName}' ({role}) in chamber '{chamber.Name}'",
+            Entity = "User",
+            EntityId = user.Id.ToString(),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+        return (true, $"User '{dto.FullName}' created successfully in '{chamber.Name}'");
+    }
+
     public async Task<(bool Success, string Message)> UpdateUserSubscriptionAsync(Guid userId, UpdateUserSubscriptionDto dto)
     {
         var user = await _context.Users

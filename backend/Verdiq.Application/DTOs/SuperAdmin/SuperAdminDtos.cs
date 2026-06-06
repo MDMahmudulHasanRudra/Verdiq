@@ -91,8 +91,17 @@ public class ResetPasswordDto
 
 public class ImpersonateDto
 {
-    public Guid ChamberId { get; set; }
     public Guid? UserId { get; set; }
+}
+
+public class CreateAdminUserDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string Role { get; set; } = "Owner";
+    public Guid ChamberId { get; set; }
 }
 
 public class SystemHealthDto

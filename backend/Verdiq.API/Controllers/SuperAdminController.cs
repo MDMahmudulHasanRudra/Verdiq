@@ -162,6 +162,17 @@ public class SuperAdminController : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, message));
     }
 
+    [HttpPost("users")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<ActionResult<ApiResponse<object>>> CreateAdminUser([FromBody] CreateAdminUserDto dto)
+    {
+        var (success, message) = await _superAdminService.CreateAdminUserAsync(dto);
+        if (!success)
+            return BadRequest(ApiResponse<object>.Fail(message));
+
+        return Ok(ApiResponse<object>.Ok(null!, message));
+    }
+
     [HttpPut("users/{id}/subscription")]
     [Authorize(Roles = "SuperAdmin")]
     public async Task<ActionResult<ApiResponse<object>>> UpdateUserSubscription(

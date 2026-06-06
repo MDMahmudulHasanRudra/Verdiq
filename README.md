@@ -30,18 +30,28 @@ A production-grade SaaS Law Firm/Chamber Management System for the Bangladesh le
 - Node.js 20+
 - Docker Desktop (for PostgreSQL)
 
-### Backend
+### Docker (Recommended — starts all services)
+
+```bash
+cd backend
+docker compose build
+docker compose up -d
+```
+
+This starts PostgreSQL (5432), the API (5000), and the Next.js frontend (3000).
+
+### Backend (Local)
 
 ```bash
 cd backend
 $env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"
 dotnet restore
 dotnet build
-docker compose up -d
+docker compose up -d    # starts PostgreSQL only
 dotnet run --project Verdiq.API
 ```
 
-### Frontend
+### Frontend (Local)
 
 ```bash
 cd frontend
@@ -222,6 +232,8 @@ frontend/
 | 401 on API calls | Check `access_token` in localStorage |
 | CORS error | Verify API running on port 5000 |
 | `npm run dev` fails | Run `$env:NPM_CONFIG_PREFIX = "C:\Program Files\nodejs"` first |
+| API exits with `column does not exist` | Postgres filtered index uses `[ColumnName]` brackets — change to `"ColumnName"` in `HasFilter()` |
+| API exits with `column "Name" does not exist` | Data migration references old column — wrap in `DO $$ ... END $$` with `IF EXISTS` checks |
 
 ## License
 

@@ -11,7 +11,7 @@
 ```bash
 cd backend
 
-# Build and start services
+# Build and start all services
 docker compose up -d
 
 # Check status
@@ -24,11 +24,14 @@ docker compose logs -f
 This starts:
 - **db** — PostgreSQL 16-alpine on port 5432
 - **api** — Verdiq API on port 5000
+- **web** — Next.js frontend on port 3000
 
 ### Rebuild After Changes
 
 ```bash
-docker compose build api
+docker compose build api      # Rebuild API only
+docker compose build web      # Rebuild frontend only
+docker compose build          # Rebuild all
 docker compose up -d
 ```
 
@@ -50,6 +53,16 @@ If the database gets into a bad state (e.g. leftover `__EFMigrationsHistory` tab
 # Or reset completely
 docker compose down -v && docker compose up -d
 ```
+
+### Docker Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| API exits immediately (exit code 0) | EF Core `EnsureCreatedAsync()` generates invalid SQL for PostgreSQL filtered indexes | Check `HasFilter()` in `AppDbContext.cs` — use PostgreSQL double-quote syntax `"ColumnName"` not SQL Server brackets `[ColumnName]` |
+| `column "Name" does not exist` | Data migration `UPDATE` references old column not present in fresh schema | Wrap migration `UPDATE` in `DO $$ ... END $$` with `IF EXISTS (SELECT FROM information_schema.columns WHERE ...)` checks |
+| API exits with `column "ClientCode" does not exist` | `EnsureCreatedAsync()` generates `CREATE UNIQUE INDEX "IX_Clients_ClientCode" ON "Clients" ("ClientCode") WHERE [ClientCode] IS NOT NULL` with SQL Server bracket syntax | Change `HasFilter("[ClientCode] IS NOT NULL")` to `HasFilter("\"ClientCode\" IS NOT NULL")` |
+| `pull access denied for verdiq-api` | Image not built yet | Run `docker compose build` before `docker compose up -d` |
+| Healthcheck fails (missing `wget`) | `wget` not installed in base runtime images | Use `curl` instead, or install it in the Dockerfile |
 
 ---
 
