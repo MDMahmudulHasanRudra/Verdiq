@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Verdiq.API.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8d00701e1a8637fb80b26e7519ab1a4746550c0c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0842df119ce95b1d3956bc45994c57e50448e407")]
 [assembly: System.Reflection.AssemblyProductAttribute("Verdiq.API.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Verdiq.API.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

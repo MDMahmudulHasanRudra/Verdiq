@@ -671,7 +671,7 @@ namespace Verdiq.Infrastructure.Migrations
 
                     b.HasIndex("ClientCode")
                         .IsUnique()
-                        .HasFilter("[ClientCode] IS NOT NULL");
+                        .HasFilter("\"ClientCode\" IS NOT NULL");
 
                     b.HasIndex("Email");
 

@@ -44,6 +44,7 @@ try
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new() { Title = "Verdiq API", Version = "v1" });
+        c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
     });
 
     builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
@@ -133,6 +134,14 @@ try
     builder.Services.AddScoped<IWorkflowTemplateService, WorkflowTemplateService>();
     builder.Services.AddScoped<IBailService, BailService>();
     builder.Services.AddScoped<ITeamService, TeamService>();
+    builder.Services.AddScoped<IChartOfAccountService, ChartOfAccountService>();
+    builder.Services.AddScoped<IAccountingService, AccountingService>();
+    builder.Services.AddScoped<IPayrollService, PayrollService>();
+    builder.Services.AddScoped<IBankingService, BankingService>();
+    builder.Services.AddScoped<IBudgetService, BudgetService>();
+    builder.Services.AddScoped<IFixedAssetService, FixedAssetService>();
+    builder.Services.AddScoped<ITaxService, TaxService>();
+    builder.Services.AddScoped<IAuditService, AuditService>();
 
     builder.Services.AddSignalR();
     builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();

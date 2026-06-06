@@ -1273,7 +1273,7 @@ namespace Verdiq.Infrastructure.Migrations
                 table: "Clients",
                 column: "ClientCode",
                 unique: true,
-                filter: "[ClientCode] IS NOT NULL");
+                filter: "\"ClientCode\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Clients_Email",

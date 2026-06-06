@@ -37,6 +37,19 @@ public class AppDbContext : DbContext
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<AiConversation> AiConversations => Set<AiConversation>();
     public DbSet<Team> Teams => Set<Team>();
+    public DbSet<ChartOfAccount> ChartOfAccounts => Set<ChartOfAccount>();
+    public DbSet<AccountingJournal> AccountingJournals => Set<AccountingJournal>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Payroll> Payrolls => Set<Payroll>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<BudgetLine> BudgetLines => Set<BudgetLine>();
+    public DbSet<FixedAsset> FixedAssets => Set<FixedAsset>();
+    public DbSet<AssetDepreciation> AssetDepreciations => Set<AssetDepreciation>();
+    public DbSet<TaxSetting> TaxSettings => Set<TaxSetting>();
+    public DbSet<TaxTransaction> TaxTransactions => Set<TaxTransaction>();
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
     public DbSet<DocumentFavorite> DocumentFavorites => Set<DocumentFavorite>();
@@ -240,6 +253,256 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => new { e.TeamId, e.UserId }).IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Chart of Accounts
+        modelBuilder.Entity<ChartOfAccount>(entity =>
+        {
+            entity.ToTable("ChartOfAccounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Code).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.OpeningBalance).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.ChamberId, e.Code }).IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Accounting Journal
+        modelBuilder.Entity<AccountingJournal>(entity =>
+        {
+            entity.ToTable("AccountingJournals");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EntryNumber).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.ReferenceType).HasMaxLength(50);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Lines)
+                .WithOne(l => l.Journal)
+                .HasForeignKey(l => l.JournalId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.EntryNumber).IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Journal Line
+        modelBuilder.Entity<JournalLine>(entity =>
+        {
+            entity.ToTable("JournalLines");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DebitAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.CreditAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Description).HasMaxLength(500);
+
+            entity.HasOne(e => e.Journal)
+                .WithMany(j => j.Lines)
+                .HasForeignKey(e => e.JournalId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Account)
+                .WithMany(a => a.JournalLines)
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Employee
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.ToTable("Employees");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmployeeCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.FullName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.Phone).HasMaxLength(50);
+            entity.Property(e => e.Designation).HasMaxLength(200);
+            entity.Property(e => e.Department).HasMaxLength(200);
+            entity.Property(e => e.BankName).HasMaxLength(200);
+            entity.Property(e => e.BankAccountNo).HasMaxLength(50);
+            entity.Property(e => e.NidNo).HasMaxLength(50);
+            entity.Property(e => e.TinNo).HasMaxLength(50);
+            entity.Property(e => e.BaseSalary).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => new { e.ChamberId, e.EmployeeCode }).IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Payroll
+        modelBuilder.Entity<Payroll>(entity =>
+        {
+            entity.ToTable("Payrolls");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PayrollNumber).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.GrossSalary).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Bonus).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Overtime).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Deductions).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.TaxDeduction).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.NetSalary).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.HasOne(e => e.Employee).WithMany(ep => ep.Payrolls).HasForeignKey(e => e.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedBy).WithMany().HasForeignKey(e => e.CreatedById).OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Attendance
+        modelBuilder.Entity<Attendance>(entity =>
+        {
+            entity.ToTable("Attendances");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.HasOne(e => e.Employee).WithMany(ep => ep.Attendances).HasForeignKey(e => e.EmployeeId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // BankAccount
+        modelBuilder.Entity<BankAccount>(entity =>
+        {
+            entity.ToTable("BankAccounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AccountName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.BankName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.BranchName).HasMaxLength(200);
+            entity.Property(e => e.AccountNumber).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.RoutingNumber).HasMaxLength(20);
+            entity.Property(e => e.AccountType).HasMaxLength(50);
+            entity.Property(e => e.OpeningBalance).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.CurrentBalance).HasColumnType("decimal(18,2)");
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // BankTransaction
+        modelBuilder.Entity<BankTransaction>(entity =>
+        {
+            entity.ToTable("BankTransactions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TransactionType).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.ReferenceNo).HasMaxLength(100);
+            entity.Property(e => e.ChequeNo).HasMaxLength(50);
+            entity.Property(e => e.Payee).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.ReconciliationStatus).HasConversion<string>().HasMaxLength(20);
+            entity.HasOne(e => e.BankAccount).WithMany(a => a.Transactions).HasForeignKey(e => e.BankAccountId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Budget
+        modelBuilder.Entity<Budget>(entity =>
+        {
+            entity.ToTable("Budgets");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedBy).WithMany().HasForeignKey(e => e.CreatedById).OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // BudgetLine
+        modelBuilder.Entity<BudgetLine>(entity =>
+        {
+            entity.ToTable("BudgetLines");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AllocatedAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.SpentAmount).HasColumnType("decimal(18,2)");
+            entity.HasOne(e => e.Budget).WithMany(b => b.Lines).HasForeignKey(e => e.BudgetId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Account).WithMany().HasForeignKey(e => e.AccountId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // FixedAsset
+        modelBuilder.Entity<FixedAsset>(entity =>
+        {
+            entity.ToTable("FixedAssets");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AssetCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.PurchaseCost).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.CurrentValue).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.SalvageValue).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.AccumulatedDepreciation).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Location).HasMaxLength(200);
+            entity.Property(e => e.Vendor).HasMaxLength(200);
+            entity.Property(e => e.DepreciationMethod).HasConversion<string>().HasMaxLength(30);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.DisposalReason).HasMaxLength(500);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.ChamberId, e.AssetCode }).IsUnique();
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // AssetDepreciation
+        modelBuilder.Entity<AssetDepreciation>(entity =>
+        {
+            entity.ToTable("AssetDepreciations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.HasOne(e => e.Asset).WithMany().HasForeignKey(e => e.AssetId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // TaxSetting
+        modelBuilder.Entity<TaxSetting>(entity =>
+        {
+            entity.ToTable("TaxSettings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TaxType).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Rate).HasColumnType("decimal(5,2)");
+            entity.Property(e => e.Threshold).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // TaxTransaction
+        modelBuilder.Entity<TaxTransaction>(entity =>
+        {
+            entity.ToTable("TaxTransactions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ReferenceNumber).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.TaxableAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.TaxAmount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.ChallanNo).HasMaxLength(50);
+            entity.Property(e => e.Remarks).HasMaxLength(500);
+            entity.HasOne(e => e.TaxSetting).WithMany().HasForeignKey(e => e.TaxSettingId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Chamber).WithMany().HasForeignKey(e => e.ChamberId).OnDelete(DeleteBehavior.Restrict);
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
@@ -556,6 +819,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<DocumentShare>(entity =>
@@ -568,6 +833,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.SharedWithUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<DocumentComment>(entity =>
@@ -600,6 +867,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<DocumentTemplate>(entity =>
@@ -916,6 +1185,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<TaskAttachment>(entity =>
@@ -931,6 +1202,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UploadedById)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<TaskWatcher>(entity =>
@@ -943,6 +1216,8 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         modelBuilder.Entity<LegalDocument>(entity =>
