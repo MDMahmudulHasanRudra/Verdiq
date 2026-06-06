@@ -217,8 +217,12 @@ public class AdminService : IAdminService
         var now = DateTime.UtcNow;
         var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        var activityGroups = await _context.AuditLogs
+        var auditLogs = await _context.AuditLogs
             .Where(a => a.CreatedAt >= monthStart)
+            .Select(a => new { a.UserId, a.Entity, a.CreatedAt })
+            .ToListAsync();
+
+        var activityGroups = auditLogs
             .GroupBy(a => a.UserId)
             .Select(g => new
             {
@@ -228,7 +232,7 @@ public class AdminService : IAdminService
                     .ToDictionary(sub => sub.Key, sub => sub.Count()),
                 LastActivityAt = g.Max(a => a.CreatedAt)
             })
-            .ToListAsync();
+            .ToList();
 
         var userIds = activityGroups.Select(g => g.UserId).ToList();
         var users = await _context.Users

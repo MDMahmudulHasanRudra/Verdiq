@@ -1,6 +1,0 @@
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.csproj.AssemblyReference.cache
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.AssemblyInfoInputs.cache
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.AssemblyInfo.cs
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.csproj.CoreCompileInputs.cache
-C:\Users\mdmah\Desktop\Verdiq\backend\Verdiq.Infrastructure\obj\Release\net10.0\Verdiq.Infrastructure.sourcelink.json
