@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Verdiq.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e03b3e192196d429ac63e17e5ac4a33d62f90e3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f78f596b437b9a53f67dc90726e370112ae62af3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Verdiq.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Verdiq.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
