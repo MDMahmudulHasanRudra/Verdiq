@@ -1282,9 +1282,14 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.ToTable("AuditLogs");
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.ChamberId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Action);
+            entity.HasIndex(e => e.Entity);
             entity.Property(e => e.Action).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Entity).HasMaxLength(100);
             entity.Property(e => e.EntityId).HasMaxLength(100);
+            entity.Property(e => e.UserName).HasMaxLength(200);
             entity.Property(e => e.IpAddress).HasMaxLength(50);
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

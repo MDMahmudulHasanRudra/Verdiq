@@ -79,7 +79,7 @@ public class DocumentsController : BaseController
         var (fileStream, contentType, fileName) = await _documentService.PreviewAsync(id);
         if (fileStream is null)
             return NotFound(ApiResponse<object>.Fail("Document not found"));
-        return File(fileStream, contentType!, fileName!);
+        return File(fileStream, contentType!);
     }
 
     [HttpDelete("{id}")]

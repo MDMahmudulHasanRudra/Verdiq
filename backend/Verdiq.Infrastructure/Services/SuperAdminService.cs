@@ -775,6 +775,7 @@ public class SuperAdminService : ISuperAdminService
             {
                 Id = a.Id,
                 UserId = a.UserId.ToString(),
+                UserName = a.UserName,
                 Action = a.Action,
                 Entity = a.Entity,
                 EntityId = a.EntityId,

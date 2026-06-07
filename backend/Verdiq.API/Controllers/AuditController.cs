@@ -19,8 +19,37 @@ public class AuditController : BaseController
         => Ok(ApiResponse<AuditSummaryDto>.Ok(await _service.GetSummaryAsync(GetChamberId())));
 
     [HttpGet("logs")]
-    public async Task<ActionResult<ApiResponse<List<AuditLogResponseDto>>>> GetLogs(
-        [FromQuery] string? entity, [FromQuery] string? action,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
-        => Ok(ApiResponse<List<AuditLogResponseDto>>.Ok(await _service.GetLogsAsync(GetChamberId(), entity, action, page, pageSize)));
+    public async Task<ActionResult<ApiResponse<object>>> GetLogs(
+        [FromQuery] string? entity,
+        [FromQuery] string? action,
+        [FromQuery] Guid? userId,
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 100)
+    {
+        var filter = new AuditLogFilterDto
+        {
+            Entity = entity,
+            Action = action,
+            UserId = userId,
+            DateFrom = dateFrom,
+            DateTo = dateTo,
+            Search = search,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var (items, totalCount) = await _service.GetLogsAsync(GetChamberId(), filter);
+        return Ok(new
+        {
+            success = true,
+            data = items,
+            totalCount,
+            page,
+            pageSize,
+            totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        });
+    }
 }
