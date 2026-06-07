@@ -73,6 +73,15 @@ public class DocumentsController : BaseController
         return File(fileStream, contentType!, fileName!);
     }
 
+    [HttpGet("preview/{id}")]
+    public async Task<ActionResult> Preview(Guid id)
+    {
+        var (fileStream, contentType, fileName) = await _documentService.PreviewAsync(id);
+        if (fileStream is null)
+            return NotFound(ApiResponse<object>.Fail("Document not found"));
+        return File(fileStream, contentType!, fileName!);
+    }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id)
     {

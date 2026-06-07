@@ -57,6 +57,7 @@ public class AppDbContext : DbContext
     public DbSet<DocumentComment> DocumentComments => Set<DocumentComment>();
     public DbSet<DocumentActivity> DocumentActivities => Set<DocumentActivity>();
     public DbSet<DocumentTemplate> DocumentTemplates => Set<DocumentTemplate>();
+    public DbSet<DocumentFileContent> DocumentFileContents => Set<DocumentFileContent>();
     public DbSet<TaskComment> TaskComments => Set<TaskComment>();
     public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
     public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();
@@ -814,6 +815,21 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Document)
                 .WithMany()
                 .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<DocumentFileContent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("DocumentFileContents");
+            entity.Property(e => e.ContentType).HasMaxLength(100);
+            entity.Property(e => e.FileData).IsRequired();
+
+            entity.HasOne(e => e.Document)
+                .WithOne()
+                .HasForeignKey<DocumentFileContent>(e => e.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasQueryFilter(e => !e.IsDeleted);

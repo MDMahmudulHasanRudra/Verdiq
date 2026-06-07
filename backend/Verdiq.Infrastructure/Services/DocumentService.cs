@@ -29,6 +29,13 @@ public class DocumentService : IDocumentService
             return (false, "Case not found", null);
 
         var key = $"cases/{caseId}/{category}/{Guid.NewGuid():N}_{fileName}";
+
+        fileStream.Position = 0;
+        using var memoryStream = new MemoryStream();
+        await fileStream.CopyToAsync(memoryStream);
+        fileStream.Position = 0;
+        var fileBytes = memoryStream.ToArray();
+
         var storageKey = await _cloudStorage.UploadAsync(key, fileStream, contentType);
 
         var document = new Document
@@ -65,6 +72,15 @@ public class DocumentService : IDocumentService
             UploadedById = userId,
             CreatedAt = DateTime.UtcNow
         };
+
+        _context.DocumentFileContents.Add(new DocumentFileContent
+        {
+            DocumentId = document.Id,
+            FileData = fileBytes,
+            ContentType = contentType,
+            FileSize = fileBytes.Length,
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _unitOfWork.Repository<Document>().AddAsync(document);
         _context.DocumentVersions.Add(version);
@@ -129,12 +145,44 @@ public class DocumentService : IDocumentService
 
     public async Task<(Stream? FileStream, string? ContentType, string? FileName)> DownloadAsync(Guid id)
     {
+        var document = await _context.Documents
+            .Include(d => d.Versions)
+            .FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted);
+        if (document == null)
+            return (null, null, null);
+
+        var fileContent = await _context.DocumentFileContents
+            .FirstOrDefaultAsync(fc => fc.DocumentId == id && !fc.IsDeleted);
+        if (fileContent != null)
+        {
+            return (new MemoryStream(fileContent.FileData), fileContent.ContentType, document.OriginalFileName);
+        }
+
+        var stream = await _cloudStorage.DownloadAsync(document.StorageKey ?? document.FileName);
+        return (stream, document.FileType, document.OriginalFileName);
+    }
+
+    public async Task<(Stream? FileStream, string? ContentType, string? FileName)> PreviewAsync(Guid id)
+    {
         var document = await _context.Documents.FindAsync(id);
         if (document == null || document.IsDeleted)
             return (null, null, null);
 
+        var fileContent = await _context.DocumentFileContents
+            .FirstOrDefaultAsync(fc => fc.DocumentId == id && !fc.IsDeleted);
+        if (fileContent != null)
+        {
+            var contentType = fileContent.ContentType;
+            if (contentType == "application/msword" || contentType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                contentType = "application/pdf";
+            return (new MemoryStream(fileContent.FileData), contentType, document.OriginalFileName);
+        }
+
         var stream = await _cloudStorage.DownloadAsync(document.StorageKey ?? document.FileName);
-        return (stream, document.FileType, document.OriginalFileName);
+        var previewType = document.FileType;
+        if (previewType == "application/msword" || previewType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            previewType = "application/pdf";
+        return (stream, previewType, document.OriginalFileName);
     }
 
     public async Task<IEnumerable<DocumentResponseDto>> GetAllAsync(Guid chamberId, string? category = null, int page = 1, int pageSize = 10)

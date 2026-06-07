@@ -54,6 +54,9 @@ public class CloudStorageService : ICloudStorageService
         }
 
         var filePath = Path.Combine(_localPath, storageKey);
+        var dir = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
         await using (var fs = new FileStream(filePath, FileMode.Create))
         {
             await fileStream.CopyToAsync(fs);
