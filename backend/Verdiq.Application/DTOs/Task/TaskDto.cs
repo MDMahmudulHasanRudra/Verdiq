@@ -8,6 +8,8 @@ public class CreateTaskDto
     public string? Priority { get; set; }
     public Guid AssignedTo { get; set; }
     public Guid? CaseId { get; set; }
+    public Guid? HearingId { get; set; }
+    public bool IsPreHearing { get; set; }
     public int SortOrder { get; set; }
     public bool IsRecurring { get; set; }
     public string? RecurrencePattern { get; set; }
@@ -45,6 +47,8 @@ public class TaskResponseDto
     public string AssignedByName { get; set; } = string.Empty;
     public Guid? CaseId { get; set; }
     public string? CaseTitle { get; set; }
+    public Guid? HearingId { get; set; }
+    public bool IsPreHearing { get; set; }
     public DateTime CreatedAt { get; set; }
     public int SortOrder { get; set; }
     public bool IsRecurring { get; set; }

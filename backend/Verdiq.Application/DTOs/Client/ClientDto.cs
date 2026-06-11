@@ -29,6 +29,7 @@ public class CreateClientDto
     public string? WhatsAppNumber { get; set; }
     public string? SecondaryPhone { get; set; }
     public string? EmergencyContact { get; set; }
+    public string? AvatarUrl { get; set; }
 }
 
 public class UpdateClientDto
@@ -62,6 +63,7 @@ public class UpdateClientDto
     public string? EmergencyContact { get; set; }
     public bool? IsBlacklisted { get; set; }
     public bool? IsActive { get; set; }
+    public string? AvatarUrl { get; set; }
 }
 
 public class ClientResponseDto
@@ -99,4 +101,5 @@ public class ClientResponseDto
     public string? SecondaryPhone { get; set; }
     public string? EmergencyContact { get; set; }
     public bool IsBlacklisted { get; set; }
+    public string? AvatarUrl { get; set; }
 }

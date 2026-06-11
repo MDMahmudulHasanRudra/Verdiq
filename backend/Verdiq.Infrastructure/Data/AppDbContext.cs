@@ -576,6 +576,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.WhatsAppNumber).HasMaxLength(20);
             entity.Property(e => e.SecondaryPhone).HasMaxLength(20);
             entity.Property(e => e.EmergencyContact).HasMaxLength(255);
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
 
             entity.HasOne(e => e.Chamber)
                 .WithMany(c => c.Clients)

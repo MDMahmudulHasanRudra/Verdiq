@@ -82,6 +82,7 @@ public class HearingService : IHearingService
     {
         var hearing = await _context.Hearings
             .Include(h => h.Case)
+            .Include(h => h.Tasks)
             .FirstOrDefaultAsync(h => h.Id == id && !h.IsDeleted);
 
         return hearing == null ? null : MapToDto(hearing);
@@ -91,6 +92,7 @@ public class HearingService : IHearingService
     {
         var hearings = await _context.Hearings
             .Include(h => h.Case)
+            .Include(h => h.Tasks)
             .Where(h => h.CaseId == caseId && !h.IsDeleted)
             .OrderByDescending(h => h.HearingDate)
             .ToListAsync();
@@ -103,6 +105,7 @@ public class HearingService : IHearingService
         var now = DateTime.UtcNow;
         var hearings = await _context.Hearings
             .Include(h => h.Case)
+            .Include(h => h.Tasks)
             .Where(h => h.Case.ChamberId == chamberId
                 && h.HearingDate >= now
                 && h.Status == Domain.Enums.HearingStatus.Scheduled
@@ -121,6 +124,7 @@ public class HearingService : IHearingService
 
         var hearings = await _context.Hearings
             .Include(h => h.Case)
+            .Include(h => h.Tasks)
             .Where(h => h.Case.ChamberId == chamberId
                 && h.HearingDate >= dayStart
                 && h.HearingDate < dayEnd
@@ -146,7 +150,13 @@ public class HearingService : IHearingService
             NextHearingDate = h.NextHearingDate,
             Status = h.Status.ToString(),
             Notes = h.Notes,
-            CreatedAt = h.CreatedAt
+            CreatedAt = h.CreatedAt,
+            HasIncompletePreHearingTasks = h.Tasks?.Any(t =>
+                !t.IsDeleted && t.IsPreHearing &&
+                t.Status != Domain.Enums.TaskStatus.Completed &&
+                t.Status != Domain.Enums.TaskStatus.Cancelled) ?? false,
+            HasPreHearingTasks = h.Tasks?.Any(t =>
+                !t.IsDeleted && t.IsPreHearing) ?? false
         };
     }
 }

@@ -17,11 +17,13 @@ namespace Verdiq.API.Controllers;
 public class ClientsController : BaseController
 {
     private readonly IClientService _clientService;
+    private readonly ICloudStorageService _storage;
     private readonly AppDbContext _context;
 
-    public ClientsController(IClientService clientService, AppDbContext context)
+    public ClientsController(IClientService clientService, ICloudStorageService storage, AppDbContext context)
     {
         _clientService = clientService;
+        _storage = storage;
         _context = context;
     }
 
@@ -147,5 +149,32 @@ public class ClientsController : BaseController
         await _context.SaveChangesAsync();
 
         return Ok(ApiResponse<object>.Ok(null!, "Portal access revoked"));
+    }
+
+    [HttpPost("{clientId}/avatar")]
+    [RequestSizeLimit(5_000_000)]
+    public async Task<ActionResult<ApiResponse<ClientResponseDto>>> UploadAvatar(Guid clientId, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<ClientResponseDto>.Fail("No file provided"));
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType))
+            return BadRequest(ApiResponse<ClientResponseDto>.Fail("Only JPEG, PNG, GIF, and WebP images are allowed"));
+
+        var ext = Path.GetExtension(file.FileName);
+        var fileName = $"client_{clientId:N}_{Guid.NewGuid():N}{ext}";
+        var key = $"Uploads/Avatars/{fileName}";
+
+        await using var stream = file.OpenReadStream();
+        await _storage.UploadAsync(key, stream, file.ContentType);
+
+        var url = $"{Request.Scheme}://{Request.Host}/uploads/avatars/{fileName}";
+        var (success, message, data) = await _clientService.UploadAvatarAsync(clientId, url);
+
+        if (!success)
+            return BadRequest(ApiResponse<ClientResponseDto>.Fail(message));
+
+        return Ok(ApiResponse<ClientResponseDto>.Ok(data!));
     }
 }

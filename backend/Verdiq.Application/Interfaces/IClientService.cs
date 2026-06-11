@@ -11,4 +11,5 @@ public interface IClientService
     Task<IEnumerable<ClientResponseDto>> GetAllAsync(Guid chamberId, int page = 1, int pageSize = 10);
     Task<IEnumerable<ClientResponseDto>> SearchAsync(string query, Guid chamberId);
     Task<int> GetCountAsync(Guid chamberId);
+    Task<(bool Success, string Message, ClientResponseDto? Data)> UploadAvatarAsync(Guid clientId, string avatarUrl);
 }

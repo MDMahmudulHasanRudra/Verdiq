@@ -274,12 +274,14 @@ Create a new client.
 
 ```json
 {
-  "fullName": "string",
+  "name": "Client Name",
   "email": "client@example.com",
   "phone": "+8801XXXXXXXXX",
   "address": "Dhaka, Bangladesh",
-  "nationalId": "1234567890",
+  "nid": "1234567890",
+  "companyName": "ABC Corp",
   "notes": "Referred by...",
+  "clientType": "Individual",
   "passportNumber": "AB123456",
   "dateOfBirth": "1990-01-15",
   "gender": "Male",
@@ -298,7 +300,8 @@ Create a new client.
   "preferredContactMethod": "Phone",
   "whatsAppNumber": "+8801XXXXXXXXX",
   "secondaryPhone": "+8801XXXXXXXXY",
-  "emergencyContact": "Wife - +8801XXXXXXXXZ"
+  "emergencyContact": "Wife - +8801XXXXXXXXZ",
+  "avatarUrl": null
 }
 ```
 
@@ -324,6 +327,56 @@ Create portal user account linked to this client. Creates a `User` with `Role=Cl
 
 ### POST /api/clients/{id}/revoke-portal
 Revoke portal access for this client. Soft-deletes the linked portal user.
+
+### POST /api/clients/{id}/avatar
+Upload a profile photo for the client.
+
+**Request:** `multipart/form-data` with a single `file` field.
+
+| Constraint | Value |
+|------------|-------|
+| Max size | 5 MB |
+| Allowed types | JPEG, PNG, GIF, WebP |
+
+**Response:** Returns the updated `ClientResponseDto` with `avatarUrl` populated.
+
+### DTO — ClientResponseDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Client ID |
+| name | string | Full name |
+| phone | string | Phone number |
+| email | string | Email address |
+| address | string? | Physical address |
+| nid | string? | National ID |
+| companyName | string? | Company name |
+| notes | string? | Notes |
+| isActive | bool | Active status |
+| casesCount | int | Number of linked cases |
+| createdAt | DateTime | Creation timestamp |
+| clientType | string? | Client type |
+| clientCode | string? | Auto-generated client code |
+| avatarUrl | string? | Profile photo URL |
+| passportNumber | string? | Passport number |
+| dateOfBirth | DateTime? | Date of birth |
+| gender | string? | Gender |
+| occupation | string? | Occupation |
+| nationality | string? | Nationality |
+| tradeLicense | string? | Trade license number |
+| registrationNumber | string? | Business registration |
+| taxVatNumber | string? | Tax/VAT number |
+| authorizedRepresentative | string? | Authorized representative |
+| tags | string? | Tags |
+| riskLevel | string? | Low, Medium, High |
+| clientCategory | string? | Client category |
+| billingPreference | string? | Billing preference |
+| paymentTerms | string? | Payment terms |
+| creditLimit | decimal? | Credit limit |
+| preferredContactMethod | string? | Preferred contact method |
+| whatsAppNumber | string? | WhatsApp number |
+| secondaryPhone | string? | Secondary phone |
+| emergencyContact | string? | Emergency contact |
+| isBlacklisted | bool | Blacklist status |
 
 ---
 
@@ -359,6 +412,28 @@ Get all hearings for a specific case.
 ### GET /api/hearings/{id}
 Get a single hearing.
 
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "guid",
+    "caseId": "guid",
+    "caseNumber": "VER-2026-0012",
+    "caseTitle": "State vs. Defendant",
+    "hearingDate": "2024-06-15T10:00:00Z",
+    "courtroom": "Room 302",
+    "judgeName": "Hon. Judge",
+    "result": null,
+    "nextHearingDate": null,
+    "status": "Scheduled",
+    "notes": "Bring all documents",
+    "createdAt": "2024-06-01T08:00:00Z",
+    "hasIncompletePreHearingTasks": false
+  }
+}
+```
+
 ### POST /api/hearings
 Create a hearing.
 
@@ -383,6 +458,135 @@ Soft-delete a hearing.
 
 ### POST /api/hearings/{id}/send-reminder
 Send a reminder notification for a hearing.
+
+### DTO — HearingResponseDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Hearing ID |
+| caseId | Guid | Associated case ID |
+| caseNumber | string | Case number |
+| caseTitle | string | Case title |
+| hearingDate | DateTime | Scheduled hearing date |
+| courtroom | string? | Courtroom location |
+| judgeName | string? | Presiding judge |
+| result | string? | Hearing outcome |
+| nextHearingDate | DateTime? | Next hearing date |
+| status | string | Scheduled, Completed, Adjourned, Cancelled |
+| notes | string? | Hearing notes |
+| createdAt | DateTime | Creation timestamp |
+| hasIncompletePreHearingTasks | bool | Whether any pre-hearing tasks are incomplete |
+
+---
+
+## Tasks
+
+All endpoints require `[Authorize]`. Base: `/api/tasks`
+
+### POST /api/tasks
+Create a new task.
+
+**Request Body:**
+```json
+{
+  "title": "Prepare case brief",
+  "description": "Review all documents and prepare summary",
+  "dueDate": "2024-06-20T17:00:00Z",
+  "priority": "High",
+  "assignedTo": "guid",
+  "caseId": "guid",
+  "hearingId": "guid",
+  "isPreHearing": true,
+  "sortOrder": 0,
+  "isRecurring": false,
+  "recurrencePattern": null,
+  "recurrenceInterval": null,
+  "estimatedHours": 2.5,
+  "watcherIds": ["guid"]
+}
+```
+
+### GET /api/tasks
+List tasks with filtering.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| status | string | Pending, InProgress, Completed, Cancelled |
+| priority | string | Low, Medium, High, Urgent |
+| assignedTo | Guid | Filter by assignee |
+
+### GET /api/tasks/my
+Get tasks assigned to the current user.
+
+### GET /api/tasks/by-case/{caseId}
+Get all tasks for a specific case.
+
+### GET /api/tasks/by-hearing/{hearingId}
+Get all tasks for a specific hearing (e.g. pre-hearing tasks).
+
+### GET /api/tasks/{id}
+Get a single task by ID.
+
+### PUT /api/tasks/{id}
+Update a task. All fields optional.
+
+### DELETE /api/tasks/{id}
+Delete a task.
+
+### GET /api/tasks/overdue
+Get overdue tasks for the current chamber.
+
+### POST /api/tasks/reorder
+Reorder tasks (drag-and-drop).
+
+**Request Body:**
+```json
+{
+  "tasks": [
+    { "id": "guid", "sortOrder": 1, "status": "Pending" }
+  ]
+}
+```
+
+### POST /api/tasks/{id}/comments
+Add a comment to a task.
+
+### GET /api/tasks/{id}/comments
+Get comments for a task.
+
+### POST /api/tasks/{id}/watchers
+Toggle watcher status for the current user.
+
+### POST /api/tasks/{id}/start-timer
+Start time tracking on a task.
+
+### POST /api/tasks/{id}/stop-timer
+Stop time tracking. Send `{ "minutes": 30 }` in request body.
+
+### DTO — TaskResponseDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Task ID |
+| title | string | Task title |
+| description | string | Task description |
+| dueDate | DateTime | Due date |
+| status | string | Pending, InProgress, Completed, Cancelled |
+| priority | string? | Low, Medium, High, Urgent |
+| assignedTo | Guid | Assignee user ID |
+| assignedToName | string | Assignee display name |
+| assignedByName | string | Assigner display name |
+| caseId | Guid? | Associated case ID |
+| caseTitle | string? | Case title |
+| hearingId | Guid? | Associated hearing ID (for pre-hearing tasks) |
+| isPreHearing | bool | Whether this is a pre-hearing task |
+| createdAt | DateTime | Creation timestamp |
+| sortOrder | int | Display order |
+| isRecurring | bool | Recurring task flag |
+| completedAt | DateTime? | Completion timestamp |
+| estimatedHours | double? | Estimated effort |
+| actualHours | double? | Logged hours |
+| commentCount | int | Number of comments |
+| attachmentCount | int | Number of attachments |
 
 ---
 

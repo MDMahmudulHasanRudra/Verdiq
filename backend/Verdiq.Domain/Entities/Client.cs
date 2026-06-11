@@ -32,6 +32,7 @@ public class Client : BaseEntity
     public string? WhatsAppNumber { get; set; }
     public string? SecondaryPhone { get; set; }
     public string? EmergencyContact { get; set; }
+    public string? AvatarUrl { get; set; }
     public bool IsBlacklisted { get; set; }
 
     public Guid? UserId { get; set; }

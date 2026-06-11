@@ -15,6 +15,7 @@ public interface ITaskService
     Task<IEnumerable<TaskCommentDto>> GetCommentsAsync(Guid taskId);
     Task<bool> ToggleWatcherAsync(Guid taskId, Guid userId);
     Task ReorderAsync(ReorderTasksDto dto);
+    Task<IEnumerable<TaskResponseDto>> GetByHearingIdAsync(Guid hearingId);
     Task<IEnumerable<TaskResponseDto>> GetOverdueAsync(Guid chamberId);
     Task<TaskResponseDto> StartTimeTrackingAsync(Guid taskId);
     Task<TaskResponseDto> StopTimeTrackingAsync(Guid taskId, double minutes);

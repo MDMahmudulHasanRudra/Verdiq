@@ -35,6 +35,8 @@ public class TaskService : ITaskService
             AssignedTo = dto.AssignedTo,
             AssignedBy = assignedBy,
             CaseId = dto.CaseId,
+            HearingId = dto.HearingId,
+            IsPreHearing = dto.IsPreHearing,
             ChamberId = chamberId,
             SortOrder = dto.SortOrder,
             IsRecurring = dto.IsRecurring,
@@ -267,6 +269,23 @@ public class TaskService : ITaskService
         await _context.SaveChangesAsync();
     }
 
+    public async Task<IEnumerable<TaskResponseDto>> GetByHearingIdAsync(Guid hearingId)
+    {
+        var tasks = await _context.Tasks
+            .Include(t => t.AssignedUser)
+            .Include(t => t.Assigner)
+            .Include(t => t.Case)
+            .Include(t => t.Hearing)
+            .Include(t => t.Comments)
+            .Include(t => t.Attachments)
+            .Include(t => t.Watchers)
+            .Where(t => t.HearingId == hearingId && !t.IsDeleted)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        return tasks.Select(MapToDto);
+    }
+
     public async Task<IEnumerable<TaskResponseDto>> GetOverdueAsync(Guid chamberId)
     {
         var now = DateTime.UtcNow;
@@ -340,6 +359,8 @@ public class TaskService : ITaskService
             AssignedByName = t.Assigner.FullName,
             CaseId = t.CaseId,
             CaseTitle = t.Case?.Title,
+            HearingId = t.HearingId,
+            IsPreHearing = t.IsPreHearing,
             CreatedAt = t.CreatedAt,
             SortOrder = t.SortOrder,
             IsRecurring = t.IsRecurring,

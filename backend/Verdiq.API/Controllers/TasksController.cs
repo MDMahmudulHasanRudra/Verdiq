@@ -56,6 +56,13 @@ public class TasksController : BaseController
         return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
     }
 
+    [HttpGet("by-hearing/{hearingId}")]
+    public async Task<ActionResult<ApiResponse<List<TaskResponseDto>>>> GetByHearing(Guid hearingId)
+    {
+        var tasks = await _taskService.GetByHearingIdAsync(hearingId);
+        return Ok(ApiResponse<List<TaskResponseDto>>.Ok(tasks.ToList()));
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<TaskResponseDto>>> GetById(Guid id)
     {

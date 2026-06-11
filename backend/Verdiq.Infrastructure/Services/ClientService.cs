@@ -150,6 +150,19 @@ public class ClientService : IClientService
         return await _context.Clients.CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
     }
 
+    public async Task<(bool Success, string Message, ClientResponseDto? Data)> UploadAvatarAsync(Guid clientId, string avatarUrl)
+    {
+        var client = await _context.Clients.FindAsync(clientId);
+        if (client == null || client.IsDeleted)
+            return (false, "Client not found", null);
+
+        client.AvatarUrl = avatarUrl;
+        client.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return (true, "Avatar uploaded", MapToDto(client));
+    }
+
     private async Task<string> GenerateClientCode(Guid chamberId)
     {
         var count = await _context.Clients.CountAsync(c => c.ChamberId == chamberId) + 1;
@@ -167,6 +180,7 @@ public class ClientService : IClientService
         CompanyName = c.CompanyName,
         Notes = c.Notes,
         IsActive = c.IsActive,
+        AvatarUrl = c.AvatarUrl,
         CasesCount = c.ClientCases.Count,
         CreatedAt = c.CreatedAt,
         ClientType = c.ClientType,

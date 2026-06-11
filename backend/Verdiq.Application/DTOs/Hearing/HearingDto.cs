@@ -34,4 +34,6 @@ public class HearingResponseDto
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool HasIncompletePreHearingTasks { get; set; }
+    public bool HasPreHearingTasks { get; set; }
 }

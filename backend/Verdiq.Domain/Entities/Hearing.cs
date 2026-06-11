@@ -14,4 +14,5 @@ public class Hearing : BaseEntity
     public HearingStatus Status { get; set; } = HearingStatus.Scheduled;
     public string? Notes { get; set; }
     public bool ReminderSent { get; set; }
+    public ICollection<Task> Tasks { get; set; } = new List<Task>();
 }

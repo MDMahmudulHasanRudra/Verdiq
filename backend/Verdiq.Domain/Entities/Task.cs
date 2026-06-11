@@ -16,6 +16,9 @@ public class Task : BaseEntity
     public User Assigner { get; set; } = null!;
     public Guid? CaseId { get; set; }
     public Case? Case { get; set; }
+    public Guid? HearingId { get; set; }
+    public Hearing? Hearing { get; set; }
+    public bool IsPreHearing { get; set; }
     public Guid ChamberId { get; set; }
     public Chamber Chamber { get; set; } = null!;
 
