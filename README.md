@@ -1,4 +1,4 @@
-# Verdiq — Law Firm Management System (12 Modules)
+# Verdiq — Law Firm Management System 
 
 A production-grade SaaS Law Firm/Chamber Management System for the Bangladesh legal market. Built with ASP.NET Core 10 + Next.js 16 with PostgreSQL.
 
