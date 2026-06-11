@@ -164,7 +164,7 @@ public class ClientsController : BaseController
 
         var ext = Path.GetExtension(file.FileName);
         var fileName = $"client_{clientId:N}_{Guid.NewGuid():N}{ext}";
-        var key = $"Uploads/Avatars/{fileName}";
+        var key = $"avatars/{fileName}";
 
         await using var stream = file.OpenReadStream();
         await _storage.UploadAsync(key, stream, file.ContentType);

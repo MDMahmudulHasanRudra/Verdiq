@@ -429,7 +429,8 @@ Get a single hearing.
     "status": "Scheduled",
     "notes": "Bring all documents",
     "createdAt": "2024-06-01T08:00:00Z",
-    "hasIncompletePreHearingTasks": false
+    "hasIncompletePreHearingTasks": false,
+    "hasPreHearingTasks": false
   }
 }
 ```
@@ -475,6 +476,7 @@ Send a reminder notification for a hearing.
 | notes | string? | Hearing notes |
 | createdAt | DateTime | Creation timestamp |
 | hasIncompletePreHearingTasks | bool | Whether any pre-hearing tasks are incomplete |
+| hasPreHearingTasks | bool | Whether any pre-hearing tasks exist |
 
 ---
 
