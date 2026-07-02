@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: verdiq-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    port: 5000
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:5000
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: verdiq-db
+          property: connectionString
+      - key: Jwt__Key
+        generateValue: true
+      - key: Jwt__Issuer
+        value: Verdiq
+      - key: Jwt__Audience
+        value: VerdiqApp
+      - key: DocumentStorage__Path
+        value: /var/lib/verdiq/uploads
+      - key: OPENAI__ApiKey
+        sync: false
+
+databases:
+  - name: verdiq-db
+    databaseName: verdiq
+    user: verdiq
+    plan: starter
+    ipAllowList: []
