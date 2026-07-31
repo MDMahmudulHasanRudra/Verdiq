@@ -15,7 +15,7 @@ A production-grade SaaS Law Firm/Chamber Management System for the Bangladesh le
 - **Rate Limiting:** System.Threading.RateLimiting (100 req/min per IP)
 
 ### Frontend
-- **Framework:** Next.js 16.2.6 (App Router)
+- **Framework:** Next.js 16.2.12 (App Router)
 - **Bundler:** Turbopack
 - **UI Library:** `@base-ui/react` v1.5 (shadcn v4+)
 - **Styling:** Tailwind CSS v4 (OKLCH color tokens, no tailwind.config.js)
@@ -70,7 +70,37 @@ npm install
 npm run dev
 ```
 
-## Phase 7 — Advanced Case/Client Fields, Chamber Config, Workflow (Latest)
+## Latest Changes — Error Handling & Core Module Upgrades (August 2026)
+
+### Bug Fix — List endpoints crashing pages
+- **Root cause:** `/cases`, `/clients`, `/hearings`, `/expenses`, `/legal-documents` return a raw `PagedResponse<T>`, but the frontend `apiGet()` helper unwrapped only the inner `data` array. Pages then read `data.data.length` / `data.totalPages` on a bare array and threw a `TypeError`, so opening the Case, Hearing, Client (and Expense) modules showed an error page.
+- **Fix:** added `apiGetFull<T>()` in `frontend/src/lib/api.ts`; the paged services (`caseService`, `clientService`, `hearingService`, `expenseService`, `legalDocumentService`) now use it and receive the full paged envelope.
+
+### Proper error handling pages
+- `frontend/src/app/error.tsx` — client-boundary error page with **Try again**, **Dashboard** link, a backend-unreachable hint (detects network errors and tells the user to run `dotnet run`), and collapsible error details incl. digest.
+- `frontend/src/app/global-error.tsx` — top-level critical error page (self-contained HTML).
+- `frontend/src/app/not-found.tsx` — branded 404 page.
+
+### Case module upgrade (`/lawyer/cases`)
+- **List ↔ Grid view toggle** — grid cards show status/priority badges, court, opponent, assigned lawyer, client/hearing/document counts and next-hearing date.
+- **Edit case** dialog (prefilled, incl. status) and **delete case** with confirmation dialog.
+- **Inline quick status change** directly from the row/card.
+- Extra filters: case type, sort (filing date, created, title, case no), status chips, improved debounced search.
+
+### Hearings module upgrade (`/lawyer/hearings`)
+- **Case dropdown selector** instead of pasting a raw GUID.
+- **Upcoming / All** tabs, status filter, pre-hearing-task warning icon.
+- **Edit hearing** (result, next hearing date, status) and **delete** with confirmation.
+
+### Clients module upgrade (`/lawyer/clients`)
+- Backend `/api/clients` now supports **search, status (active/inactive), and clientType filters** (`ClientsController`, `IClientService`, `ClientService.BuildQuery`) — previously search was ignored server-side.
+- **Edit client** dialog (incl. active toggle) and **delete** with confirmation.
+- Type + status filters and improved debounced search.
+
+### Verification
+- `npx tsc --noEmit` clean · `npm run build` succeeds (all routes)
+
+## Phase 7 — Advanced Case/Client Fields, Chamber Config, Workflow
 
 **May 2026** — Major expansion of data models and configuration system.
 

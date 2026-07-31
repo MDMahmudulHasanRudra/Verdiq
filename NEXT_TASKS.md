@@ -1,5 +1,17 @@
 # Remaining Tasks
 
+## 0. Completed — Recent (August 2026)
+
+- [x] **Fixed list-endpoint crash (Case / Hearing / Client / Expense pages)**
+  - Root cause: backend list endpoints return raw `PagedResponse<T>`, but `apiGet()` unwrapped only the inner `data` array.
+  - Fix: added `apiGetFull<T>()` in `frontend/src/lib/api.ts`; used by `caseService`, `clientService`, `hearingService`, `expenseService`, `legalDocumentService`.
+- [x] **Added proper error handling pages** — `error.tsx` (retry + backend-unreachable hint + error details), `global-error.tsx`, `not-found.tsx`.
+- [x] **Case module upgrade** — list/grid view toggle, edit + delete dialogs, inline quick status change, type/sort/status filters.
+- [x] **Hearings module upgrade** — case dropdown selector (no more GUID paste), Upcoming/All tabs, edit (result/next date/status) + delete.
+- [x] **Clients module upgrade** — backend `/api/clients` now supports `search`, `status`, `clientType` filters; edit (active toggle) + delete dialogs.
+- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK).
+
+
 ## 1.  Verify API (High Priority)
 - [ ] Start PostgreSQL container: `docker compose up -d db`
 - [ ] Start API server: `dotnet run --project Verdiq.API --urls http://localhost:5001`

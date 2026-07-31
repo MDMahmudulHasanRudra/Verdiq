@@ -254,15 +254,16 @@ Soft-delete a case. CaseActivity record created automatically. SignalR notificat
 All endpoints require `[Authorize]`. Base: `/api/clients`
 
 ### GET /api/clients
-List clients with pagination.
+List clients with pagination, search, and filters.
 
 **Query Parameters:**
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | page | int | 1 | Page number |
 | pageSize | int | 10 | Items per page |
-| search | string | - | Search name, email, phone |
-| status | string | - | active or inactive |
+| search | string | - | Search name, email, phone, NID, company, client code |
+| status | string | - | `active` or `inactive` |
+| clientType | string | - | Filter by client type (Individual, Corporate, Government, NGO) |
 | sortBy | string | createdAt | Sort field |
 | sortOrder | string | desc | asc or desc |
 

@@ -86,7 +86,7 @@ Every entity includes `ChamberId`. JWT includes `ChamberId` claim accessible via
 ### API Endpoints
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET/POST | `/api/clients` | List/create clients |
+| GET/POST | `/api/clients` | List (page, pageSize, search, status, clientType filters) / create clients |
 | GET/PUT/DELETE | `/api/clients/{id}` | Client CRUD |
 
 ## Module 4 — Document Management
@@ -432,11 +432,11 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 / → redirect to /login
 /login → login form
 /lawyer → dashboard with stats/charts
-/lawyer/cases → case list + create dialog with search/sort/filter
+/lawyer/cases → case list with search/sort/filter, list ↔ grid view toggle, create/edit/delete, inline quick status
 /lawyer/cases/[id] → case detail with timeline, hearings, documents
-/lawyer/clients → client list + create
+/lawyer/clients → client list + create/edit/delete with search, type & active-status filters
 /lawyer/clients/[id] → client detail
-/lawyer/hearings → hearing calendar + list
+/lawyer/hearings → hearing list with Upcoming/All tabs, status filter, case-picker dialog, edit (result/next date/status)/delete
 /lawyer/documents → document grid + upload
 /lawyer/tasks → task assignment board
 /lawyer/templates → template library
@@ -449,6 +449,9 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 /lawyer/settings → profile settings
 /lawyer/configuration → 12-tab chamber configuration (General, Appearance, Case Defaults, Document, Billing, Notification, Workflow, Legal Sections, Users, Security, Integrations, Data)
 /admin → admin panel (Owner only)
+
+Global error routes
+/error boundary → app/error.tsx (client-boundary error page with retry + backend-unreachable hint), app/global-error.tsx, app/not-found.tsx (404)
 
 /super-admin/login → Super Admin login
 /super-admin/dashboard → Dashboard with 12 stats + 8 quick actions + chamber table
@@ -506,3 +509,4 @@ Login → /api/auth/login → stores tokens in localStorage + cookies
 20. **Chamber Key-Value Settings** — `ChamberSettings` stores sections as JSON blobs, enabling flexible per-chamber configuration without schema changes
 21. **Workflow Template Engine** — Ordered status transitions with color/icon per step, entity-type scoped, enabling configurable lifecycle management
 22. **Legal Sections as Reference Data** — `LegalSections` table acts as a reusable reference for legal acts/sections linked to cases via many-to-many
+23. **Frontend Paged Response Handling** — `apiGet<T>` unwraps `ApiResponse.data` for single-object endpoints; `apiGetFull<T>` returns the raw body for list endpoints that return `PagedResponse<T>` directly (cases, clients, hearings, expenses, legal-documents) — preventing shape-mismatch crashes

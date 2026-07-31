@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { apiGet, apiGetFull, apiPost, apiPut, apiDelete } from "@/lib/api";
 import type { Case, CreateCaseInput, UpdateCaseInput, CaseActivity } from "@/types/models";
 import type { PagedResponse } from "@/types/api";
 
@@ -23,7 +23,7 @@ export const caseService = {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && String(v) !== "") qs.set(k, String(v));
     });
-    return apiGet<PagedResponse<Case>>(`/cases?${qs.toString()}`);
+    return apiGetFull<PagedResponse<Case>>(`/cases?${qs.toString()}`);
   },
   get: (id: string) => apiGet<Case>(`/cases/${id}`),
   search: (q: string) => apiGet<Case[]>(`/cases/search?q=${encodeURIComponent(q)}`),

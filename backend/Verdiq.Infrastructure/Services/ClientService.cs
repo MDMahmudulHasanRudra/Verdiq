@@ -118,11 +118,9 @@ public class ClientService : IClientService
         return client == null ? null : MapToDto(client);
     }
 
-    public async Task<IEnumerable<ClientResponseDto>> GetAllAsync(Guid chamberId, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<ClientResponseDto>> GetAllAsync(Guid chamberId, int page = 1, int pageSize = 10, string? search = null, string? status = null, string? clientType = null)
     {
-        var clients = await _context.Clients
-            .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
-            .Where(c => c.ChamberId == chamberId && !c.IsDeleted)
+        var clients = await BuildQuery(chamberId, search, status, clientType)
             .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -145,9 +143,9 @@ public class ClientService : IClientService
         return clients.Select(MapToDto);
     }
 
-    public async Task<int> GetCountAsync(Guid chamberId)
+    public async Task<int> GetCountAsync(Guid chamberId, string? search = null, string? status = null, string? clientType = null)
     {
-        return await _context.Clients.CountAsync(c => c.ChamberId == chamberId && !c.IsDeleted);
+        return await BuildQuery(chamberId, search, status, clientType).CountAsync();
     }
 
     public async Task<(bool Success, string Message, ClientResponseDto? Data)> UploadAvatarAsync(Guid clientId, string avatarUrl)
@@ -167,6 +165,37 @@ public class ClientService : IClientService
     {
         var count = await _context.Clients.CountAsync(c => c.ChamberId == chamberId) + 1;
         return $"CL-{DateTime.UtcNow:yyyy}-{count:D4}";
+    }
+
+    private IQueryable<Client> BuildQuery(Guid chamberId, string? search, string? status, string? clientType)
+    {
+        var query = _context.Clients
+            .Include(c => c.ClientCases.Where(cc => !cc.IsDeleted))
+            .Where(c => c.ChamberId == chamberId && !c.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var active = status.Equals("active", StringComparison.OrdinalIgnoreCase);
+            query = query.Where(c => c.IsActive == active);
+        }
+
+        if (!string.IsNullOrWhiteSpace(clientType))
+        {
+            var type = clientType.ToLower();
+            query = query.Where(c => c.ClientType != null && c.ClientType.ToLower() == type);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(c =>
+                c.Name.ToLower().Contains(term) || c.Email.ToLower().Contains(term) ||
+                c.Phone.Contains(term) || (c.Nid != null && c.Nid.Contains(term)) ||
+                (c.CompanyName != null && c.CompanyName.ToLower().Contains(term)) ||
+                (c.ClientCode != null && c.ClientCode.Contains(term)));
+        }
+
+        return query;
     }
 
     private static ClientResponseDto MapToDto(Client c) => new()

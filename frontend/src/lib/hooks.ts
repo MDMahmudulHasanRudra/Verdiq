@@ -35,17 +35,39 @@ export function useLawyerProductivity() {
   return useQuery({ queryKey: ["dashboard", "productivity"], queryFn: () => dashboardService.lawyerProductivity() });
 }
 
-export function useCases(params: { page?: number; pageSize?: number; status?: string; priority?: string; search?: string; assignedToMe?: boolean } = {}) {
+export function useCases(
+  params: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    priority?: string;
+    search?: string;
+    assignedToMe?: boolean;
+    type?: string;
+    courtName?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}
+) {
   return useQuery({
     queryKey: ["cases", params],
-    queryFn: () => caseService.list({
-      page: params.page,
-      pageSize: params.pageSize,
-      status: params.status,
-      priority: params.priority,
-      search: params.search,
-      assignedLawyerId: params.assignedToMe ? "me" : undefined
-    })
+    queryFn: () =>
+      caseService.list({
+        page: params.page,
+        pageSize: params.pageSize,
+        status: params.status,
+        priority: params.priority,
+        search: params.search,
+        assignedLawyerId: params.assignedToMe ? "me" : undefined,
+        type: params.type,
+        courtName: params.courtName,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo
+      })
   });
 }
 
@@ -69,7 +91,7 @@ export function useCaseProcedures(id: string) {
   });
 }
 
-export function useClients(params: { page?: number; pageSize?: number; search?: string } = {}) {
+export function useClients(params: { page?: number; pageSize?: number; search?: string; status?: string; clientType?: string } = {}) {
   return useQuery({
     queryKey: ["clients", params],
     queryFn: () => clientService.list(params)

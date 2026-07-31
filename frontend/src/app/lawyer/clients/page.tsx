@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
@@ -15,30 +15,112 @@ import { useClients } from "@/lib/hooks";
 import { clientService } from "@/lib/services";
 import { getErrorMessage, formatDate, initials } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { Users, Plus, Search } from "lucide-react";
-import type { CreateClientInput } from "@/types/models";
+import { Users, Plus, Search, PenLine, Trash2, ArrowUpRight } from "lucide-react";
+import type { Client, CreateClientInput } from "@/types/models";
+
+const clientTypes = ["Individual", "Corporate", "Government", "NGO"];
+
+interface ClientFormState {
+  name: string;
+  phone: string;
+  email: string;
+  clientType: string;
+  nid: string;
+  companyName: string;
+  address: string;
+  isActive: boolean;
+}
+
+const emptyForm = (): ClientFormState => ({
+  name: "",
+  phone: "",
+  email: "",
+  clientType: "Individual",
+  nid: "",
+  companyName: "",
+  address: "",
+  isActive: true
+});
+
+const fromClient = (c: Client): ClientFormState => ({
+  name: c.name,
+  phone: c.phone,
+  email: c.email,
+  clientType: c.clientType ?? "Individual",
+  nid: c.nid ?? "",
+  companyName: c.companyName ?? "",
+  address: c.address ?? "",
+  isActive: c.isActive
+});
 
 export default function ClientsPage() {
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [clientType, setClientType] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<Client | null>(null);
+  const [deleting, setDeleting] = useState<Client | null>(null);
 
-  const { data, isLoading } = useClients({ page, pageSize: 10, search: debouncedSearch || undefined });
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 350);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const { data, isLoading } = useClients({
+    page,
+    pageSize: 10,
+    search: debouncedSearch || undefined,
+    status: status || undefined,
+    clientType: clientType || undefined
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["clients"] });
 
   const createMutation = useMutation({
     mutationFn: (input: CreateClientInput) => clientService.create(input),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["clients"] });
+      invalidate();
       setCreateOpen(false);
       toast.success("Client created");
       router.push(`/lawyer/clients/${data.id}`);
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<CreateClientInput> & { isActive?: boolean } }) =>
+      clientService.update(id, input),
+    onSuccess: () => {
+      invalidate();
+      setEditing(null);
+      toast.success("Client updated");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => clientService.remove(id),
+    onSuccess: () => {
+      invalidate();
+      setDeleting(null);
+      setPage(1);
+      toast.success("Client deleted");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const applyFilter = (fn: () => void) => {
+    fn();
+    setPage(1);
+  };
+
+  const clients = data?.data ?? [];
 
   return (
     <div>
@@ -53,24 +135,42 @@ export default function ClientsPage() {
       />
 
       <Card className="mb-4 p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
-          <Input
-            placeholder="Search by name, phone, email…"
-            className="pl-9"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              window.setTimeout(() => setDebouncedSearch(e.target.value), 350);
-            }}
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+            <Input
+              placeholder="Search by name, phone, email, client code…"
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select
+            className="sm:w-44"
+            value={clientType}
+            onChange={(e) => applyFilter(() => setClientType(e.target.value))}
+          >
+            <option value="">All types</option>
+            {clientTypes.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Select>
+          <Select
+            className="sm:w-40"
+            value={status}
+            onChange={(e) => applyFilter(() => setStatus(e.target.value))}
+          >
+            <option value="">Active & inactive</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </Select>
         </div>
       </Card>
 
       <Card>
         {isLoading ? (
           <Loading />
-        ) : data && data.data.length > 0 ? (
+        ) : clients.length > 0 ? (
           <>
             <Table>
               <thead>
@@ -81,11 +181,16 @@ export default function ClientsPage() {
                   <th>Cases</th>
                   <th>Status</th>
                   <th>Created</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {data.data.map((c) => (
-                  <tr key={c.id} className="cursor-pointer" onClick={() => router.push(`/lawyer/clients/${c.id}`)}>
+                {clients.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/lawyer/clients/${c.id}`)}
+                  >
                     <td>
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-semibold text-primary-700">
@@ -105,59 +210,169 @@ export default function ClientsPage() {
                     <td className="font-medium text-ink">{c.casesCount}</td>
                     <td><StatusBadge value={c.isActive ? "Active" : "Inactive"} /></td>
                     <td className="text-ink-muted">{formatDate(c.createdAt)}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditing(c)}
+                          className="cursor-pointer rounded-md p-1.5 text-ink-soft transition-colors hover:bg-slate-100 hover:text-ink"
+                          title="Edit client"
+                        >
+                          <PenLine className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleting(c)}
+                          className="cursor-pointer rounded-md p-1.5 text-ink-soft transition-colors hover:bg-red-50 hover:text-red-600"
+                          title="Delete client"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <ArrowUpRight className="ml-1 h-4 w-4 text-ink-soft" />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
-            <Pagination page={data.page} totalPages={data.totalPages} totalCount={data.totalCount} onChange={setPage} />
+            {data && data.totalPages > 1 ? (
+              <Pagination
+                page={data.page}
+                totalPages={data.totalPages}
+                totalCount={data.totalCount}
+                onChange={setPage}
+              />
+            ) : null}
           </>
         ) : (
           <EmptyState
             icon={<Users className="h-10 w-10" />}
-            title="No clients yet"
-            description="Add a client to link them to cases and invoices."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Client</Button>}
+            title={debouncedSearch || clientType || status ? "No matching clients" : "No clients yet"}
+            description={
+              debouncedSearch || clientType || status
+                ? "Try clearing some filters or changing your search."
+                : "Add a client to link them to cases and invoices."
+            }
+            action={
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4" /> New Client
+              </Button>
+            }
           />
         )}
       </Card>
 
-      <CreateClientDialog open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={(v) => createMutation.mutate(v)} />
+      <ClientFormDialog
+        open={createOpen}
+        title="New Client"
+        description="Basic client information to get started."
+        submitLabel="Create Client"
+        isEdit={false}
+        initial={emptyForm()}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={(form) =>
+          createMutation.mutate({
+            name: form.name,
+            phone: form.phone,
+            email: form.email,
+            address: form.address || null,
+            nid: form.nid || null,
+            companyName: form.companyName || null,
+            clientType: form.clientType
+          })
+        }
+      />
+
+      {editing ? (
+        <ClientFormDialog
+          open
+          title="Edit Client"
+          description={editing.clientCode || editing.email}
+          submitLabel="Save Changes"
+          isEdit
+          initial={fromClient(editing)}
+          onClose={() => setEditing(null)}
+          onSubmit={(form) =>
+            updateMutation.mutate({
+              id: editing.id,
+              input: {
+                name: form.name || undefined,
+                phone: form.phone || undefined,
+                email: form.email || undefined,
+                clientType: form.clientType || undefined,
+                nid: form.nid || null,
+                companyName: form.companyName || null,
+                address: form.address || null,
+                isActive: form.isActive
+              }
+            })
+          }
+        />
+      ) : null}
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete client"
+        description={deleting ? `"${deleting.name}" will be permanently removed.` : ""}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+            >
+              <Trash2 className="h-4 w-4" /> Delete Client
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-muted">
+          Their cases will remain but will no longer be linked to this client. This action cannot
+          be undone.
+        </p>
+      </Dialog>
     </div>
   );
 }
 
-function CreateClientDialog({
+function ClientFormDialog({
   open,
+  title,
+  description,
+  submitLabel,
+  isEdit,
+  initial,
   onClose,
   onSubmit
 }: {
   open: boolean;
+  title: string;
+  description: string;
+  submitLabel: string;
+  isEdit: boolean;
+  initial: ClientFormState;
   onClose: () => void;
-  onSubmit: (input: CreateClientInput) => void;
+  onSubmit: (form: ClientFormState) => void;
 }) {
-  const [form, setForm] = useState<CreateClientInput>({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    clientType: "Individual",
-    nid: "",
-    companyName: "",
-    notes: ""
-  });
-  const set = (k: keyof CreateClientInput, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [form, setForm] = useState<ClientFormState>(initial);
+
+  useEffect(() => {
+    setForm(initial);
+  }, [initial]);
+
+  const set = (k: keyof ClientFormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Client"
-      description="Basic client information to get started."
+      title={title}
+      description={description}
       size="lg"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={!form.name || !form.phone} onClick={() => onSubmit(form)}>Create Client</Button>
+          <Button disabled={!form.name || !form.phone} onClick={() => onSubmit(form)}>{submitLabel}</Button>
         </>
       }
     >
@@ -172,21 +387,32 @@ function CreateClientDialog({
           <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
         </Field>
         <Field label="Client Type">
-          <Select value={form.clientType ?? "Individual"} onChange={(e) => set("clientType", e.target.value)}>
-            {["Individual", "Corporate", "Government", "NGO"].map((t) => (
+          <Select value={form.clientType} onChange={(e) => set("clientType", e.target.value)}>
+            {clientTypes.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </Select>
         </Field>
         <Field label="NID">
-          <Input value={form.nid ?? ""} onChange={(e) => set("nid", e.target.value)} />
+          <Input value={form.nid} onChange={(e) => set("nid", e.target.value)} />
         </Field>
         <Field label="Company (if corporate)" className="sm:col-span-2">
-          <Input value={form.companyName ?? ""} onChange={(e) => set("companyName", e.target.value)} />
+          <Input value={form.companyName} onChange={(e) => set("companyName", e.target.value)} />
         </Field>
         <Field label="Address" className="sm:col-span-2">
-          <Textarea rows={2} value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
+          <Textarea rows={2} value={form.address} onChange={(e) => set("address", e.target.value)} />
         </Field>
+        {isEdit ? (
+          <label className="sm:col-span-2 inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              className="h-4 w-4 accent-primary-700"
+            />
+            Client is active
+          </label>
+        ) : null}
       </div>
     </Dialog>
   );

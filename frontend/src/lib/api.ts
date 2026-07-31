@@ -165,6 +165,13 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promi
   return data.data;
 }
 
+// Returns the full response body — used for list endpoints that return a
+// PagedResponse<T> directly (e.g. /cases, /clients, /hearings, /expenses).
+export async function apiGetFull<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  const { data } = await api.get<T>(url, config);
+  return data;
+}
+
 export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
   const { data } = await api.post<{ data: T }>(url, body);
   return data.data;

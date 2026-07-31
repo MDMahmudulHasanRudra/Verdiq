@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { apiGet, apiGetFull, apiPost, apiPut, apiDelete } from "@/lib/api";
 import type { Client, CreateClientInput } from "@/types/models";
 import type { PagedResponse } from "@/types/api";
 
@@ -10,6 +10,7 @@ export interface ClientQueryParams {
   pageSize?: number;
   search?: string;
   status?: string;
+  clientType?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -20,12 +21,12 @@ export const clientService = {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && String(v) !== "") qs.set(k, String(v));
     });
-    return apiGet<PagedResponse<Client>>(`/clients?${qs.toString()}`);
+    return apiGetFull<PagedResponse<Client>>(`/clients?${qs.toString()}`);
   },
   get: (id: string) => apiGet<Client>(`/clients/${id}`),
   search: (q: string) => apiGet<Client[]>(`/clients/search?q=${encodeURIComponent(q)}`),
   create: (input: CreateClientInput) => apiPost<Client>("/clients", input),
-  update: (id: string, input: Partial<CreateClientInput>) => apiPut<Client>(`/clients/${id}`, input),
+  update: (id: string, input: Partial<CreateClientInput> & { isActive?: boolean }) => apiPut<Client>(`/clients/${id}`, input),
   remove: (id: string) => apiDelete<object>(`/clients/${id}`),
   grantPortalAccess: (clientId: string, data: { fullName: string; email: string; password: string; phone?: string }) =>
     apiPost<object>(`/clients/${clientId}/portal-access`, data),
@@ -38,7 +39,7 @@ export const hearingService = {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && String(v) !== "") qs.set(k, String(v));
     });
-    return apiGet<PagedResponse<import("@/types/models").Hearing>>(`/hearings?${qs.toString()}`);
+    return apiGetFull<PagedResponse<import("@/types/models").Hearing>>(`/hearings?${qs.toString()}`);
   },
   upcoming: () => apiGet<import("@/types/models").Hearing[]>("/hearings/upcoming"),
   byCase: (caseId: string) => apiGet<import("@/types/models").Hearing[]>(`/hearings/by-case/${caseId}`),
@@ -105,7 +106,7 @@ export const expenseService = {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && String(v) !== "") qs.set(k, String(v));
     });
-    return apiGet<PagedResponse<import("@/types/models").Expense>>(`/expenses?${qs.toString()}`);
+    return apiGetFull<PagedResponse<import("@/types/models").Expense>>(`/expenses?${qs.toString()}`);
   },
   total: () => apiGet<number>("/expenses/total"),
   create: (input: Record<string, unknown>) => apiPost<import("@/types/models").Expense>("/expenses", input)
@@ -145,7 +146,7 @@ export const legalDocumentService = {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && String(v) !== "") qs.set(k, String(v));
     });
-    return apiGet<PagedResponse<import("@/types/models").LegalDocument>>(`/legal-documents?${qs.toString()}`);
+    return apiGetFull<PagedResponse<import("@/types/models").LegalDocument>>(`/legal-documents?${qs.toString()}`);
   },
   search: (q: string) => apiGet<import("@/types/models").LegalDocument[]>(`/legal-documents/search?q=${encodeURIComponent(q)}`),
   byCategory: (category: string) =>

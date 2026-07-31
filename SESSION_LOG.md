@@ -1,4 +1,39 @@
-# Session Log — June 6, 2026
+# Session Log
+
+## Session 3 — Error Page Fix & Core Module Upgrades (August 2026)
+
+### Changes Made
+
+**Frontend — Paged-response bug fix (critical)**
+- Root cause: `/cases`, `/clients`, `/hearings`, `/expenses`, `/legal-documents` return a raw `PagedResponse<T>`, but the `apiGet()` helper unwrapped only `data.data` (the array). Pages then read `data.data.length` / `data.totalPages` on a bare array → `TypeError` → error page.
+- Added `apiGetFull<T>()` in `frontend/src/lib/api.ts` (returns the full body).
+- Switched the paged services to `apiGetFull` in `case-service.ts` and `services/index.ts` (clients, hearings, expenses, legal-documents).
+- `useCases` hook now passes through the full `CaseQueryParams` (type, courtName, sortBy, sortOrder, dateFrom, dateTo).
+
+**Frontend — Error handling pages**
+- Created `frontend/src/app/error.tsx` (client-boundary: retry, dashboard link, backend-unreachable hint, collapsible details + digest), `global-error.tsx`, `not-found.tsx`.
+
+**Frontend — Case module (`lawyer/cases/page.tsx`)**
+- List ↔ grid view toggle (grid cards with status/priority badges, court, opponent, assigned lawyer, client/hearing/document counts, next hearing).
+- Edit-case dialog (prefilled incl. status) and delete-case confirmation dialog.
+- Inline quick-status change per row/card.
+- Filters: case type, sort (filingDate/createdAt/title/caseNumber), status chips, improved debounced search.
+
+**Frontend — Hearings module (`lawyer/hearings/page.tsx`)**
+- Case dropdown selector (fetched from live case list) instead of pasting a GUID.
+- Upcoming / All tabs, status filter, incomplete pre-hearing-task warning icon.
+- Edit-hearing dialog (result, nextHearingDate, status) and delete confirmation.
+
+**Frontend + Backend — Clients module (`lawyer/clients/page.tsx`)**
+- Backend: `/api/clients` now accepts `search`, `status`, `clientType` filters — updated `ClientsController.GetAll`, `IClientService.GetAllAsync/GetCountAsync`, and `ClientService` (new `BuildQuery` helper).
+- Frontend: edit-client dialog (incl. active toggle), delete confirmation, type/status filters, improved debounced search. `clientService.update` accepts `isActive`.
+
+### Verification
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — succeeds (all routes)
+- Backend not compiled locally (no .NET SDK on this machine); C# changes follow existing patterns.
+
+---
 
 ## Session 2 — Module-Based Access Control & Admin Enhancements
 

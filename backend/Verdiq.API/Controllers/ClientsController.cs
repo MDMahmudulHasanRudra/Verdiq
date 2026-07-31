@@ -28,11 +28,16 @@ public class ClientsController : BaseController
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<ClientResponseDto>>> GetAll(int page = 1, int pageSize = 10)
+    public async Task<ActionResult<PagedResponse<ClientResponseDto>>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? clientType = null)
     {
         var chamberId = GetChamberId();
-        var clients = await _clientService.GetAllAsync(chamberId, page, pageSize);
-        var totalCount = await _clientService.GetCountAsync(chamberId);
+        var clients = await _clientService.GetAllAsync(chamberId, page, pageSize, search, status, clientType);
+        var totalCount = await _clientService.GetCountAsync(chamberId, search, status, clientType);
         return Ok(new PagedResponse<ClientResponseDto>
         {
             Data = clients.ToList(),
