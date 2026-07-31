@@ -1,0 +1,22 @@
+services:
+  verdiq:
+    image: verdiq:latest
+    container_name: verdiq
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"   # Web (Next.js)
+      - "5000:5000"   # API (ASP.NET)
+      - "5432:5432"   # PostgreSQL
+    environment:
+      POSTGRES_PASSWORD: postgres
+      DocumentStorage__Path: /data/uploads
+    volumes:
+      - pgdata:/var/lib/verdiq/pgdata
+      - uploads:/data/uploads
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:

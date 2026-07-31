@@ -30,15 +30,24 @@ A production-grade SaaS Law Firm/Chamber Management System for the Bangladesh le
 - Node.js 20+
 - Docker Desktop (for PostgreSQL)
 
-### Docker (Recommended — starts all services)
+### Docker (Recommended — full app in one container)
 
 ```bash
-cd backend
-docker compose build
-docker compose up -d
+# From the repo root (Verdiq/)
+docker compose up -d --build
 ```
 
-This starts PostgreSQL (5432), the API (5000), and the Next.js frontend (3000).
+This builds and starts the full app in a single container — PostgreSQL (5432), the API (5000), and the Next.js frontend (3000).
+
+- Web: http://localhost:3000
+- API: http://localhost:5000
+- API health: http://localhost:5000/health
+
+```bash
+docker compose logs -f   # follow logs
+docker compose down      # stop (keeps data)
+docker compose down -v   # stop + wipe data (PG + uploads)
+```
 
 ### Backend (Local)
 

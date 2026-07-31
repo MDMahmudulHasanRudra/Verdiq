@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+**/bin
+**/obj
+**/node_modules
+**/.next
+**/dist
+**/out
+
+# Logs & temp
+**/logs
+*.log
+.tmp
+
+# Secrets & local env
+**/.env
+**/.env.*
+!frontend/.env.example
+
+# IDE / OS
+.vscode
+.idea
+*.suo
+Thumbs.db
+.DS_Store
+
+# Docker files (context copies sources, not Dockerfiles)
+**/Dockerfile
+docker-compose.yml
