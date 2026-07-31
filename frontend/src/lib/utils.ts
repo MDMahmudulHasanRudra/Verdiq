@@ -1,0 +1,74 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import dayjs from "dayjs";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+export function formatCurrency(amount: number | null | undefined, currency = "BDT") {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) return "—";
+  const n = Number(amount);
+  const formatted = n.toLocaleString("en-BD", {
+    minimumFractionDigits: n % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2
+  });
+  return `${currency === "BDT" ? "৳" : currency === "USD" ? "$" : currency + " "}${formatted}`;
+}
+
+export function formatDate(value: string | null | undefined, format = "DD MMM YYYY") {
+  if (!value) return "—";
+  const d = dayjs(value);
+  if (!d.isValid()) return "—";
+  return d.format(format);
+}
+
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = dayjs(value);
+  if (!d.isValid()) return "—";
+  return d.format("DD MMM YYYY, hh:mm A");
+}
+
+export function timeAgo(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = dayjs(value);
+  if (!d.isValid()) return "—";
+  const diff = dayjs().diff(d, "minute");
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${diff}m ago`;
+  const hours = Math.floor(diff / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+export function initials(name: string | null | undefined) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
+}
+
+export function firstError(errors?: string[] | null, fallback = "Something went wrong") {
+  if (errors && errors.length > 0) return errors[0];
+  return fallback;
+}
+
+export function getErrorMessage(err: unknown): string {
+  if (typeof err === "object" && err !== null) {
+    const e = err as { response?: { data?: { message?: string; errors?: string[] } }; message?: string };
+    if (e.response?.data?.message) return firstError(e.response.data.errors, e.response.data.message);
+    if (e.message) return e.message;
+  }
+  return "Something went wrong";
+}

@@ -1,0 +1,10 @@
+**/.git
+**/node_modules
+**/.next
+**/.env*.local
+**/.env*.development
+npm-debug.log*
+Dockerfile
+.dockerignore
+next-env.d.ts
+tsconfig.tsbuildinfo
