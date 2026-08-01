@@ -10,6 +10,22 @@ PG_PASSWORD=${POSTGRES_PASSWORD:-postgres}
 export ConnectionStrings__DefaultConnection="Host=127.0.0.1;Port=${PG_PORT};Database=${PG_DB};Username=${PG_USER};Password=${PG_PASSWORD}"
 export DocumentStorage__Path=${DocumentStorage__Path:-/data/uploads}
 
+# --- JWT signing key: use a provided one, or generate + persist one so that
+#     sessions survive restarts and every deployment gets a unique key. ---
+DATA_DIR="$(dirname "$PGDATA")"
+JWT_KEY_FILE="$DATA_DIR/jwt.key"
+if [ -z "$Jwt__Key" ]; then
+  if [ -f "$JWT_KEY_FILE" ]; then
+    export Jwt__Key="$(cat "$JWT_KEY_FILE")"
+  else
+    mkdir -p "$DATA_DIR"
+    head -c 48 /dev/urandom | base64 | tr -d '\n' > "$JWT_KEY_FILE"
+    chmod 600 "$JWT_KEY_FILE"
+    export Jwt__Key="$(cat "$JWT_KEY_FILE")"
+    echo "[init] Generated a new persistent JWT signing key at $JWT_KEY_FILE"
+  fi
+fi
+
 mkdir -p "$(dirname "$PGDATA")" /data/uploads
 chown -R postgres:postgres "$(dirname "$PGDATA")"
 

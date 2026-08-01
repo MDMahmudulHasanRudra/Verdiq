@@ -12,7 +12,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { EmptyState, Loading } from "@/components/ui/loading";
 import { documentService } from "@/lib/services";
 import { useCases } from "@/lib/hooks";
-import { getErrorMessage, formatDateTime } from "@/lib/utils";
+import { getErrorMessage, formatDateTime, API_URL } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { FileText, Upload, Download, Trash2 } from "lucide-react";
 
@@ -139,7 +139,7 @@ export default function DocumentsPage() {
                         className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
                         aria-label="Download"
                         title="Download"
-                        href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/documents/download/${d.id}`}
+                        href={`${API_URL}/documents/download/${d.id}`}
                         target="_blank"
                         rel="noreferrer"
                       >

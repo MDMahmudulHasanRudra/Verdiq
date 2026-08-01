@@ -6,8 +6,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const DEFAULT_API_URL = "http://localhost:5000/api";
+
+// The API base URL is used by the browser (axios + download links). When no
+// explicit NEXT_PUBLIC_API_URL is configured (the localhost build default),
+// derive it at runtime from the page's own hostname so a VPS deploy works
+// with zero extra configuration: the API is served on port 5000 of the same
+// host that serves the frontend.
+function resolveApiUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured && configured !== DEFAULT_API_URL) return configured;
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:5000/api`;
+  }
+  return DEFAULT_API_URL;
+}
+
+export const API_URL = resolveApiUrl();
 
 export function formatCurrency(amount: number | null | undefined, currency = "BDT") {
   if (amount === null || amount === undefined || Number.isNaN(amount)) return "—";

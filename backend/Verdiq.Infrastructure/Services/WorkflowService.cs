@@ -349,9 +349,9 @@ public class WorkflowService : IWorkflowService
             .Where(s => s.Status != "Completed")
             .OrderBy(s => s.OrderIndex)
             .FirstOrDefault();
-
     private static void AddSteps(Guid workflowId, ICollection<WorkflowStep> target, IEnumerable<CreateWorkflowStepDto> steps)
     {
+        var index = 0;
         foreach (var s in steps)
         {
             target.Add(new WorkflowStep
@@ -359,7 +359,7 @@ public class WorkflowService : IWorkflowService
                 WorkflowId = workflowId,
                 Title = s.Title.Trim(),
                 Description = s.Description,
-                OrderIndex = s.OrderIndex,
+                OrderIndex = index++,
                 DueInDays = s.DueInDays,
                 CreatedAt = DateTime.UtcNow
             });

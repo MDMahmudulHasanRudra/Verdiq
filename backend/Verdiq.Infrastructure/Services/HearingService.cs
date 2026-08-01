@@ -146,7 +146,7 @@ public class HearingService : IHearingService
     // Keeps the parent Case.NextHearingDate in sync with the case's hearings:
     // the next future Scheduled hearing, falling back to the next future
     // hearing date recorded on any active/adjourned hearing.
-    private async Task SyncCaseNextHearingDateAsync(Guid caseId)
+    private async System.Threading.Tasks.Task SyncCaseNextHearingDateAsync(Guid caseId)
     {
         var now = DateTime.UtcNow;
 
@@ -164,7 +164,7 @@ public class HearingService : IHearingService
         {
             nextHearingDate = await _context.Hearings
                 .Where(h => h.CaseId == caseId && !h.IsDeleted
-                    && h.Status != Domain.Enums.HearingStatus.Canceled
+                    && h.Status != Domain.Enums.HearingStatus.Cancelled
                     && h.NextHearingDate.HasValue
                     && h.NextHearingDate.Value >= now)
                 .OrderBy(h => h.NextHearingDate)

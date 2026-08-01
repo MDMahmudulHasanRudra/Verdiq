@@ -13,11 +13,15 @@
 - [x] **Case photos** — per-case photo upload (to cloud storage), thumbnail grid, lightbox, download, soft-delete.
 - [x] **Delete case re-authentication** — `DELETE /api/cases/{id}` now requires the caller's `email` + `password` (BCrypt-verified) in the request body; confirm dialog on the cases page.
 - [x] **Case Workflows / Processes** — user-created workflow presets (`/lawyer/workflows`, step builder with due-in-days, activate/deactivate) linkable to a case; steps unlock sequentially (locked until previous step completes) with due-date/overdue tracking, per-workflow progress, cancel/remove, case-detail Workflow tab + Overview progress snippet. Backend: `Workflow`/`WorkflowStep`/`CaseWorkflow`/`CaseWorkflowStep` entities, `WorkflowService`, `WorkflowsController` + `CaseWorkflowsController`.
-- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK), then add EF migration(s) for the new tables + `dotnet ef database update`:
-  - `AddJudgmentsAndCasePhotos` — `Judgments` / `CasePhotos`
-  - `AddCaseWorkflows` — `Workflows` / `WorkflowSteps` / `CaseWorkflows` / `CaseWorkflowSteps`
-  - `AddConfirmCaseDelete` — no schema change (body-only API change; skip if already applied)
-- [ ] Manual test the Workflow feature end-to-end (create preset → link to case → complete steps in sequence → confirm the next step unlocks → export/delete).
+- [x] **Backend compile-verify + EF migrations** (done in Docker — no local .NET SDK):
+  - Backend builds clean via `docker compose up -d --build` (SDK image `mcr.microsoft.com/dotnet/sdk:10.0`).
+  - Migrations applied at startup via `MigrateAsync()`: `Judgments`/`CasePhotos` + `Workflows`/`WorkflowSteps`/`CaseWorkflows`/`CaseWorkflowSteps` all folded into one migration **`20260801140144_AddCaseWorkflows`** (pending-model-changes warning is gone; `__EFMigrationsHistory` contains it).
+  - `AddConfirmCaseDelete` — no schema change (body-only API change; nothing to migrate).
+  - Fixes along the way: `HearingService.cs` `Task` ambiguity (`System.Threading.Tasks.Task`) and `HearingStatus.Cancelled` (double-l); `WorkflowService.AddSteps` now assigns `OrderIndex` sequentially (client-sent indexes were silently collapsing to 0).
+- [x] **Manual test the Workflow feature end-to-end** (verified against `http://localhost:5000`, admin `admin@verdiq.com`/`admin123`):
+  - Create preset → steps snapshotted with correct `OrderIndex` 0/1; link to case → step A active/unlocked, step B locked.
+  - Sequential gating: completing B before A → 400 `Complete "A" first - the next step unlocks after it`; starting A twice → 400 `This step has already been started`; completing A unlocks B (`isActive=true`, `isLocked=false`, `percentComplete=50`).
+  - Cancel/remove and workflow completion (`Completed`, `percentComplete=100`) verified.
 
 
 ## 1.  Verify API (High Priority)

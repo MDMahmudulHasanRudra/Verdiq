@@ -15,7 +15,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { Dialog } from "@/components/ui/dialog";
 import { Input, Select, Field, Textarea } from "@/components/ui/field";
 import { Loading, EmptyState } from "@/components/ui/loading";
-import { getErrorMessage, formatDate, formatDateTime } from "@/lib/utils";
+import { getErrorMessage, formatDate, formatDateTime, API_URL } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import {
   ArrowLeft,
@@ -640,7 +640,7 @@ function DocumentsTab({ caseId }: { caseId: string }) {
                       className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
                       aria-label="Download"
                       title="Download"
-                      href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/documents/download/${d.id}`}
+                      href={`${API_URL}/documents/download/${d.id}`}
                       target="_blank"
                       rel="noreferrer"
                     >

@@ -8,9 +8,10 @@ services:
     ports:
       - "3000:3000"   # Web (Next.js)
       - "5000:5000"   # API (ASP.NET)
-      - "5432:5432"   # PostgreSQL
     environment:
-      POSTGRES_PASSWORD: postgres
+      # Override on the server (e.g. .env file): POSTGRES_PASSWORD=... JWT_KEY=...
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      Jwt__Key: ${JWT_KEY:-}
       DocumentStorage__Path: /data/uploads
     volumes:
       - pgdata:/var/lib/verdiq/pgdata

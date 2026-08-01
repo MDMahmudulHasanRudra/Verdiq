@@ -87,7 +87,7 @@ npm run dev
 
 ### Verification
 - `npx tsc --noEmit` clean · `npm run build` succeeds (all routes, incl. `/lawyer/workflows`)
-- Backend requires `dotnet build` + `dotnet ef migrations add AddCaseWorkflows` + `dotnet ef database update` on a .NET machine.
+- Backend builds clean via `docker compose up -d --build`; migrations committed (`20260801140144_AddCaseWorkflows`) and auto-applied at startup.
 
 ## Latest Changes — Judgments, Case Photos & Delete Re-authentication (August 2026)
 
@@ -111,7 +111,7 @@ npm run dev
 
 ### Verification
 - `npx tsc --noEmit` clean · `npm run build` succeeds (all routes)
-- Backend requires `dotnet build` + `dotnet ef migrations add AddJudgmentsAndCasePhotos` + `dotnet ef database update` on a .NET machine.
+- Backend builds clean in Docker; `Judgments`/`CasePhotos` schema included in the committed `20260801140144_AddCaseWorkflows` migration (auto-applied at startup).
 
 ## Latest Changes — Error Handling & Core Module Upgrades (August 2026)
 
