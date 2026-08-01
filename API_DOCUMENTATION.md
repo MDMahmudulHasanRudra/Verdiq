@@ -245,7 +245,169 @@ Update an existing case. All fields optional. CaseActivity record created automa
 ```
 
 ### DELETE /api/cases/{id}
-Soft-delete a case. CaseActivity record created automatically. SignalR notification sent to case group.
+Soft-delete a case. Requires **re-authentication**: the body must contain the signed-in user's `email` and `password` (BCrypt-verified). Missing/blank fields or a password mismatch → 400.
+
+**Request:**
+```json
+{
+  "email": "admin@verdiq.com",
+  "password": "admin123"
+}
+```
+
+CaseActivity record created automatically. SignalR notification sent to case group.
+
+---
+
+## Judgments
+
+All endpoints require `[Authorize]`. Base: `/api/cases/{caseId}/judgments`
+
+### GET /api/cases/{caseId}/judgments
+List judgment records for a case (newest judgment date first).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "caseId": "guid",
+      "caption": "Final Judgment",
+      "summary": "Court ruled in favour of the plaintiff...",
+      "result": "Decree in favour of plaintiff",
+      "judgmentDate": "2026-07-10T00:00:00Z",
+      "nextHearingDate": null,
+      "keyFindings": "Compensation awarded; costs on defendant",
+      "fileName": null,
+      "originalFileName": null,
+      "fileType": null,
+      "fileSize": null,
+      "hasDocument": false,
+      "recordedByName": "Jane Smith",
+      "createdAt": "2026-07-11T09:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/cases/{caseId}/judgments
+Record a judgment for a case. Logs a `CaseActivity`. `caption` is required; `judgmentDate` defaults to now.
+
+**Request:**
+```json
+{
+  "caption": "Final Judgment",
+  "summary": "Court ruled in favour of the plaintiff...",
+  "result": "Decree in favour of plaintiff",
+  "judgmentDate": "2026-07-10T00:00:00Z",
+  "nextHearingDate": null,
+  "keyFindings": "Compensation awarded; costs on defendant"
+}
+```
+
+### POST /api/cases/{caseId}/judgments/{judgmentId}/upload-document
+Attach a judgment document (`multipart/form-data`, `file` field). Replaces any existing attachment (old file is removed from storage).
+
+| Constraint | Value |
+|------------|-------|
+| Max size | 50 MB |
+
+**Response:** Updated `JudgmentDto` with `hasDocument: true`.
+
+### GET /api/cases/{caseId}/judgments/{judgmentId}/download-document
+Download the attached judgment document. Returns 404 if no document is attached.
+
+### GET /api/cases/{caseId}/judgments/export?format=pdf|csv
+Export the case's judgment history.
+- `format=pdf` (default) — minimal hand-built PDF (UTF-16BE text, no external PDF library), filename `judgments-{caseNumber}-{yyyyMMdd}.pdf`, `application/pdf`.
+- `format=csv` — Excel-compatible CSV with UTF-8 BOM, filename `judgments-{caseNumber}-{yyyyMMdd}.csv`, `text/csv`.
+
+### DELETE /api/cases/{caseId}/judgments/{judgmentId}
+Soft-delete a judgment record (also removes its attached file from storage).
+
+### DTO — JudgmentDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Judgment ID |
+| caseId | Guid | Associated case ID |
+| caption | string | Judgment title |
+| summary | string? | Summary text |
+| result | string? | Outcome |
+| judgmentDate | DateTime | Judgment date |
+| nextHearingDate | DateTime? | Next hearing date |
+| keyFindings | string? | Key findings |
+| fileName | string? | Stored attachment file name |
+| originalFileName | string? | Original attachment name |
+| fileType | string? | Attachment MIME type |
+| fileSize | long? | Attachment size in bytes |
+| hasDocument | bool | Whether a document is attached |
+| recordedByName | string? | Recording user's full name |
+| createdAt | DateTime | Creation timestamp |
+
+---
+
+## Case Photos
+
+All endpoints require `[Authorize]`. Base: `/api/cases/{caseId}/photos`
+
+### GET /api/cases/{caseId}/photos
+List photos for a case (newest captured date first).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "caseId": "guid",
+      "fileName": "a1b2c3d4e5f6_scene.jpg",
+      "originalFileName": "scene.jpg",
+      "contentType": "image/jpeg",
+      "fileSize": 2458000,
+      "caption": "Exhibit A — crime scene",
+      "capturedAt": "2026-06-01T10:05:00Z",
+      "uploadedByName": "Jane Smith",
+      "createdAt": "2026-06-01T10:05:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/cases/{caseId}/photos/upload
+Upload a photo (`multipart/form-data`). Logs a `CaseActivity`.
+
+**Form Data:**
+| Field | Type | Required |
+|-------|------|----------|
+| file | file | Yes |
+| caption | string | No |
+
+| Constraint | Value |
+|------------|-------|
+| Max size | 20 MB |
+
+### GET /api/cases/{caseId}/photos/{photoId}/download
+Download the photo file.
+
+### DELETE /api/cases/{caseId}/photos/{photoId}
+Soft-delete a photo (also removes its file from storage).
+
+### DTO — CasePhotoDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Photo ID |
+| caseId | Guid | Associated case ID |
+| fileName | string | Stored file name |
+| originalFileName | string | Original upload name |
+| contentType | string | MIME type |
+| fileSize | long | File size in bytes |
+| caption | string? | Caption |
+| capturedAt | DateTime | Photo captured/uploaded timestamp |
+| uploadedByName | string? | Uploading user's full name |
+| createdAt | DateTime | Upload timestamp |
 
 ---
 

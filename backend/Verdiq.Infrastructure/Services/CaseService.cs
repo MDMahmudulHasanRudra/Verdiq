@@ -158,10 +158,18 @@ public class CaseService : ICaseService
         return (true, "Case updated successfully", result);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(Guid id)
+    public async Task<(bool Success, string Message)> DeleteAsync(Guid id, string email, string password)
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            return (false, "Email or password is incorrect");
+
         var caseEntity = await _context.Cases.FindAsync(id);
         if (caseEntity == null || caseEntity.IsDeleted) return (false, "Case not found");
+
+        if (user.ChamberId != caseEntity.ChamberId)
+            return (false, "You are not authorized to delete this case");
+
         caseEntity.IsDeleted = true;
         caseEntity.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();

@@ -70,6 +70,30 @@ npm install
 npm run dev
 ```
 
+## Latest Changes — Judgments, Case Photos & Delete Re-authentication (August 2026)
+
+### Judgments module (`/lawyer/cases/[id]` → Judgments tab)
+- Record per-case judgment entries: caption, summary, result, judgment date, next hearing date, key findings — auto logs to the case timeline.
+- Attach / download a judgment document (cloud storage; replaces the previous attachment).
+- Export the case's judgment history as **PDF** (hand-rolled minimal PDF writer with Unicode/UTF-16BE text — no external PDF library) or **Excel-compatible CSV** (UTF-8 BOM).
+- Backend: `Judgment` entity, `JudgmentsController` (`/api/cases/{caseId}/judgments`), `JudgmentService`.
+
+### Case photos module (`/lawyer/cases/[id]` → Photos tab)
+- Upload photos per case (with captions) to `cases/{caseId}/photos/…`, view as a thumbnail grid, open in a lightbox, download, or soft-delete.
+- Backend: `CasePhoto` entity, `CasePhotosController` (`/api/cases/{caseId}/photos`), `CasePhotoService`.
+
+### Delete case re-authentication
+- `DELETE /api/cases/{id}` now requires the signed-in user's `email` + `password` in the request body (BCrypt-verified, chamber-checked) — 400 if missing/blank or mismatched.
+- The cases page shows an email/password confirm dialog (email prefilled from the auth store).
+
+### Frontend
+- `api.ts` — `apiDownload` (Blob) + `downloadBlob` helpers for authenticated file downloads.
+- New types (`Judgment`, `CasePhoto`, `ConfirmCaseDeleteInput`) and services (`judgmentService`, `casePhotoService`).
+
+### Verification
+- `npx tsc --noEmit` clean · `npm run build` succeeds (all routes)
+- Backend requires `dotnet build` + `dotnet ef migrations add AddJudgmentsAndCasePhotos` + `dotnet ef database update` on a .NET machine.
+
 ## Latest Changes — Error Handling & Core Module Upgrades (August 2026)
 
 ### Bug Fix — List endpoints crashing pages
@@ -181,7 +205,7 @@ src/components/clients/
 | # | Module | Description |
 |---|--------|-------------|
 | 1 | Authentication & Chamber | Multi-chamber, role-based access (Owner/SeniorLawyer/JuniorLawyer/Assistant/Accountant/Client), permission system |
-| 2 | Case Management | Case CRUD with auto-numbering (VER-YYYY-XXXX), search/sort/filter, timeline (CaseActivity), real-time updates via SignalR, hearing management, cause list tracking |
+| 2 | Case Management | Case CRUD with auto-numbering (VER-YYYY-XXXX), search/sort/filter, timeline (CaseActivity), real-time updates via SignalR, hearing management, cause list tracking, per-case judgment records (with PDF/CSV export) and photo gallery |
 | 3 | Client Management | Profiles (name/nid/company), many-to-many client-case linking, portal account creation/revocation |
 | 4 | Document Management | Upload (PDF/DOCX/Image), OCR search, version control, folder structure (Petition/Evidence/Order/Agreement) with client visibility controls |
 | 5 | Legal Drafting | Template library, AI draft generator, smart variables ({{client_name}}, {{court_name}}, {{case_number}}) |
@@ -200,10 +224,10 @@ src/components/clients/
 
 ```
 backend/
-  Verdiq.Domain/          # 28 entities (added ChamberSettings, WorkflowTemplate, WorkflowTemplateSection, LegalSection), 13 enums, 5 interfaces
+  Verdiq.Domain/          # 30 entities (added ChamberSettings, WorkflowTemplate, WorkflowTemplateSection, LegalSection, Judgment, CasePhoto), 13 enums, 5 interfaces
   Verdiq.Application/     # 22 DTO groups, 26 service interfaces, 8 validators
-  Verdiq.Infrastructure/  # EF Core (32 DbSets), 23 services, audit interceptor
-  Verdiq.API/             # 26 controllers, 3 middleware, 2 SignalR hubs
+  Verdiq.Infrastructure/  # EF Core (34 DbSets), 25 services, audit interceptor
+  Verdiq.API/             # 28 controllers, 3 middleware, 2 SignalR hubs
   tests/
     Verdiq.API.Tests/
 
@@ -230,6 +254,8 @@ frontend/
 - `Clients` — Client profiles with NID, company, optional `UserId` FK for portal access
 - `ClientCases` — Many-to-many client-case join
 - `Hearings` — Court hearings with result/next-hearing-date
+- `Judgments` — Per-case judgment records (caption, result, dates, key findings) with optional attached document
+- `CasePhotos` — Per-case photo uploads with captions
 - `Documents`, `DocumentVersions`, `DocumentContents` — Document management + OCR; `Visibility` (InternalOnly/SharedWithClient) + `SharedWithClientId` FK
 - `Messages` — Client-lawyer direct messaging with read status
 - `Templates` — Legal drafting templates with smart variables
@@ -257,6 +283,8 @@ frontend/
 - CORS: `SetIsOriginAllowed(_ => true)` with credentials
 - `.env.local` is required for frontend
 - All queries scoped by `ChamberId` from JWT claim
+- Deleting a case requires email + password re-authentication (`DELETE /api/cases/{id}` body: `{ email, password }`)
+- Authenticated file downloads via `apiDownload`/`downloadBlob` (Blob + `responseType: "blob"`)
 - Client portal at `/client/*` — separate route group with simplified navigation
 - Portal accounts: lawyers create `User` (`Role=Client`) linked to existing `Client` record via `ClientId`
 - Document visibility: `InternalOnly` (lawyer-only) or `SharedWithClient` (client-visible)

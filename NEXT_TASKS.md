@@ -9,7 +9,10 @@
 - [x] **Case module upgrade** — list/grid view toggle, edit + delete dialogs, inline quick status change, type/sort/status filters.
 - [x] **Hearings module upgrade** — case dropdown selector (no more GUID paste), Upcoming/All tabs, edit (result/next date/status) + delete.
 - [x] **Clients module upgrade** — backend `/api/clients` now supports `search`, `status`, `clientType` filters; edit (active toggle) + delete dialogs.
-- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK).
+- [x] **Judgments module** — per-case judgment records (caption, result, judgment date, next hearing, key findings) with list/create/soft-delete, attach + download judgment documents, export history as PDF (hand-rolled writer) / Excel-compatible CSV.
+- [x] **Case photos** — per-case photo upload (to cloud storage), thumbnail grid, lightbox, download, soft-delete.
+- [x] **Delete case re-authentication** — `DELETE /api/cases/{id}` now requires the caller's `email` + `password` (BCrypt-verified) in the request body; confirm dialog on the cases page.
+- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK), then add EF migration `AddJudgmentsAndCasePhotos` for the new `Judgments` / `CasePhotos` tables + `dotnet ef database update`.
 
 
 ## 1.  Verify API (High Priority)

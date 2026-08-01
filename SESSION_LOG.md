@@ -1,5 +1,37 @@
 # Session Log
 
+## Session 4 — Judgments, Case Photos & Delete Re-authentication (August 2026)
+
+### Changes Made
+
+**Backend — New entities**
+- `Judgment` (CaseId/Case, Caption, Summary, Result, JudgmentDate, NextHearingDate, KeyFindings, optional attached-document metadata, RecordedById/RecordedBy) and `CasePhoto` (CaseId/Case, FileName, OriginalFileName, StorageKey, ContentType, FileSize, Caption, CapturedAt, UploadedById/UploadedBy).
+- `Case` extended with `ICollection<Judgment> Judgments` + `ICollection<CasePhoto> Photos`.
+- `AppDbContext` — added `DbSet<Judgment> Judgments` + `DbSet<CasePhoto> CasePhotos` with fluent configs (soft-delete query filters, cascade delete from Case, `Restrict` on user FKs).
+
+**Backend — Judgments API** (`/api/cases/{caseId}/judgments`)
+- `JudgmentService` — list, create (auto logs `CaseActivity`), soft-delete, attach a judgment document (cloud storage, replaces existing), download, and export history as **PDF** (hand-rolled minimal PDF writer using `<FEFF…>` UTF-16BE hex strings — no external PDF library added) or **Excel-compatible CSV** (UTF-8 BOM).
+
+**Backend — Case Photos API** (`/api/cases/{caseId}/photos`)
+- `CasePhotoService` — upload to `cases/{caseId}/photos/{guid}_{name}`, list, download, soft-delete; logs `CaseActivity` on upload/delete.
+
+**Backend — Delete re-authentication**
+- `CaseService.DeleteAsync(id, email, password)` now verifies the caller's email + BCrypt password (and chamber) before soft-deleting.
+- `CasesController.Delete` takes `ConfirmCaseDeleteDto` (`{ email, password }`); missing/blank credentials or mismatch → 400.
+
+**Frontend**
+- `api.ts` — added `apiDownload` (Blob, `responseType: "blob"`) + `downloadBlob`.
+- Types (`Judgment`, `CasePhoto`, `ConfirmCaseDeleteInput`) + `judgmentService` / `casePhotoService`.
+- `/lawyer/cases` — delete dialog now requires email + password (email prefilled from auth store); confirm button disabled until both filled.
+- `/lawyer/cases/[id]` — new **Judgments** tab (record judgment, attach/download document, export PDF/CSV) and **Photos** tab (upload, thumbnail grid, lightbox, download, delete).
+
+### Verification
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — succeeds (all routes)
+- Backend not compiled locally (no .NET SDK on this machine). Requires `dotnet build` + `dotnet ef migrations add AddJudgmentsAndCasePhotos` + `database update` on a .NET machine.
+
+---
+
 ## Session 3 — Error Page Fix & Core Module Upgrades (August 2026)
 
 ### Changes Made

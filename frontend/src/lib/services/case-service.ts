@@ -1,5 +1,5 @@
 import { apiGet, apiGetFull, apiPost, apiPut, apiDelete } from "@/lib/api";
-import type { Case, CreateCaseInput, UpdateCaseInput, CaseActivity } from "@/types/models";
+import type { Case, CreateCaseInput, UpdateCaseInput, CaseActivity, ConfirmCaseDeleteInput } from "@/types/models";
 import type { PagedResponse } from "@/types/api";
 
 export interface CaseQueryParams {
@@ -29,7 +29,7 @@ export const caseService = {
   search: (q: string) => apiGet<Case[]>(`/cases/search?q=${encodeURIComponent(q)}`),
   create: (input: CreateCaseInput) => apiPost<Case>("/cases", input),
   update: (id: string, input: UpdateCaseInput) => apiPut<Case>(`/cases/${id}`, input),
-  remove: (id: string) => apiDelete<object>(`/cases/${id}`),
+  remove: (id: string, confirm: ConfirmCaseDeleteInput) => apiDelete<object>(`/cases/${id}`, confirm),
   activities: (id: string) => apiGet<CaseActivity[]>(`/cases/${id}/activities`),
   procedures: (id: string) => apiGet<unknown[]>(`/cases/${id}/procedures`),
   generateProcedures: (caseId: string, legalSectionId: string) =>

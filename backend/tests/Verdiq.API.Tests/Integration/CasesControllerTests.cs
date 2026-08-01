@@ -178,7 +178,11 @@ public class CasesControllerTests : TestBase
         var idProp = createDoc.RootElement.GetProperty("data").GetProperty("id");
         var caseId = idProp.ValueKind == JsonValueKind.String ? idProp.GetGuid() : Guid.Parse(idProp.GetRawText());
 
-        var response = await Client.DeleteAsync($"/api/cases/{caseId}");
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/cases/{caseId}")
+        {
+            Content = JsonContent.Create(new { email = "admin@verdiq.com", password = "admin123" })
+        };
+        var response = await Client.SendAsync(request);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -239,7 +243,11 @@ public class CasesControllerTests : TestBase
         var lawyerToken = await GetLawyerTokenAsync();
         SetAuthHeader(lawyerToken);
 
-        var response = await Client.DeleteAsync($"/api/cases/{caseId}");
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/cases/{caseId}")
+        {
+            Content = JsonContent.Create(new { email = "lawyer@verdiq.com", password = "lawyer123" })
+        };
+        var response = await Client.SendAsync(request);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
     }
 

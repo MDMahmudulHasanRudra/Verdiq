@@ -111,11 +111,14 @@ public class CasesController : BaseController
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id)
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, [FromBody] ConfirmCaseDeleteDto dto)
     {
-        var (success, message) = await _caseService.DeleteAsync(id);
+        if (dto is null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(ApiResponse<object>.Fail("Email and password are required to delete a case"));
+
+        var (success, message) = await _caseService.DeleteAsync(id, dto.Email, dto.Password);
         if (!success)
-            return NotFound(ApiResponse<object>.Fail(message));
+            return BadRequest(ApiResponse<object>.Fail(message));
 
         await _notifier.NotifyCaseGroupAsync(id.ToString(), "CaseUpdated", new { deleted = true });
 

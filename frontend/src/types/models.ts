@@ -93,6 +93,51 @@ export interface CaseActivity {
   isClientVisible?: boolean;
 }
 
+export interface Judgment {
+  id: string;
+  caseId: string;
+  caption: string;
+  summary: string | null;
+  result: string | null;
+  judgmentDate: string;
+  nextHearingDate: string | null;
+  keyFindings: string | null;
+  fileName: string | null;
+  originalFileName: string | null;
+  fileType: string | null;
+  fileSize: number | null;
+  hasDocument: boolean;
+  recordedByName: string | null;
+  createdAt: string;
+}
+
+export interface CreateJudgmentInput {
+  caption: string;
+  summary?: string | null;
+  result?: string | null;
+  judgmentDate?: string | null;
+  nextHearingDate?: string | null;
+  keyFindings?: string | null;
+}
+
+export interface CasePhoto {
+  id: string;
+  caseId: string;
+  fileName: string;
+  originalFileName: string;
+  contentType: string;
+  fileSize: number;
+  caption: string | null;
+  capturedAt: string;
+  uploadedByName: string | null;
+  createdAt: string;
+}
+
+export interface ConfirmCaseDeleteInput {
+  email: string;
+  password: string;
+}
+
 export interface CreateCaseInput {
   title: string;
   caseNumber?: string;

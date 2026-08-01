@@ -71,6 +71,8 @@ public class AppDbContext : DbContext
     public DbSet<WorkflowTemplateSection> WorkflowTemplateSections => Set<WorkflowTemplateSection>();
     public DbSet<Bail> Bails => Set<Bail>();
     public DbSet<UserModule> UserModules => Set<UserModule>();
+    public DbSet<Judgment> Judgments => Set<Judgment>();
+    public DbSet<CasePhoto> CasePhotos => Set<CasePhoto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -715,6 +717,55 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.Hearings)
                 .HasForeignKey(e => e.CaseId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<Judgment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Judgments");
+            entity.Property(e => e.Caption).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Summary).HasMaxLength(10000);
+            entity.Property(e => e.Result).HasMaxLength(100);
+            entity.Property(e => e.KeyFindings).HasMaxLength(10000);
+            entity.Property(e => e.FileName).HasMaxLength(500);
+            entity.Property(e => e.OriginalFileName).HasMaxLength(500);
+            entity.Property(e => e.FilePath).HasMaxLength(1000);
+            entity.Property(e => e.FileType).HasMaxLength(100);
+
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.Judgments)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RecordedBy)
+                .WithMany()
+                .HasForeignKey(e => e.RecordedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<CasePhoto>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("CasePhotos");
+            entity.Property(e => e.FileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.OriginalFileName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.StorageKey).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(100);
+            entity.Property(e => e.Caption).HasMaxLength(500);
+
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.Photos)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.UploadedBy)
+                .WithMany()
+                .HasForeignKey(e => e.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

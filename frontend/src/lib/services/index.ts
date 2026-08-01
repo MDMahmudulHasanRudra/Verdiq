@@ -1,4 +1,4 @@
-import { apiGet, apiGetFull, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { apiGet, apiGetFull, apiPost, apiPut, apiDelete, apiDownload } from "@/lib/api";
 import type { Client, CreateClientInput } from "@/types/models";
 import type { PagedResponse } from "@/types/api";
 
@@ -90,6 +90,34 @@ export const documentService = {
   },
   remove: (id: string) => apiDelete<object>(`/documents/${id}`),
   get: (id: string) => apiGet<import("@/types/models").Document>(`/documents/${id}`)
+};
+
+export const judgmentService = {
+  byCase: (caseId: string) => apiGet<import("@/types/models").Judgment[]>(`/cases/${caseId}/judgments`),
+  create: (caseId: string, input: import("@/types/models").CreateJudgmentInput) =>
+    apiPost<import("@/types/models").Judgment>(`/cases/${caseId}/judgments`, input),
+  remove: (caseId: string, id: string) => apiDelete<object>(`/cases/${caseId}/judgments/${id}`),
+  uploadDocument: (caseId: string, judgmentId: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiPost<import("@/types/models").Judgment>(`/cases/${caseId}/judgments/${judgmentId}/upload-document`, form);
+  },
+  downloadDocument: (caseId: string, judgmentId: string) =>
+    apiDownload(`/cases/${caseId}/judgments/${judgmentId}/download-document`),
+  exportData: (caseId: string, format: "pdf" | "csv") =>
+    apiDownload(`/cases/${caseId}/judgments/export?format=${format}`)
+};
+
+export const casePhotoService = {
+  byCase: (caseId: string) => apiGet<import("@/types/models").CasePhoto[]>(`/cases/${caseId}/photos`),
+  upload: (caseId: string, file: File, caption?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (caption) form.append("caption", caption);
+    return apiPost<import("@/types/models").CasePhoto>(`/cases/${caseId}/photos/upload`, form);
+  },
+  remove: (caseId: string, photoId: string) => apiDelete<object>(`/cases/${caseId}/photos/${photoId}`),
+  download: (caseId: string, photoId: string) => apiDownload(`/cases/${caseId}/photos/${photoId}/download`)
 };
 
 export const invoiceService = {

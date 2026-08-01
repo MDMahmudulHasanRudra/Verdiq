@@ -106,6 +106,8 @@ try
     builder.Services.AddScoped<IClientService, ClientService>();
     builder.Services.AddScoped<IHearingService, HearingService>();
     builder.Services.AddScoped<IDocumentService, DocumentService>();
+    builder.Services.AddScoped<IJudgmentService, JudgmentService>();
+    builder.Services.AddScoped<ICasePhotoService, CasePhotoService>();
     builder.Services.AddScoped<ICloudStorageService, CloudStorageService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();

@@ -15,6 +15,7 @@ import { useCases, useClients } from "@/lib/hooks";
 import { caseService } from "@/lib/services";
 import { getErrorMessage, formatDate, cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useAuthStore } from "@/lib/store/auth-store";
 import {
   Plus,
   Search,
@@ -99,6 +100,9 @@ export default function CasesPage() {
   const [createClientIds, setCreateClientIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<Case | null>(null);
   const [deleting, setDeleting] = useState<Case | null>(null);
+  const [deleteEmail, setDeleteEmail] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const authUser = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (preClient) {
@@ -111,6 +115,12 @@ export default function CasesPage() {
     const t = window.setTimeout(() => setDebouncedSearch(search), 350);
     return () => window.clearTimeout(t);
   }, [search]);
+
+  useEffect(() => {
+    if (deleting && !deleteEmail) {
+      setDeleteEmail(authUser?.email ?? "");
+    }
+  }, [deleting, deleteEmail, authUser]);
 
   const { data, isLoading } = useCases({
     page,
@@ -147,10 +157,12 @@ export default function CasesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => caseService.remove(id),
+    mutationFn: ({ id, email, password }: { id: string; email: string; password: string }) =>
+      caseService.remove(id, { email, password }),
     onSuccess: () => {
       invalidate();
       setDeleting(null);
+      setDeletePassword("");
       setPage(1);
       toast.success("Case deleted");
     },
@@ -459,18 +471,42 @@ export default function CasesPage() {
             <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
             <Button
               variant="danger"
-              disabled={deleteMutation.isPending}
-              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              disabled={deleteMutation.isPending || !deleteEmail || !deletePassword}
+              onClick={() =>
+                deleting && deleteMutation.mutate({ id: deleting.id, email: deleteEmail, password: deletePassword })
+              }
             >
               <Trash2 className="h-4 w-4" /> Delete Case
             </Button>
           </>
         }
       >
-        <p className="text-sm text-ink-muted">
-          Related hearings and documents on the backend may also be affected. Make sure you
-          really want to remove this case.
-        </p>
+        <div className="space-y-4">
+          <p className="text-sm text-ink-muted">
+            Deleting a case is permanent and affects linked hearings and documents. Confirm your
+            email and password to continue.
+          </p>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Email</label>
+            <Input
+              type="email"
+              value={deleteEmail}
+              onChange={(e) => setDeleteEmail(e.target.value)}
+              placeholder="Your account email"
+              autoComplete="username"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Password</label>
+            <Input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Your account password"
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
       </Dialog>
     </div>
   );

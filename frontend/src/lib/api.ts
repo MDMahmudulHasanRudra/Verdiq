@@ -187,9 +187,27 @@ export async function apiPatch<T>(url: string, body?: unknown): Promise<T> {
   return data.data;
 }
 
-export async function apiDelete<T>(url: string): Promise<T> {
-  const { data } = await api.delete<{ data: T }>(url);
+export async function apiDelete<T>(url: string, body?: unknown): Promise<T> {
+  const { data } = await api.delete<{ data: T }>(url, { data: body });
   return data.data;
+}
+
+// Fetches a raw binary file (PDF, photo, …) as a Blob through the authenticated client.
+export async function apiDownload(url: string): Promise<Blob> {
+  const { data } = await api.get<Blob>(url, { responseType: "blob" });
+  return data;
+}
+
+// Triggers a browser download for a fetched Blob.
+export function downloadBlob(blob: Blob, filename: string) {
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(href);
 }
 
 export async function saGet<T>(url: string): Promise<T> {

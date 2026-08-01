@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useCase, useCaseActivities, useCaseProcedures } from "@/lib/hooks";
-import { caseService, hearingService, documentService } from "@/lib/services";
+import { caseService, hearingService, documentService, judgmentService, casePhotoService } from "@/lib/services";
+import { downloadBlob } from "@/lib/api";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge, StatusBadge } from "@/components/ui/badge";
@@ -27,9 +28,11 @@ import {
   FileText,
   PenLine,
   Trash2,
-  CalendarDays
+  CalendarDays,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
-import type { Hearing } from "@/types/models";
+import type { Hearing, Judgment, CreateJudgmentInput, CasePhoto } from "@/types/models";
 
 const hearingStatuses = ["Scheduled", "Adjourned", "Completed", "Canceled"];
 const results = ["Adjourned", "Granted", "Rejected", "Heard", "Deferred", "Dismissed"];
@@ -118,7 +121,7 @@ export default function CaseDetailPage() {
         ) : null}
       </div>
 
-      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "documents", label: "Documents" }, { value: "procedures", label: "Procedures" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "judgments", label: "Judgments" }, { value: "documents", label: "Documents" }, { value: "photos", label: "Photos" }, { value: "procedures", label: "Procedures" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
 
       {tab === "overview" && (
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -231,6 +234,18 @@ export default function CaseDetailPage() {
       {tab === "documents" && (
         <div className="mt-5">
           <DocumentsTab caseId={c.id} />
+        </div>
+      )}
+
+      {tab === "judgments" && (
+        <div className="mt-5">
+          <JudgmentsTab caseId={c.id} caseNumber={c.caseNumber} />
+        </div>
+      )}
+
+      {tab === "photos" && (
+        <div className="mt-5">
+          <PhotosTab caseId={c.id} />
         </div>
       )}
 
@@ -773,5 +788,509 @@ function ScheduleHearingDialog({
         </Field>
       </div>
     </Dialog>
+  );
+}
+
+function JudgmentsTab({ caseId, caseNumber }: { caseId: string; caseNumber: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [deleting, setDeleting] = useState<Judgment | null>(null);
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["judgments", caseId] });
+    qc.invalidateQueries({ queryKey: ["case", caseId] });
+  };
+
+  const { data: judgments, isLoading } = useQuery({
+    queryKey: ["judgments", caseId],
+    queryFn: () => judgmentService.byCase(caseId),
+    enabled: !!caseId
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (input: CreateJudgmentInput) => judgmentService.create(caseId, input),
+    onSuccess: () => {
+      invalidate();
+      setRecordOpen(false);
+      toast.success("Judgment recorded");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => judgmentService.remove(caseId, id),
+    onSuccess: () => {
+      invalidate();
+      setDeleting(null);
+      toast.success("Judgment deleted");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ judgmentId, file }: { judgmentId: string; file: File }) =>
+      judgmentService.uploadDocument(caseId, judgmentId, file),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Document attached to judgment");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const handleDownload = async (j: Judgment) => {
+    try {
+      const blob = await judgmentService.downloadDocument(caseId, j.id);
+      downloadBlob(blob, j.originalFileName ?? `judgment-${j.caption}.pdf`);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  };
+
+  const handleExport = async (format: "pdf" | "csv") => {
+    try {
+      const blob = await judgmentService.exportData(caseId, format);
+      const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      downloadBlob(blob, `judgments-${caseNumber}-${stamp}.${format}`);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Judgments"
+          description={`Recorded judgments and orders for ${caseNumber}. Export the full history as PDF or Excel (CSV).`}
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => handleExport("pdf")}>
+                <FileText className="h-4 w-4" /> Export PDF
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>
+                <Download className="h-4 w-4" /> Export Excel
+              </Button>
+              <Button size="sm" onClick={() => setRecordOpen(true)}>
+                <Plus className="h-4 w-4" /> Record Judgment
+              </Button>
+            </div>
+          }
+        />
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <Loading />
+          ) : judgments && judgments.length > 0 ? (
+            judgments.map((j) => (
+              <div key={j.id} className="rounded-lg border border-line p-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-ink">{j.caption}</p>
+                      {j.result ? (
+                        <Badge tone={/dismiss|reject|rejected|dismissed/.test(j.result.toLowerCase()) ? "red" : "green"}>{j.result}</Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      {formatDate(j.judgmentDate)}
+                      {j.recordedByName ? ` · Recorded by ${j.recordedByName}` : ""}
+                      {j.nextHearingDate ? ` · Next hearing ${formatDate(j.nextHearingDate)}` : ""}
+                    </p>
+                    {j.keyFindings ? <p className="mt-1 text-xs text-ink-muted">{j.keyFindings}</p> : null}
+                    {j.summary ? <p className="mt-1 text-sm text-ink">{j.summary}</p> : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <label
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
+                      title="Attach document"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.txt"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadMutation.mutate({ judgmentId: j.id, file: f });
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {j.hasDocument ? (
+                      <button
+                        onClick={() => handleDownload(j)}
+                        className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
+                        title={j.originalFileName ?? "Download document"}
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                    <button
+                      onClick={() => setDeleting(j)}
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete judgment"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                {j.originalFileName ? (
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 text-xs text-ink-muted">
+                    <FileText className="h-3 w-3" />
+                    {j.originalFileName}
+                    {j.fileSize ? ` · ${(j.fileSize / 1024).toFixed(0)} KB` : ""}
+                  </p>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              title="No judgments recorded"
+              description="Record the outcome of each hearing so you can export a full judgment history."
+              action={
+                <Button onClick={() => setRecordOpen(true)}>
+                  <Plus className="h-4 w-4" /> Record Judgment
+                </Button>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {recordOpen ? (
+        <RecordJudgmentDialog
+          onClose={() => setRecordOpen(false)}
+          onSubmit={(input) => createMutation.mutate(input)}
+        />
+      ) : null}
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete judgment"
+        description={deleting ? `"${deleting.caption}" will be permanently removed.` : ""}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button variant="danger" disabled={deleteMutation.isPending} onClick={() => deleting && deleteMutation.mutate(deleting.id)}>
+              <Trash2 className="h-4 w-4" /> Delete Judgment
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-muted">This action cannot be undone.</p>
+      </Dialog>
+    </>
+  );
+}
+
+function RecordJudgmentDialog({
+  onClose,
+  onSubmit
+}: {
+  onClose: () => void;
+  onSubmit: (input: CreateJudgmentInput) => void;
+}) {
+  const [form, setForm] = useState({
+    caption: "",
+    result: "",
+    judgmentDate: new Date().toISOString().slice(0, 10),
+    nextHearingDate: "",
+    keyFindings: "",
+    summary: ""
+  });
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Record Judgment"
+      description="Record the court's order, its outcome and any next hearing date."
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            disabled={!form.caption}
+            onClick={() =>
+              onSubmit({
+                caption: form.caption,
+                result: form.result || null,
+                judgmentDate: form.judgmentDate ? new Date(`${form.judgmentDate}T10:00`).toISOString() : null,
+                nextHearingDate: form.nextHearingDate ? new Date(`${form.nextHearingDate}T10:00`).toISOString() : null,
+                keyFindings: form.keyFindings || null,
+                summary: form.summary || null
+              })
+            }
+          >
+            Save Judgment
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Caption" required className="sm:col-span-2">
+          <Input
+            value={form.caption}
+            onChange={(e) => setForm({ ...form, caption: e.target.value })}
+            placeholder="e.g. Final judgment — suit decreed in favour of the plaintiff"
+          />
+        </Field>
+        <Field label="Result">
+          <Input
+            value={form.result}
+            onChange={(e) => setForm({ ...form, result: e.target.value })}
+            placeholder="e.g. Decree granted"
+          />
+        </Field>
+        <Field label="Judgment Date">
+          <Input type="date" value={form.judgmentDate} onChange={(e) => setForm({ ...form, judgmentDate: e.target.value })} />
+        </Field>
+        <Field label="Next Hearing Date" className="sm:col-span-2">
+          <Input type="date" value={form.nextHearingDate} onChange={(e) => setForm({ ...form, nextHearingDate: e.target.value })} />
+        </Field>
+        <Field label="Key Findings" className="sm:col-span-2">
+          <Textarea
+            rows={3}
+            value={form.keyFindings}
+            onChange={(e) => setForm({ ...form, keyFindings: e.target.value })}
+            placeholder="Summary of the court's reasoning and findings"
+          />
+        </Field>
+        <Field label="Summary" className="sm:col-span-2">
+          <Textarea rows={3} value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
+        </Field>
+      </div>
+    </Dialog>
+  );
+}
+
+function usePhotoBlobUrls(caseId: string, photos: CasePhoto[]) {
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let alive = true;
+    const created: string[] = [];
+    (async () => {
+      const next: Record<string, string> = {};
+      for (const p of photos) {
+        try {
+          const blob = await casePhotoService.download(caseId, p.id);
+          const u = URL.createObjectURL(blob);
+          created.push(u);
+          next[p.id] = u;
+        } catch {
+          /* unreadable photo — leave placeholder */
+        }
+      }
+      if (alive) setUrls(next);
+      else created.forEach((u) => URL.revokeObjectURL(u));
+    })();
+    return () => {
+      alive = false;
+      created.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [caseId, photos]);
+  return urls;
+}
+
+let pendingPhotoFile: File | null = null;
+let pendingPhotoCaption = "";
+
+function PhotosTab({ caseId }: { caseId: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [viewing, setViewing] = useState<CasePhoto | null>(null);
+
+  const { data: photos, isLoading } = useQuery({
+    queryKey: ["photos", caseId],
+    queryFn: () => casePhotoService.byCase(caseId),
+    enabled: !!caseId
+  });
+  const urls = usePhotoBlobUrls(caseId, photos ?? []);
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["photos", caseId] });
+    qc.invalidateQueries({ queryKey: ["case", caseId] });
+  };
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ file, caption }: { file: File; caption: string }) =>
+      casePhotoService.upload(caseId, file, caption || undefined),
+    onSuccess: () => {
+      invalidate();
+      setUploadOpen(false);
+      toast.success("Photo uploaded");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (photoId: string) => casePhotoService.remove(caseId, photoId),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Photo deleted");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const handleDownload = async (p: CasePhoto) => {
+    try {
+      const blob = await casePhotoService.download(caseId, p.id);
+      downloadBlob(blob, p.originalFileName);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Case Photos"
+          description="Evidence photos, document scans and scene images attached to this case."
+          action={
+            <Button size="sm" onClick={() => setUploadOpen(true)}>
+              <FileUp className="h-4 w-4" /> Add Photo
+            </Button>
+          }
+        />
+        <CardContent>
+          {isLoading ? (
+            <Loading />
+          ) : photos && photos.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {photos.map((p) => (
+                <div key={p.id} className="group overflow-hidden rounded-lg border border-line">
+                  <button onClick={() => setViewing(p)} className="block w-full cursor-zoom-in">
+                    {urls[p.id] ? (
+                      <img
+                        src={urls[p.id]}
+                        alt={p.caption ?? p.originalFileName}
+                        className="h-36 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-36 w-full items-center justify-center bg-slate-100">
+                        <ImageIcon className="h-6 w-6 text-ink-soft" />
+                      </div>
+                    )}
+                  </button>
+                  <div className="flex items-center justify-between gap-2 px-2.5 py-2">
+                    <p className="truncate text-xs text-ink-muted">{p.caption ?? p.originalFileName}</p>
+                    <button
+                      onClick={() => deleteMutation.mutate(p.id)}
+                      className="shrink-0 cursor-pointer rounded p-1 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete photo"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No photos"
+              description="Add photos of documents, evidence or scene visits for this case."
+              action={
+                <Button onClick={() => setUploadOpen(true)}>
+                  <Plus className="h-4 w-4" /> Add Photo
+                </Button>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title="Add Photo"
+        description="Attach a photo of a document, evidence or scene."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setUploadOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!pendingPhotoFile || uploadMutation.isPending}
+              onClick={() =>
+                pendingPhotoFile &&
+                uploadMutation.mutate({ file: pendingPhotoFile, caption: pendingPhotoCaption })
+              }
+            >
+              <FileUp className="h-4 w-4" /> Upload Photo
+            </Button>
+          </>
+        }
+      >
+        <PhotoUploadForm
+          onReady={(file, caption) => {
+            pendingPhotoFile = file;
+            pendingPhotoCaption = caption;
+          }}
+        />
+      </Dialog>
+
+      <Dialog
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+        title={viewing?.caption ?? "Photo"}
+        description={
+          viewing
+            ? `${viewing.originalFileName} · ${formatDateTime(viewing.capturedAt)}${viewing.uploadedByName ? ` · by ${viewing.uploadedByName}` : ""}`
+            : ""
+        }
+        size="lg"
+        footer={
+          <>
+            {viewing ? (
+              <Button variant="outline" onClick={() => handleDownload(viewing)}>
+                <Download className="h-4 w-4" /> Download
+              </Button>
+            ) : null}
+            <Button variant="ghost" onClick={() => setViewing(null)}>Close</Button>
+          </>
+        }
+      >
+        {viewing && urls[viewing.id] ? (
+          <img
+            src={urls[viewing.id]}
+            alt={viewing.caption ?? viewing.originalFileName}
+            className="max-h-[70vh] w-full rounded-lg object-contain"
+          />
+        ) : null}
+      </Dialog>
+    </>
+  );
+}
+
+function PhotoUploadForm({ onReady }: { onReady: (file: File, caption: string) => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [caption, setCaption] = useState("");
+
+  const update = (f: File | null, c: string) => {
+    setFile(f);
+    setCaption(c);
+    if (f) onReady(f, c);
+  };
+
+  return (
+    <div className="space-y-4">
+      <Field label="Photo" required>
+        <input
+          type="file"
+          accept="image/*"
+          className="w-full text-sm text-ink file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-800 file:transition-colors hover:file:bg-primary-100"
+          onChange={(e) => update(e.target.files?.[0] ?? null, caption)}
+        />
+      </Field>
+      <Field label="Caption">
+        <Input
+          value={caption}
+          onChange={(e) => update(file, e.target.value)}
+          placeholder="e.g. Evidence exhibit A"
+        />
+      </Field>
+      {!file ? <p className="text-xs text-ink-muted">Choose an image to enable upload.</p> : null}
+    </div>
   );
 }
