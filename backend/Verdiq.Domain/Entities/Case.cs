@@ -56,4 +56,5 @@ public class Case : BaseEntity
     public ICollection<CaseLegalSection> CaseLegalSections { get; set; } = new List<CaseLegalSection>();
     public ICollection<Judgment> Judgments { get; set; } = new List<Judgment>();
     public ICollection<CasePhoto> Photos { get; set; } = new List<CasePhoto>();
+    public ICollection<CaseWorkflow> CaseWorkflows { get; set; } = new List<CaseWorkflow>();
 }

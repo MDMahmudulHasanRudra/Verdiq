@@ -73,6 +73,10 @@ public class AppDbContext : DbContext
     public DbSet<UserModule> UserModules => Set<UserModule>();
     public DbSet<Judgment> Judgments => Set<Judgment>();
     public DbSet<CasePhoto> CasePhotos => Set<CasePhoto>();
+    public DbSet<Workflow> Workflows => Set<Workflow>();
+    public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
+    public DbSet<CaseWorkflow> CaseWorkflows => Set<CaseWorkflow>();
+    public DbSet<CaseWorkflowStep> CaseWorkflowSteps => Set<CaseWorkflowStep>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -765,6 +769,100 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.UploadedBy)
                 .WithMany()
                 .HasForeignKey(e => e.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Workflow / Process (user-created custom workflows with sequential steps)
+        modelBuilder.Entity<Workflow>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Workflows");
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Steps)
+                .WithOne(s => s.Workflow)
+                .HasForeignKey(s => s.WorkflowId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<WorkflowStep>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("WorkflowSteps");
+            entity.Property(e => e.Title).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Workflow)
+                .WithMany(w => w.Steps)
+                .HasForeignKey(e => e.WorkflowId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<CaseWorkflow>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("CaseWorkflows");
+            entity.Property(e => e.WorkflowName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.WorkflowDescription).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.CaseWorkflows)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Workflow)
+                .WithMany(w => w.CaseWorkflows)
+                .HasForeignKey(e => e.WorkflowId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.StartedBy)
+                .WithMany()
+                .HasForeignKey(e => e.StartedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Steps)
+                .WithOne(s => s.CaseWorkflow)
+                .HasForeignKey(s => s.CaseWorkflowId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<CaseWorkflowStep>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("CaseWorkflowSteps");
+            entity.Property(e => e.Title).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+
+            entity.HasOne(e => e.CaseWorkflow)
+                .WithMany(cw => cw.Steps)
+                .HasForeignKey(e => e.CaseWorkflowId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CompletedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CompletedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);

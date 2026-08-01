@@ -522,6 +522,77 @@ export interface WorkflowTemplate {
   createdAt: string;
 }
 
+// ---- Case Workflows (Process) ----
+export interface WorkflowStepItem {
+  id: string;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+  dueInDays: number | null;
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  stepCount: number;
+  createdByName: string | null;
+  createdAt: string;
+  steps: WorkflowStepItem[];
+}
+
+export interface CreateWorkflowStepInput {
+  title: string;
+  description?: string | null;
+  orderIndex: number;
+  dueInDays?: number | null;
+}
+
+export interface CreateWorkflowInput {
+  name: string;
+  description?: string | null;
+  steps: CreateWorkflowStepInput[];
+}
+
+export type UpdateWorkflowInput = CreateWorkflowInput;
+
+export interface CaseWorkflowStep {
+  id: string;
+  stepId: string | null;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+  dueDate: string | null;
+  status: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  completedByName: string | null;
+  notes: string | null;
+  isActive: boolean;
+  isLocked: boolean;
+  isCompleted: boolean;
+  isOverdue: boolean;
+}
+
+export interface CaseWorkflow {
+  id: string;
+  caseId: string;
+  workflowId: string;
+  workflowName: string;
+  workflowDescription: string | null;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  startedByName: string | null;
+  stepCount: number;
+  completedStepCount: number;
+  percentComplete: number;
+  isOverdue: boolean;
+  nextStepTitle: string | null;
+  steps: CaseWorkflowStep[];
+}
+
 // ---- Messages ----
 export interface Message {
   id: string;

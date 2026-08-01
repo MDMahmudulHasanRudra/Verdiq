@@ -70,6 +70,25 @@ npm install
 npm run dev
 ```
 
+## Latest Changes — Case Workflows / Processes (August 2026)
+
+### Workflow presets (`/lawyer/workflows`)
+- Create reusable **workflow presets** with an ordered list of steps; each step has a title, description and optional "due in N days".
+- Edit (reorders + rebuilds the step list), delete, and activate/deactivate a preset.
+- New **Workflows** item in the sidebar (Practice group). Note: distinct from the pre-existing `WorkflowTemplate`/configuration template builder (`/api/workflow/templates`).
+
+### Running a workflow on a case (`/lawyer/cases/[id]` → Workflow tab)
+- **Link a workflow** to a case — the steps are snapshotted with due dates computed from the link time.
+- **Sequential gating:** only the current step is actionable (`Start`/`Complete`); later steps stay **Locked** until the previous one is completed.
+- Completing a step records an optional note + who/when; finishing the last step marks the workflow **Completed**.
+- Per-workflow progress bar, overdue warnings (due date passed), cancel, and remove-from-case; every action logs to the case timeline.
+- **Overview snippet:** the case Overview page shows running workflows with progress bars.
+- Backend: `Workflow` / `WorkflowStep` / `CaseWorkflow` / `CaseWorkflowStep` entities, `WorkflowsController` + `CaseWorkflowsController`, `WorkflowService`.
+
+### Verification
+- `npx tsc --noEmit` clean · `npm run build` succeeds (all routes, incl. `/lawyer/workflows`)
+- Backend requires `dotnet build` + `dotnet ef migrations add AddCaseWorkflows` + `dotnet ef database update` on a .NET machine.
+
 ## Latest Changes — Judgments, Case Photos & Delete Re-authentication (August 2026)
 
 ### Judgments module (`/lawyer/cases/[id]` → Judgments tab)
@@ -205,7 +224,7 @@ src/components/clients/
 | # | Module | Description |
 |---|--------|-------------|
 | 1 | Authentication & Chamber | Multi-chamber, role-based access (Owner/SeniorLawyer/JuniorLawyer/Assistant/Accountant/Client), permission system |
-| 2 | Case Management | Case CRUD with auto-numbering (VER-YYYY-XXXX), search/sort/filter, timeline (CaseActivity), real-time updates via SignalR, hearing management, cause list tracking, per-case judgment records (with PDF/CSV export) and photo gallery |
+| 2 | Case Management | Case CRUD with auto-numbering (VER-YYYY-XXXX), search/sort/filter, timeline (CaseActivity), real-time updates via SignalR, hearing management, cause list tracking, per-case judgment records (with PDF/CSV export), photo gallery, and **custom workflows** — reusable step presets linked to a case that unlock sequentially |
 | 3 | Client Management | Profiles (name/nid/company), many-to-many client-case linking, portal account creation/revocation |
 | 4 | Document Management | Upload (PDF/DOCX/Image), OCR search, version control, folder structure (Petition/Evidence/Order/Agreement) with client visibility controls |
 | 5 | Legal Drafting | Template library, AI draft generator, smart variables ({{client_name}}, {{court_name}}, {{case_number}}) |
@@ -224,10 +243,10 @@ src/components/clients/
 
 ```
 backend/
-  Verdiq.Domain/          # 30 entities (added ChamberSettings, WorkflowTemplate, WorkflowTemplateSection, LegalSection, Judgment, CasePhoto), 13 enums, 5 interfaces
-  Verdiq.Application/     # 22 DTO groups, 26 service interfaces, 8 validators
-  Verdiq.Infrastructure/  # EF Core (34 DbSets), 25 services, audit interceptor
-  Verdiq.API/             # 28 controllers, 3 middleware, 2 SignalR hubs
+  Verdiq.Domain/          # 34 entities (added ChamberSettings, WorkflowTemplate, WorkflowTemplateSection, LegalSection, Judgment, CasePhoto, Workflow, WorkflowStep, CaseWorkflow, CaseWorkflowStep), 13 enums, 5 interfaces
+  Verdiq.Application/     # 23 DTO groups, 27 service interfaces, 8 validators
+  Verdiq.Infrastructure/  # EF Core (38 DbSets), 26 services, audit interceptor
+  Verdiq.API/             # 30 controllers, 3 middleware, 2 SignalR hubs
   tests/
     Verdiq.API.Tests/
 
@@ -268,6 +287,8 @@ frontend/
 - `AuditLogs` — Entity change audit trail
 - `ChamberSettings` — Key-value settings per chamber (general, case defaults, billing, etc.)
 - `WorkflowTemplates`, `WorkflowTemplateSections` — Configurable status transition workflows
+- `Workflows`, `WorkflowSteps` — Custom reusable case-process presets (chamber-scoped)
+- `CaseWorkflows`, `CaseWorkflowSteps` — A workflow running on a case (snapshot + sequential step gating)
 - `LegalSections` — Legal acts/sections reference table
 - `AiConversations` — AI chat history
 

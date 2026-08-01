@@ -411,6 +411,198 @@ Soft-delete a photo (also removes its file from storage).
 
 ---
 
+## Workflows (Case Processes)
+
+Two controller groups. All endpoints require `[Authorize]`; every query is chamber-scoped via the JWT `chamberId` claim.
+
+- `WorkflowsController` — manage reusable **workflow presets**: `/api/workflows`.
+- `CaseWorkflowsController` — run a workflow on a specific case: `/api/cases/{caseId}/workflows`.
+
+Distinct from the pre-existing `WorkflowTemplate` feature (`/api/workflow/templates`, the configuration status-transition builder).
+
+### GET /api/workflows
+List the chamber's workflow presets (newest first). Each includes an ordered `steps` array.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "name": "Bail hearing process",
+      "description": "Standard bail application steps",
+      "isActive": true,
+      "stepCount": 3,
+      "createdByName": "Jane Smith",
+      "createdAt": "2026-08-01T09:00:00Z",
+      "steps": [
+        { "id": "guid", "title": "File bail petition", "description": "...", "orderIndex": 0, "dueInDays": 3 }
+      ]
+    }
+  ]
+}
+```
+
+### GET /api/workflows/{id}
+Get one preset.
+
+### POST /api/workflows
+Create a preset. `name` (required) + at least one step with a non-empty `title`.
+
+**Request:**
+```json
+{
+  "name": "Bail hearing process",
+  "description": "Standard bail application steps",
+  "steps": [
+    { "title": "File bail petition", "description": "Draft and file in court", "orderIndex": 0, "dueInDays": 3 },
+    { "title": "Serve the opposite party", "orderIndex": 1, "dueInDays": 5 },
+    { "title": "Final hearing", "orderIndex": 2 }
+  ]
+}
+```
+
+### PUT /api/workflows/{id}
+Update a preset. Replaces the step list (previous steps are soft-deleted, new ones inserted with the workflow's ID).
+
+### PUT /api/workflows/{id}/active?isActive=true|false
+Activate or deactivate a preset.
+
+### DELETE /api/workflows/{id}
+Soft-delete a preset and its steps. Case-workflow instances keep their snapshots.
+
+### GET /api/cases/{caseId}/workflows
+List the workflows running on a case (newest first), with progress + step states.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "guid",
+      "caseId": "guid",
+      "workflowId": "guid",
+      "workflowName": "Bail hearing process",
+      "workflowDescription": null,
+      "status": "InProgress",
+      "startedAt": "2026-08-01T10:00:00Z",
+      "completedAt": null,
+      "startedByName": "Jane Smith",
+      "stepCount": 3,
+      "completedStepCount": 1,
+      "percentComplete": 33,
+      "isOverdue": false,
+      "nextStepTitle": "Serve the opposite party",
+      "steps": [
+        {
+          "id": "guid",
+          "stepId": "guid",
+          "title": "File bail petition",
+          "description": "...",
+          "orderIndex": 0,
+          "dueDate": "2026-08-04T10:00:00Z",
+          "status": "Completed",
+          "startedAt": "2026-08-01T10:05:00Z",
+          "completedAt": "2026-08-02T11:00:00Z",
+          "completedByName": "Jane Smith",
+          "notes": "Filed — memo 114",
+          "isActive": false,
+          "isLocked": false,
+          "isCompleted": true,
+          "isOverdue": false
+        },
+        {
+          "id": "guid",
+          "stepId": "guid",
+          "title": "Serve the opposite party",
+          "description": null,
+          "orderIndex": 1,
+          "dueDate": "2026-08-06T10:00:00Z",
+          "status": "Pending",
+          "startedAt": null,
+          "completedAt": null,
+          "completedByName": null,
+          "notes": null,
+          "isActive": true,
+          "isLocked": false,
+          "isCompleted": false,
+          "isOverdue": false
+        },
+        {
+          "id": "guid",
+          "stepId": "guid",
+          "title": "Final hearing",
+          "description": null,
+          "orderIndex": 2,
+          "dueDate": null,
+          "status": "Pending",
+          "startedAt": null,
+          "completedAt": null,
+          "completedByName": null,
+          "notes": null,
+          "isActive": false,
+          "isLocked": true,
+          "isCompleted": false,
+          "isOverdue": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+### GET /api/cases/{caseId}/workflows/{workflowId}
+Get one running workflow (detail with step states). 404 if not found for the case.
+
+### POST /api/cases/{caseId}/workflows
+Link a workflow preset to the case. Snapshots the steps with due dates = `StartedAt + DueInDays`. Logs a `CaseActivity`. Fails if the preset is already linked or has no steps.
+
+**Request:** `{ "workflowId": "guid" }`
+
+### POST /api/cases/{caseId}/workflows/{workflowId}/steps/{stepId}/start
+Mark the current step `InProgress` (sets `StartedAt`). Only the **active** step (the first not-yet-completed one) can be started — otherwise 400.
+
+### POST /api/cases/{caseId}/workflows/{workflowId}/steps/{stepId}/complete
+Complete the current step (sets `Status=Completed`, `CompletedAt`, optional `notes`, logs `CaseActivity`). The next step unlocks automatically; completing the last step marks the whole workflow `Completed`. Only the active step can be completed — otherwise 400.
+
+**Request:** `{ "notes": "Bail petition filed" }`
+
+### POST /api/cases/{caseId}/workflows/{workflowId}/cancel
+Mark a running workflow `Cancelled` (cannot cancel a completed one).
+
+### DELETE /api/cases/{caseId}/workflows/{workflowId}
+Remove the workflow from the case (soft-deletes the instance + its steps).
+
+### DTO — WorkflowDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Preset ID |
+| name | string | Preset name |
+| description | string? | Description |
+| isActive | bool | Whether the preset is available to link |
+| stepCount | int | Number of steps |
+| createdByName | string? | Creator's full name |
+| createdAt | DateTime | Creation timestamp |
+| steps | WorkflowStepItemDto[] | Ordered steps |
+
+### DTO — CaseWorkflowDto
+| Field | Type | Description |
+|-------|------|-------------|
+| id | Guid | Running workflow ID |
+| caseId / workflowId | Guid | Case and preset IDs |
+| workflowName / workflowDescription | string? | Snapshot |
+| status | string | `InProgress` / `Completed` / `Cancelled` |
+| startedAt / completedAt | DateTime? | Lifecycle timestamps |
+| startedByName | string? | Linking user |
+| stepCount / completedStepCount / percentComplete | int | Progress |
+| isOverdue | bool | Any incomplete step past its due date |
+| nextStepTitle | string? | Title of the current step |
+| steps | CaseWorkflowStepDto[] | Step states |
+
+---
+
 ## Clients
 
 All endpoints require `[Authorize]`. Base: `/api/clients`

@@ -1,5 +1,33 @@
 # Session Log
 
+## Session 5 — Case Workflows / Processes (August 2026)
+
+### Changes Made
+
+**Backend — New entities**
+- `Workflow` (ChamberId, Name, Description, IsActive, CreatedById/CreatedBy, Steps) and `WorkflowStep` (WorkflowId, Title, Description, OrderIndex, DueInDays, IsRequired).
+- `CaseWorkflow` (CaseId, WorkflowId, WorkflowName/Description snapshot, Status, StartedAt/CompletedAt, StartedById/StartedBy, Steps) and `CaseWorkflowStep` (CaseWorkflowId, StepId, Title/Description/OrderIndex/DueInDays/DueDate snapshot, Status, StartedAt/CompletedAt, CompletedById/CompletedBy, Notes).
+- `Case` extended with `ICollection<CaseWorkflow> CaseWorkflows`.
+- `AppDbContext` — added 4 DbSets + fluent configs (soft-delete query filters; Workflow cascade-deletes Steps, CaseWorkflow cascade-deletes its Steps, Workflow→CaseWorkflow Restrict).
+
+**Backend — API**
+- `WorkflowService` / `IWorkflowService` — chamber-scoped CRUD for presets (create validates ≥1 step, update rebuilds the step list via soft-delete + re-add with `WorkflowId` set, delete, `SetActiveAsync` toggle), plus case-linking: `LinkAsync` snapshots steps with due dates (`StartedAt + DueInDays`), `StartStepAsync` / `CompleteStepAsync` enforce **sequential gating** (only the current step is actionable), auto-complete the workflow when the last step finishes, compute overdue + progress; `CancelAsync`, `UnlinkAsync`. Every action logs to `CaseActivity`.
+- `WorkflowsController` (`/api/workflows` CRUD + `/active`) and `CaseWorkflowsController` (`/api/cases/{caseId}/workflows`: list/detail/link/start-step/complete-step/cancel/unlink).
+- `Program.cs` — registered `IWorkflowService`.
+
+**Frontend**
+- Types `Workflow`, `WorkflowStepItem`, `CaseWorkflow`, `CaseWorkflowStep` + create/update inputs; `caseWorkflows` service in `services/index.ts` (kept distinct from the pre-existing `workflowService`/`WorkflowTemplate`).
+- New `/lawyer/workflows` page — preset list with step timelines, create/edit dialog with an ordered step builder (add/remove/reorder, due-in-days), active toggle, delete confirmation.
+- Sidebar — new **Workflows** item (Practice group, `module: "Cases"`).
+- `/lawyer/cases/[id]` — new **Workflow** tab: link dialog (active presets not already linked), per-workflow progress bar, step checklist with Locked/Active/Completed states, Start + Complete (optional note) buttons, cancel + remove; Overview page shows a **Workflows** card with progress bars for running workflows.
+
+### Verification
+- `npx tsc --noEmit` — clean (no errors)
+- `npm run build` — succeeds (47 routes, incl. `/lawyer/workflows`); super-admin routes intact
+- Backend not compiled locally (no .NET SDK on this machine). Requires `dotnet build` + `dotnet ef migrations add AddCaseWorkflows` + `database update` on a .NET machine.
+
+---
+
 ## Session 4 — Judgments, Case Photos & Delete Re-authentication (August 2026)
 
 ### Changes Made

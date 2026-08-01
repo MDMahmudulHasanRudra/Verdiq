@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useCase, useCaseActivities, useCaseProcedures } from "@/lib/hooks";
-import { caseService, hearingService, documentService, judgmentService, casePhotoService } from "@/lib/services";
+import { caseService, hearingService, documentService, judgmentService, casePhotoService, caseWorkflows } from "@/lib/services";
 import { downloadBlob } from "@/lib/api";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,16 @@ import {
   Trash2,
   CalendarDays,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Workflow as WorkflowIcon,
+  Lock,
+  Play,
+  Link2,
+  Ban,
+  ListChecks,
+  AlertCircle
 } from "lucide-react";
-import type { Hearing, Judgment, CreateJudgmentInput, CasePhoto } from "@/types/models";
+import type { Hearing, Judgment, CreateJudgmentInput, CasePhoto, CaseWorkflow, CaseWorkflowStep, Workflow } from "@/types/models";
 
 const hearingStatuses = ["Scheduled", "Adjourned", "Completed", "Canceled"];
 const results = ["Adjourned", "Granted", "Rejected", "Heard", "Deferred", "Dismissed"];
@@ -121,7 +128,7 @@ export default function CaseDetailPage() {
         ) : null}
       </div>
 
-      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "judgments", label: "Judgments" }, { value: "documents", label: "Documents" }, { value: "photos", label: "Photos" }, { value: "procedures", label: "Procedures" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "judgments", label: "Judgments" }, { value: "documents", label: "Documents" }, { value: "photos", label: "Photos" }, { value: "procedures", label: "Procedures" }, { value: "workflow", label: "Workflow" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
 
       {tab === "overview" && (
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -201,6 +208,7 @@ export default function CaseDetailPage() {
                 </div>
               </CardContent>
             </Card>
+            <WorkflowOverviewCard caseId={c.id} />
           </div>
         </div>
       )}
@@ -277,6 +285,12 @@ export default function CaseDetailPage() {
               )}
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {tab === "workflow" && (
+        <div className="mt-5">
+          <WorkflowsTab caseId={c.id} />
         </div>
       )}
 
@@ -1292,5 +1306,375 @@ function PhotoUploadForm({ onReady }: { onReady: (file: File, caption: string) =
       </Field>
       {!file ? <p className="text-xs text-ink-muted">Choose an image to enable upload.</p> : null}
     </div>
+  );
+}
+
+function useCaseWorkflowList(caseId: string) {
+  return useQuery({
+    queryKey: ["case", caseId, "workflows"],
+    queryFn: () => caseWorkflows.byCase(caseId),
+    enabled: !!caseId
+  });
+}
+
+function ProgressBar({ percent, tone }: { percent: number; tone?: "gold" | "green" | "red" }) {
+  const fill =
+    tone === "green" ? "bg-emerald-500" : tone === "red" ? "bg-red-500" : tone === "gold" ? "bg-gold-500" : "bg-primary-600";
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className={`h-full rounded-full transition-all duration-300 ${fill}`} style={{ width: `${Math.min(100, Math.max(0, percent))}%` }} />
+    </div>
+  );
+}
+
+function WorkflowOverviewCard({ caseId, onOpen }: { caseId: string; onOpen?: () => void }) {
+  const { data: workflows } = useCaseWorkflowList(caseId);
+  const running = (workflows ?? []).filter((w) => w.status === "InProgress");
+
+  if (!workflows || workflows.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader
+        title={
+          <button onClick={onOpen} className="inline-flex cursor-pointer items-center gap-2 text-left">
+            <WorkflowIcon className="h-4 w-4 text-primary-700" /> Workflows
+          </button>
+        }
+        action={running.length > 0 ? <Badge tone="amber">{running.length} running</Badge> : <Badge tone="green">All done</Badge>}
+      />
+      <CardContent className="space-y-4">
+        {workflows.map((w) => (
+          <div key={w.id}>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="truncate text-sm font-medium text-ink">{w.workflowName}</p>
+              <span className={`text-xs font-medium ${w.isOverdue ? "text-red-600" : "text-ink-muted"}`}>
+                {w.percentComplete}%
+              </span>
+            </div>
+            <ProgressBar percent={w.percentComplete} tone={w.isOverdue ? "red" : w.status === "Completed" ? "green" : undefined} />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WorkflowsTab({ caseId }: { caseId: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [completing, setCompleting] = useState<{ workflowId: string; step: CaseWorkflowStep } | null>(null);
+
+  const { data: workflows, isLoading } = useCaseWorkflowList(caseId);
+  const { data: presets } = useQuery({
+    queryKey: ["workflows"],
+    queryFn: () => caseWorkflows.list()
+  });
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["case", caseId, "workflows"] });
+    qc.invalidateQueries({ queryKey: ["case", caseId] });
+    qc.invalidateQueries({ queryKey: ["case", caseId, "activities"] });
+  };
+
+  const linkMutation = useMutation({
+    mutationFn: (workflowId: string) => caseWorkflows.link(caseId, workflowId),
+    onSuccess: () => {
+      invalidate();
+      setLinkOpen(false);
+      toast.success("Workflow linked to case");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const startMutation = useMutation({
+    mutationFn: ({ workflowId, stepId }: { workflowId: string; stepId: string }) =>
+      caseWorkflows.startStep(caseId, workflowId, stepId),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Step started");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: ({ workflowId, stepId, notes }: { workflowId: string; stepId: string; notes?: string }) =>
+      caseWorkflows.completeStep(caseId, workflowId, stepId, notes),
+    onSuccess: () => {
+      invalidate();
+      setCompleting(null);
+      toast.success("Step completed");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (workflowId: string) => caseWorkflows.cancel(caseId, workflowId),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Workflow cancelled");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: (workflowId: string) => caseWorkflows.unlink(caseId, workflowId),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Workflow removed from case");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const activePresets = (presets ?? []).filter((p) => p.isActive && !(workflows ?? []).some((w) => w.workflowId === p.id));
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Case Workflow"
+          description="Link a process to this case. Steps unlock in order — complete the current step to unlock the next one."
+          action={
+            <Button size="sm" onClick={() => setLinkOpen(true)}>
+              <Link2 className="h-4 w-4" /> Link Workflow
+            </Button>
+          }
+        />
+        <CardContent>
+          {isLoading ? (
+            <Loading />
+          ) : workflows && workflows.length > 0 ? (
+            <div className="space-y-5">
+              {workflows.map((w) => (
+                <WorkflowCard
+                  key={w.id}
+                  workflow={w}
+                  onStart={(stepId) => startMutation.mutate({ workflowId: w.id, stepId })}
+                  onComplete={(step) => setCompleting({ workflowId: w.id, step })}
+                  onCancel={() => cancelMutation.mutate(w.id)}
+                  onUnlink={() => unlinkMutation.mutate(w.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<WorkflowIcon className="h-10 w-10" />}
+              title="No workflow linked"
+              description="Link a workflow (e.g. a bail hearing process) to run its steps in sequence on this case."
+              action={<Button onClick={() => setLinkOpen(true)}><Link2 className="h-4 w-4" /> Link Workflow</Button>}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        title="Link a Workflow"
+        description="Choose a workflow to attach. Its steps are copied into this case with due dates."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setLinkOpen(false)}>Cancel</Button>
+          </>
+        }
+      >
+        {activePresets.length > 0 ? (
+          <div className="space-y-2">
+            {activePresets.map((p: Workflow) => (
+              <button
+                key={p.id}
+                onClick={() => linkMutation.mutate(p.id)}
+                className="flex w-full cursor-pointer items-start justify-between gap-3 rounded-lg border border-line p-3 text-left transition-colors hover:bg-slate-50"
+              >
+                <div>
+                  <p className="text-sm font-medium text-ink">{p.name}</p>
+                  {p.description ? <p className="mt-0.5 text-xs text-ink-muted">{p.description}</p> : null}
+                </div>
+                <Badge tone="primary">{p.stepCount} steps</Badge>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No workflows available"
+            description="All active workflows are already linked to this case, or you have not created any yet."
+            action={<a className="text-sm font-medium text-primary-700 hover:underline" href="/lawyer/workflows">Create a workflow</a>}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={!!completing}
+        onClose={() => setCompleting(null)}
+        title="Complete step"
+        description={completing ? `"${completing.step.title}" — record a short note (optional).` : ""}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCompleting(null)}>Cancel</Button>
+            <Button
+              disabled={completeMutation.isPending}
+              onClick={() => {
+                if (!completing) return;
+                const notes = (document.getElementById("step-note") as HTMLInputElement | null)?.value;
+                completeMutation.mutate({ workflowId: completing.workflowId, stepId: completing.step.id, notes });
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Complete
+            </Button>
+          </>
+        }
+      >
+        <Field label="Note">
+          <Textarea id="step-note" rows={3} placeholder="e.g. Bail petition filed in court" />
+        </Field>
+      </Dialog>
+    </>
+  );
+}
+
+function WorkflowCard({
+  workflow,
+  onStart,
+  onComplete,
+  onCancel,
+  onUnlink
+}: {
+  workflow: CaseWorkflow;
+  onStart: (stepId: string) => void;
+  onComplete: (step: CaseWorkflowStep) => void;
+  onCancel: () => void;
+  onUnlink: () => void;
+}) {
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  return (
+    <Card>
+      <CardHeader
+        title={
+          <span className="flex items-center gap-2">
+            <WorkflowIcon className="h-4 w-4 text-primary-700" />
+            {workflow.workflowName}
+            {workflow.isOverdue ? (
+              <Badge tone="red"><AlertCircle className="h-3 w-3" /> Overdue</Badge>
+            ) : null}
+          </span>
+        }
+        description={
+          workflow.workflowDescription ??
+          `${workflow.completedStepCount}/${workflow.stepCount} steps done · Started ${formatDate(workflow.startedAt)}${workflow.startedByName ? ` by ${workflow.startedByName}` : ""}`
+        }
+        action={
+          <div className="flex shrink-0 items-center gap-1">
+            <StatusBadge value={workflow.status} />
+            {workflow.status === "InProgress" ? (
+              <button
+                onClick={() => setConfirmCancel(true)}
+                className="cursor-pointer rounded-lg p-2 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                title="Cancel workflow"
+              >
+                <Ban className="h-4 w-4" />
+              </button>
+            ) : null}
+            <button
+              onClick={onUnlink}
+              className="cursor-pointer rounded-lg p-2 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+              title="Remove from case"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        }
+      />
+      <CardContent className="space-y-4">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-ink-muted">
+              {workflow.status === "Completed"
+                ? "Workflow completed"
+                : workflow.nextStepTitle
+                  ? `Next: ${workflow.nextStepTitle}`
+                  : "All steps complete"}
+            </span>
+            <span className={`font-medium ${workflow.isOverdue ? "text-red-600" : "text-ink"}`}>{workflow.percentComplete}%</span>
+          </div>
+          <ProgressBar percent={workflow.percentComplete} tone={workflow.isOverdue ? "red" : workflow.status === "Completed" ? "green" : undefined} />
+        </div>
+
+        <ol className="space-y-2">
+          {workflow.steps.map((s, i) => (
+            <li
+              key={s.id}
+              className={`flex items-start gap-3 rounded-lg border p-3 ${
+                s.isActive ? "border-primary-200 bg-primary-50/40" : s.isCompleted ? "border-line bg-slate-50/50" : "border-line opacity-70"
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  s.isCompleted
+                    ? "bg-emerald-100 text-emerald-700"
+                    : s.isActive
+                      ? "bg-primary-700 text-white"
+                      : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {s.isCompleted ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-medium ${s.isCompleted ? "text-ink-muted line-through" : "text-ink"}`}>{s.title}</p>
+                {s.description ? <p className="mt-0.5 text-xs text-ink-muted">{s.description}</p> : null}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+                  {s.dueDate ? (
+                    <span className={s.isOverdue ? "font-medium text-red-600" : ""}>
+                      Due {formatDate(s.dueDate)}
+                      {s.isOverdue ? " · overdue" : ""}
+                    </span>
+                  ) : null}
+                  {s.isCompleted && s.completedByName ? (
+                    <span>Completed by {s.completedByName}{s.completedAt ? ` · ${formatDate(s.completedAt)}` : ""}</span>
+                  ) : null}
+                  {s.notes ? <span className="italic">“{s.notes}”</span> : null}
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                {s.isCompleted ? (
+                  <Badge tone="green">Done</Badge>
+                ) : s.isActive ? (
+                  <>
+                    <Button size="sm" variant="subtle" onClick={() => onStart(s.id)}>
+                      <Play className="h-3.5 w-3.5" /> {s.status === "InProgress" ? "Started" : "Start"}
+                    </Button>
+                    <Button size="sm" variant="gold" onClick={() => onComplete(s)}>
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Complete
+                    </Button>
+                  </>
+                ) : (
+                  <Badge tone="slate">
+                    <Lock className="h-3 w-3" /> Locked
+                  </Badge>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+
+      <Dialog
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        title="Cancel workflow"
+        description="The workflow will be marked cancelled and no further steps can be completed."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmCancel(false)}>Keep running</Button>
+            <Button variant="danger" onClick={onCancel}>
+              <Ban className="h-4 w-4" /> Cancel Workflow
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-muted">You can still remove it from the case afterwards.</p>
+      </Dialog>
+    </Card>
   );
 }

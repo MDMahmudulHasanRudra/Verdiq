@@ -12,7 +12,12 @@
 - [x] **Judgments module** — per-case judgment records (caption, result, judgment date, next hearing, key findings) with list/create/soft-delete, attach + download judgment documents, export history as PDF (hand-rolled writer) / Excel-compatible CSV.
 - [x] **Case photos** — per-case photo upload (to cloud storage), thumbnail grid, lightbox, download, soft-delete.
 - [x] **Delete case re-authentication** — `DELETE /api/cases/{id}` now requires the caller's `email` + `password` (BCrypt-verified) in the request body; confirm dialog on the cases page.
-- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK), then add EF migration `AddJudgmentsAndCasePhotos` for the new `Judgments` / `CasePhotos` tables + `dotnet ef database update`.
+- [x] **Case Workflows / Processes** — user-created workflow presets (`/lawyer/workflows`, step builder with due-in-days, activate/deactivate) linkable to a case; steps unlock sequentially (locked until previous step completes) with due-date/overdue tracking, per-workflow progress, cancel/remove, case-detail Workflow tab + Overview progress snippet. Backend: `Workflow`/`WorkflowStep`/`CaseWorkflow`/`CaseWorkflowStep` entities, `WorkflowService`, `WorkflowsController` + `CaseWorkflowsController`.
+- [ ] Backend compile-verify `dotnet build` on a machine with the .NET 10 SDK (client machine had no SDK), then add EF migration(s) for the new tables + `dotnet ef database update`:
+  - `AddJudgmentsAndCasePhotos` — `Judgments` / `CasePhotos`
+  - `AddCaseWorkflows` — `Workflows` / `WorkflowSteps` / `CaseWorkflows` / `CaseWorkflowSteps`
+  - `AddConfirmCaseDelete` — no schema change (body-only API change; skip if already applied)
+- [ ] Manual test the Workflow feature end-to-end (create preset → link to case → complete steps in sequence → confirm the next step unlocks → export/delete).
 
 
 ## 1.  Verify API (High Priority)

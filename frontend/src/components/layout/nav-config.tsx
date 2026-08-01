@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   ArrowLeftRight,
   Handshake,
-  TrendingUp
+  TrendingUp,
+  Workflow
 } from "lucide-react";
 
 export interface NavItem {
@@ -57,7 +58,8 @@ export const navGroups: { key: string; label: string; items: NavItem[] }[] = [
       { label: "Tasks", href: "/lawyer/tasks", icon: ListTodo, module: "Tasks", group: "practice" },
       { label: "Time Entries", href: "/lawyer/time-entries", icon: Clock, module: "TimeEntries", group: "practice" },
       { label: "Legal Database", href: "/lawyer/legal-database", icon: BookOpen, module: "LegalDatabase", group: "practice" },
-      { label: "Templates", href: "/lawyer/templates", icon: ScrollText, module: "Templates", group: "practice" }
+      { label: "Templates", href: "/lawyer/templates", icon: ScrollText, module: "Templates", group: "practice" },
+      { label: "Workflows", href: "/lawyer/workflows", icon: Workflow, module: "Cases", group: "practice" }
     ]
   },
   {

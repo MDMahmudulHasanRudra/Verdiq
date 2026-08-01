@@ -210,6 +210,31 @@ export const workflowService = {
   remove: (id: string) => apiDelete<object>(`/workflow/templates/${id}`)
 };
 
+export const caseWorkflows = {
+  list: () => apiGet<import("@/types/models").Workflow[]>("/workflows"),
+  get: (id: string) => apiGet<import("@/types/models").Workflow>(`/workflows/${id}`),
+  create: (input: import("@/types/models").CreateWorkflowInput) =>
+    apiPost<import("@/types/models").Workflow>("/workflows", input),
+  update: (id: string, input: import("@/types/models").UpdateWorkflowInput) =>
+    apiPut<import("@/types/models").Workflow>(`/workflows/${id}`, input),
+  setActive: (id: string, isActive: boolean) =>
+    apiPut<import("@/types/models").Workflow>(`/workflows/${id}/active?isActive=${isActive}`),
+  remove: (id: string) => apiDelete<object>(`/workflows/${id}`),
+  byCase: (caseId: string) => apiGet<import("@/types/models").CaseWorkflow[]>(`/cases/${caseId}/workflows`),
+  detail: (caseId: string, workflowId: string) =>
+    apiGet<import("@/types/models").CaseWorkflow>(`/cases/${caseId}/workflows/${workflowId}`),
+  link: (caseId: string, workflowId: string) =>
+    apiPost<import("@/types/models").CaseWorkflow>(`/cases/${caseId}/workflows`, { workflowId }),
+  startStep: (caseId: string, workflowId: string, stepId: string) =>
+    apiPost<object>(`/cases/${caseId}/workflows/${workflowId}/steps/${stepId}/start`, {}),
+  completeStep: (caseId: string, workflowId: string, stepId: string, notes?: string) =>
+    apiPost<object>(`/cases/${caseId}/workflows/${workflowId}/steps/${stepId}/complete`, { notes: notes ?? null }),
+  cancel: (caseId: string, workflowId: string) =>
+    apiPost<object>(`/cases/${caseId}/workflows/${workflowId}/cancel`, {}),
+  unlink: (caseId: string, workflowId: string) =>
+    apiDelete<object>(`/cases/${caseId}/workflows/${workflowId}`)
+};
+
 export const notificationService = {
   list: (unreadOnly = false) => apiGet<import("@/types/models").Notification[]>(`/notifications?unreadOnly=${unreadOnly}`),
   unreadCount: () => apiGet<number>("/notifications/unread-count"),

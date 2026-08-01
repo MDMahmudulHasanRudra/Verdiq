@@ -364,19 +364,21 @@ A standalone control layer with hardcoded credentials (`rudra` / `rudra`) for sy
 
 ## Infrastructure Layer
 
-### AppDbContext (32 DbSets)
-Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, Messages, AuditLogs, AiConversations, Organizations, OrganizationMembers, Workspaces, ChamberSettings, WorkflowTemplates, WorkflowTemplateSections, LegalSections
+### AppDbContext (38 DbSets)
+Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists, Clients, ClientCases, Hearings, Documents, DocumentVersions, DocumentContents, Templates, Invoices, Expenses, Payments, Subscriptions, Reminders, Tasks, LegalDocuments, Notifications, Messages, AuditLogs, AiConversations, Organizations, OrganizationMembers, Workspaces, ChamberSettings, WorkflowTemplates, WorkflowTemplateSections, LegalSections, Judgments, CasePhotos, Workflows, WorkflowSteps, CaseWorkflows, CaseWorkflowSteps
 
-### Services (23 total)
+### Services (26 total)
 | Service | Key Methods |
 |---------|------------|
 | AuthService | Register/Login/Refresh/Logout with BCrypt + JWT |
 | JwtService | Token generation with ChamberId claim |
 | ChamberService | Chamber CRUD with owner assignment |
-| CaseService | CRUD + search/sort/filter + auto case number generation + client linking + CaseActivity creation + legal section linking |
+| CaseService | CRUD + search/sort/filter + auto case number generation + client linking + CaseActivity creation + legal section linking + re-authenticated delete (email + BCrypt password) |
 | ClientService | CRUD + search by name/phone/company |
 | HearingService | CRUD + upcoming/by-date/by-case queries |
 | DocumentService | Upload/download + version control |
+| JudgmentService | Per-case judgment records + PDF/CSV export + attached-document upload/download |
+| CasePhotoService | Per-case photo upload/download/delete (cloud storage) |
 | InvoiceService | Auto invoice numbers + mark-as-paid |
 | ExpenseService | Category-based expense tracking |
 | TaskService | Assignment-based task management |
@@ -392,18 +394,21 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | MessageService | Client-lawyer messaging, conversations, unread counts |
 | ChamberSettingsService | CRUD for per-chamber key-value settings sections |
 | WorkflowTemplateService | CRUD for workflow templates with ordered sections |
+| WorkflowService | Chamber-scoped workflow-preset CRUD + link a preset to a case (snapshot) + sequential step start/complete gating + cancel/unlink + progress/overdue |
 | LegalSectionService | CRUD for legal acts/sections reference data |
 
-## API Layer (26 Controllers)
+## API Layer (30 Controllers)
 
 | Controller | Route Prefix | Key Endpoints |
 |-----------|-------------|---------------|
 | AuthController | `/api/auth` | login, register, refresh, logout, me |
 | ChambersController | `/api/chambers` | CRUD + my chamber |
-| CasesController | `/api/cases` | CRUD + search + paginated list with sort/filter + realtime notifications via SignalR |
+| CasesController | `/api/cases` | CRUD + search + paginated list with sort/filter + realtime notifications via SignalR + re-authenticated delete |
 | ClientsController | `/api/clients` | CRUD + search + portal-access/revoke-portal |
 | HearingsController | `/api/hearings` | CRUD + upcoming + by-date |
 | DocumentsController | `/api/documents` | upload, download, list |
+| JudgmentsController | `/api/cases/{caseId}/judgments` | record/list/delete judgments + attach/download document + PDF/CSV export |
+| CasePhotosController | `/api/cases/{caseId}/photos` | upload/list/download/delete photos |
 | InvoicesController | `/api/invoices` | CRUD + mark-paid |
 | ExpensesController | `/api/expenses` | CRUD + total |
 | TasksController | `/api/tasks` | CRUD + my tasks |
@@ -423,6 +428,8 @@ Chambers, Users, Permissions, RolePermissions, Cases, CaseActivities, CauseLists
 | MessagesController | `/api/messages` | Conversation, send, read, unread count |
 | ConfigurationController | `/api/configuration` | Get/update settings sections |
 | WorkflowTemplatesController | `/api/workflow-templates` | CRUD for workflow templates with ordered sections |
+| WorkflowsController | `/api/workflows` | CRUD for case-process presets + activate/deactivate |
+| CaseWorkflowsController | `/api/cases/{caseId}/workflows` | list/detail/link + start/complete step (sequential gating) + cancel/unlink |
 | LegalSectionsController | `/api/legal-sections` | CRUD for legal acts/sections reference |
 
 ## Frontend Architecture
