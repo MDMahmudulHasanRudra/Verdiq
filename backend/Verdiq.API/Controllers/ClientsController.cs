@@ -94,6 +94,22 @@ public class ClientsController : BaseController
         return Ok(ApiResponse<List<ClientResponseDto>>.Ok(clients.ToList()));
     }
 
+    [HttpGet("{id}/cases")]
+    public async Task<ActionResult<ApiResponse<List<ClientCaseSummaryDto>>>> GetClientCases(Guid id)
+    {
+        var chamberId = GetChamberId();
+        var cases = await _clientService.GetCasesAsync(id, chamberId);
+        return Ok(ApiResponse<List<ClientCaseSummaryDto>>.Ok(cases.ToList()));
+    }
+
+    [HttpGet("{id}/hearings")]
+    public async Task<ActionResult<ApiResponse<List<ClientHearingDto>>>> GetClientHearings(Guid id)
+    {
+        var chamberId = GetChamberId();
+        var hearings = await _clientService.GetHearingsAsync(id, chamberId);
+        return Ok(ApiResponse<List<ClientHearingDto>>.Ok(hearings.ToList()));
+    }
+
     [HttpPost("{clientId}/portal-access")]
     public async Task<ActionResult<ApiResponse<object>>> CreatePortalAccess(Guid clientId, [FromBody] ClientRegisterDto dto)
     {

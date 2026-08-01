@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
-import { useCase, useCaseActivities, useCaseProcedures, useUpcomingHearings } from "@/lib/hooks";
-import { caseService, hearingService } from "@/lib/services";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useCase, useCaseActivities, useCaseProcedures } from "@/lib/hooks";
+import { caseService, hearingService, documentService } from "@/lib/services";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge, StatusBadge } from "@/components/ui/badge";
@@ -17,7 +16,24 @@ import { Input, Select, Field, Textarea } from "@/components/ui/field";
 import { Loading, EmptyState } from "@/components/ui/loading";
 import { getErrorMessage, formatDate, formatDateTime } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { ArrowLeft, CalendarClock, Plus, CheckCircle2, FileUp, Download, Gavel } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarClock,
+  Plus,
+  CheckCircle2,
+  FileUp,
+  Download,
+  Gavel,
+  FileText,
+  PenLine,
+  Trash2,
+  CalendarDays
+} from "lucide-react";
+import type { Hearing } from "@/types/models";
+
+const hearingStatuses = ["Scheduled", "Adjourned", "Completed", "Canceled"];
+const results = ["Adjourned", "Granted", "Rejected", "Heard", "Deferred", "Dismissed"];
+const docCategories = ["Pleadings", "Evidence", "Court Orders", "Correspondence", "Contracts", "Fees", "Other"];
 
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +50,7 @@ export default function CaseDetailPage() {
     mutationFn: (input: Record<string, unknown>) => hearingService.create(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["hearings"] });
+      qc.invalidateQueries({ queryKey: ["case", id] });
       setHearingOpen(false);
       toast.success("Hearing scheduled");
     },
@@ -87,10 +104,21 @@ export default function CaseDetailPage() {
         <Badge tone="blue">{c.caseType}</Badge>
         {c.assignedLawyerName ? <Badge tone="primary">Counsel: {c.assignedLawyerName}</Badge> : null}
         {c.teamName ? <Badge tone="purple">Team: {c.teamName}</Badge> : null}
-        {c.nextHearingDate ? <Badge tone="amber">Next hearing {formatDate(c.nextHearingDate)}</Badge> : null}
+        {c.nextHearingDate ? (
+          <Badge tone="amber">
+            <CalendarDays className="mr-1 h-3.5 w-3.5" />
+            Next hearing {formatDate(c.nextHearingDate)}
+          </Badge>
+        ) : null}
+        {c.lastHearingDate ? (
+          <Badge tone="green">
+            Last hearing {formatDate(c.lastHearingDate)}
+            {c.lastHearingResult ? ` · ${c.lastHearingResult}` : ""}
+          </Badge>
+        ) : null}
       </div>
 
-      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "procedures", label: "Procedures" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "documents", label: "Documents" }, { value: "procedures", label: "Procedures" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
 
       {tab === "overview" && (
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -132,13 +160,17 @@ export default function CaseDetailPage() {
               <CardContent className="space-y-3">
                 {c.clients.length > 0 ? (
                   c.clients.map((cl) => (
-                    <div key={cl.id} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
+                    <button
+                      key={cl.id}
+                      onClick={() => router.push(`/lawyer/clients/${cl.id}`)}
+                      className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-line px-3 py-2 text-left transition-colors hover:bg-slate-50"
+                    >
                       <div>
                         <p className="text-sm font-medium text-ink">{cl.name}</p>
                         <p className="text-xs text-ink-muted">{cl.role ?? "Primary"}</p>
                       </div>
                       <StatusBadge value={cl.role ?? "Client"} />
-                    </div>
+                    </button>
                   ))
                 ) : (
                   <p className="text-sm text-ink-muted">No clients linked.</p>
@@ -192,7 +224,13 @@ export default function CaseDetailPage() {
 
       {tab === "hearings" && (
         <div className="mt-5">
-          <HearingsTab caseId={c.id} caseNumber={c.caseNumber} />
+          <HearingsTab caseId={c.id} caseNumber={c.caseNumber} onChanged={() => qc.invalidateQueries({ queryKey: ["case", id] })} />
+        </div>
+      )}
+
+      {tab === "documents" && (
+        <div className="mt-5">
+          <DocumentsTab caseId={c.id} />
         </div>
       )}
 
@@ -274,34 +312,400 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function HearingsTab({ caseId, caseNumber }: { caseId: string; caseNumber: string }) {
-  const { data: hearings } = useUpcomingHearings();
-  const { data: allHearings } = useCaseHearings(caseId);
+function useCaseHearings(caseId: string) {
+  return useQuery({ queryKey: ["hearings", "case", caseId], queryFn: () => hearingService.byCase(caseId), enabled: !!caseId });
+}
+
+function HearingsTab({ caseId, caseNumber, onChanged }: { caseId: string; caseNumber: string; onChanged: () => void }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const { data: hearings, isLoading } = useCaseHearings(caseId);
+  const [editing, setEditing] = useState<Hearing | null>(null);
+  const [deleting, setDeleting] = useState<Hearing | null>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Record<string, unknown> }) => hearingService.update(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["hearings"] });
+      qc.invalidateQueries({ queryKey: ["hearings", "case", caseId] });
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      setEditing(null);
+      onChanged();
+      toast.success("Hearing updated");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => hearingService.remove(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["hearings"] });
+      qc.invalidateQueries({ queryKey: ["hearings", "case", caseId] });
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      setDeleting(null);
+      onChanged();
+      toast.success("Hearing removed");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const now = new Date();
+  const upcoming = (hearings ?? [])
+    .filter((h) => h.status === "Scheduled" && new Date(h.hearingDate) >= now)
+    .sort((a, b) => new Date(a.hearingDate).getTime() - new Date(b.hearingDate).getTime());
+
   return (
-    <Card>
-      <CardHeader title="Hearings" description={`All scheduled hearings for ${caseNumber}`} />
-      <CardContent className="space-y-3">
-        {(allHearings ?? []).length > 0 ? (
-          allHearings!.map((h) => (
-            <div key={h.id} className="flex items-start justify-between gap-4 rounded-lg border border-line p-3">
-              <div>
-                <p className="text-sm font-medium text-ink">{formatDateTime(h.hearingDate)}</p>
-                <p className="mt-0.5 text-xs text-ink-muted">{h.courtroom ?? "Courtroom TBA"}</p>
-                {h.result ? <p className="mt-1 text-xs text-ink">Result: {h.result}</p> : null}
-              </div>
-              <StatusBadge value={h.status} />
-            </div>
-          ))
-        ) : (
-          <EmptyState title="No hearings yet" description="Schedule a hearing to track it here." />
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader title="Hearings" description={`All hearings for ${caseNumber}. Click edit to record the judgment and next hearing day.`} />
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <Loading />
+          ) : hearings && hearings.length > 0 ? (
+            hearings.map((h) => {
+              const isNext = upcoming.length > 0 && upcoming[0].id === h.id;
+              return (
+                <div
+                  key={h.id}
+                  className={`flex items-start justify-between gap-4 rounded-lg border p-3 ${isNext ? "border-gold-300 bg-gold-50/50" : "border-line"}`}
+                >
+                  <div>
+                    <p className="inline-flex items-center gap-2 text-sm font-medium text-ink">
+                      {formatDateTime(h.hearingDate)}
+                      {isNext ? (
+                        <Badge tone="amber">Next hearing</Badge>
+                      ) : null}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      {h.courtroom ?? "Courtroom TBA"}
+                      {h.judgeName ? ` · Judge ${h.judgeName}` : ""}
+                    </p>
+                    {h.result ? (
+                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-ink">
+                        <Gavel className="h-3.5 w-3.5 text-gold-600" />
+                        Judgment: {h.result}
+                      </p>
+                    ) : null}
+                    {h.nextHearingDate ? (
+                      <p className="mt-0.5 text-xs text-ink-muted">Next hearing: {formatDate(h.nextHearingDate)}</p>
+                    ) : null}
+                    {h.notes ? <p className="mt-1 text-xs text-ink-muted">{h.notes}</p> : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <StatusBadge value={h.status} />
+                    <button
+                      onClick={() => setEditing(h)}
+                      className="cursor-pointer rounded-md p-1.5 text-ink-soft transition-colors hover:bg-slate-100 hover:text-ink"
+                      title="Record judgment / edit"
+                    >
+                      <PenLine className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleting(h)}
+                      className="cursor-pointer rounded-md p-1.5 text-ink-soft transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Delete hearing"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <EmptyState title="No hearings yet" description="Schedule a hearing to track it here." />
+          )}
+        </CardContent>
+      </Card>
+
+      {editing ? (
+        <HearingEditDialog
+          hearing={editing}
+          onClose={() => setEditing(null)}
+          onSubmit={(input) => updateMutation.mutate({ id: editing.id, input })}
+        />
+      ) : null}
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete hearing"
+        description={
+          deleting ? `Hearing on ${formatDateTime(deleting.hearingDate)} will be permanently removed.` : ""
+        }
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button variant="danger" disabled={deleteMutation.isPending} onClick={() => deleting && deleteMutation.mutate(deleting.id)}>
+              <Trash2 className="h-4 w-4" /> Delete Hearing
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-muted">
+          This action cannot be undone. Consider marking the hearing as &quot;Adjourned&quot; instead
+          if it was simply moved.
+        </p>
+      </Dialog>
+    </>
   );
 }
 
-function useCaseHearings(caseId: string) {
-  return useQuery({ queryKey: ["hearings", "case", caseId], queryFn: () => hearingService.byCase(caseId), enabled: !!caseId });
+function HearingEditDialog({
+  hearing,
+  onClose,
+  onSubmit
+}: {
+  hearing: Hearing;
+  onClose: () => void;
+  onSubmit: (input: Record<string, unknown>) => void;
+}) {
+  const [form, setForm] = useState({
+    hearingDate: (hearing.hearingDate || "").slice(0, 10),
+    hearingTime: (hearing.hearingDate || "").slice(11, 16) || "10:00",
+    courtroom: hearing.courtroom ?? "",
+    judgeName: hearing.judgeName ?? "",
+    status: hearing.status,
+    result: hearing.result ?? "",
+    nextHearingDate: hearing.nextHearingDate ? hearing.nextHearingDate.slice(0, 10) : "",
+    notes: hearing.notes ?? ""
+  });
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Record Hearing Judgment"
+      description={`${hearing.caseNumber} — record the outcome and the next hearing day.`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            disabled={!form.hearingDate}
+            onClick={() =>
+              onSubmit({
+                hearingDate: new Date(`${form.hearingDate}T${form.hearingTime}`).toISOString(),
+                courtroom: form.courtroom || null,
+                judgeName: form.judgeName || null,
+                status: form.status || undefined,
+                result: form.result || null,
+                nextHearingDate: form.nextHearingDate
+                  ? new Date(`${form.nextHearingDate}T10:00`).toISOString()
+                  : null,
+                notes: form.notes || null
+              })
+            }
+          >
+            Save
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Hearing Date" required>
+          <Input type="date" value={form.hearingDate} onChange={(e) => setForm({ ...form, hearingDate: e.target.value })} />
+        </Field>
+        <Field label="Hearing Time">
+          <Input type="time" value={form.hearingTime} onChange={(e) => setForm({ ...form, hearingTime: e.target.value })} />
+        </Field>
+        <Field label="Status">
+          <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            {hearingStatuses.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Result / Judgment">
+          <Select value={form.result} onChange={(e) => setForm({ ...form, result: e.target.value })}>
+            <option value="">No result recorded</option>
+            {results.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Next Hearing Date" className="sm:col-span-2">
+          <Input type="date" value={form.nextHearingDate} onChange={(e) => setForm({ ...form, nextHearingDate: e.target.value })} />
+        </Field>
+        <Field label="Courtroom">
+          <Input value={form.courtroom} onChange={(e) => setForm({ ...form, courtroom: e.target.value })} />
+        </Field>
+        <Field label="Judge">
+          <Input value={form.judgeName} onChange={(e) => setForm({ ...form, judgeName: e.target.value })} />
+        </Field>
+        <Field label="Notes" className="sm:col-span-2">
+          <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+        </Field>
+      </div>
+    </Dialog>
+  );
+}
+
+let pendingFile: File | null = null;
+let pendingCategory = "Evidence";
+
+function DocumentsTab({ caseId }: { caseId: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const { data: documents, isLoading } = useQuery({
+    queryKey: ["documents", "case", caseId],
+    queryFn: () => documentService.byCase(caseId),
+    enabled: !!caseId
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ file, docCategory }: { file: File; docCategory: string }) =>
+      documentService.upload(file, caseId, docCategory),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents", "case", caseId] });
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      setUploadOpen(false);
+      toast.success("Document uploaded");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (docId: string) => documentService.remove(docId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents", "case", caseId] });
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      toast.success("Document deleted");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Evidence & Documents"
+          description="Upload evidence and documents for this case. They are stored securely and linked to the case."
+          action={
+            <Button size="sm" onClick={() => setUploadOpen(true)}>
+              <Plus className="h-4 w-4" /> Upload Evidence
+            </Button>
+          }
+        />
+        <CardContent>
+          {isLoading ? (
+            <Loading />
+          ) : documents && documents.length > 0 ? (
+            <div className="space-y-3">
+              {documents.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-4 rounded-lg border border-line p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50">
+                      <FileText className="h-4 w-4 text-primary-700" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-ink">{d.originalFileName ?? d.fileName}</p>
+                      <p className="text-xs text-ink-muted">
+                        {d.category} · {d.fileType} · {d.fileSize ? `${(d.fileSize / 1024).toFixed(0)} KB` : "—"} · v{d.version}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <a
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
+                      aria-label="Download"
+                      title="Download"
+                      href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/documents/download/${d.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                    <button
+                      onClick={() => deleteMutation.mutate(d.id)}
+                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No documents"
+              description="Upload evidence, court orders and correspondence for this case."
+              action={
+                <Button onClick={() => setUploadOpen(true)}>
+                  <Plus className="h-4 w-4" /> Upload Evidence
+                </Button>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title="Upload Evidence / Document"
+        description="Attach a file to this case. It will be stored securely and linked to the case."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setUploadOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!pendingFile || uploadMutation.isPending}
+              onClick={() => pendingFile && uploadMutation.mutate({ file: pendingFile, docCategory: pendingCategory })}
+            >
+              <FileUp className="h-4 w-4" /> Upload
+            </Button>
+          </>
+        }
+      >
+        <UploadForm
+          initialCategory={pendingCategory}
+          onReady={(file, docCategory) => {
+            pendingFile = file;
+            pendingCategory = docCategory;
+          }}
+        />
+      </Dialog>
+    </>
+  );
+}
+
+function UploadForm({
+  initialCategory,
+  onReady
+}: {
+  initialCategory: string;
+  onReady: (file: File, docCategory: string) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [docCategory, setDocCategory] = useState(initialCategory);
+
+  const update = (f: File | null, cat: string) => {
+    setFile(f);
+    setDocCategory(cat);
+    if (f) onReady(f, cat);
+  };
+
+  return (
+    <div className="space-y-4">
+      <Field label="File" required>
+        <input
+          type="file"
+          className="w-full text-sm text-ink file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-800 file:transition-colors hover:file:bg-primary-100"
+          onChange={(e) => update(e.target.files?.[0] ?? null, docCategory)}
+        />
+      </Field>
+      <Field label="Category">
+        <Select value={docCategory} onChange={(e) => update(file, e.target.value)}>
+          {docCategories.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </Select>
+      </Field>
+      {!file ? <p className="text-xs text-ink-muted">Choose a file to enable upload.</p> : null}
+    </div>
+  );
 }
 
 function ScheduleHearingDialog({

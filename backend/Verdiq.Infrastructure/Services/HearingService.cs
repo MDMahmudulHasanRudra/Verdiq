@@ -38,6 +38,8 @@ public class HearingService : IHearingService
         await _unitOfWork.Repository<Hearing>().AddAsync(hearing);
         await _unitOfWork.CompleteAsync();
 
+        await SyncCaseNextHearingDateAsync(dto.CaseId);
+
         var result = await GetByIdAsync(hearing.Id);
         return (true, "Hearing created successfully", result);
     }
@@ -62,6 +64,8 @@ public class HearingService : IHearingService
         await _unitOfWork.Repository<Hearing>().UpdateAsync(hearing);
         await _unitOfWork.CompleteAsync();
 
+        await SyncCaseNextHearingDateAsync(hearing.CaseId);
+
         var result = await GetByIdAsync(id);
         return (true, "Hearing updated successfully", result);
     }
@@ -72,8 +76,12 @@ public class HearingService : IHearingService
         if (hearing == null || hearing.IsDeleted)
             return (false, "Hearing not found");
 
+        var caseId = hearing.CaseId;
+
         await _unitOfWork.Repository<Hearing>().DeleteAsync(hearing);
         await _unitOfWork.CompleteAsync();
+
+        await SyncCaseNextHearingDateAsync(caseId);
 
         return (true, "Hearing deleted successfully");
     }
@@ -133,6 +141,43 @@ public class HearingService : IHearingService
             .ToListAsync();
 
         return hearings.Select(MapToDto);
+    }
+
+    // Keeps the parent Case.NextHearingDate in sync with the case's hearings:
+    // the next future Scheduled hearing, falling back to the next future
+    // hearing date recorded on any active/adjourned hearing.
+    private async Task SyncCaseNextHearingDateAsync(Guid caseId)
+    {
+        var now = DateTime.UtcNow;
+
+        var nextScheduled = await _context.Hearings
+            .Where(h => h.CaseId == caseId && !h.IsDeleted
+                && h.Status == Domain.Enums.HearingStatus.Scheduled
+                && h.HearingDate >= now)
+            .OrderBy(h => h.HearingDate)
+            .Select(h => (DateTime?)h.HearingDate)
+            .FirstOrDefaultAsync();
+
+        DateTime? nextHearingDate = nextScheduled;
+
+        if (nextHearingDate == null)
+        {
+            nextHearingDate = await _context.Hearings
+                .Where(h => h.CaseId == caseId && !h.IsDeleted
+                    && h.Status != Domain.Enums.HearingStatus.Canceled
+                    && h.NextHearingDate.HasValue
+                    && h.NextHearingDate.Value >= now)
+                .OrderBy(h => h.NextHearingDate)
+                .Select(h => (DateTime?)h.NextHearingDate)
+                .FirstOrDefaultAsync();
+        }
+
+        var caseEntity = await _context.Cases.FindAsync(caseId);
+        if (caseEntity == null) return;
+
+        caseEntity.NextHearingDate = nextHearingDate;
+        caseEntity.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
     }
 
     private static HearingResponseDto MapToDto(Hearing h)

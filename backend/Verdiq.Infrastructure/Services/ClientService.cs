@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Verdiq.Application.DTOs.Client;
+using Verdiq.Application.DTOs.ClientPortal;
 using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
+using Verdiq.Domain.Enums;
 using Verdiq.Infrastructure.Data;
 
 namespace Verdiq.Infrastructure.Services;
@@ -159,6 +161,62 @@ public class ClientService : IClientService
         await _context.SaveChangesAsync();
 
         return (true, "Avatar uploaded", MapToDto(client));
+    }
+
+    public async Task<IEnumerable<ClientCaseSummaryDto>> GetCasesAsync(Guid clientId, Guid chamberId)
+    {
+        return await _context.ClientCases
+            .Where(cc => cc.ClientId == clientId && !cc.IsDeleted
+                && cc.Case != null && cc.Case.ChamberId == chamberId && !cc.Case.IsDeleted)
+            .Include(cc => cc.Case).ThenInclude(c => c.AssignedLawyer)
+            .OrderByDescending(cc => cc.Case.CreatedAt)
+            .Select(cc => new ClientCaseSummaryDto
+            {
+                Id = cc.CaseId,
+                CaseNumber = cc.Case.CaseNumber,
+                Title = cc.Case.Title,
+                CaseType = cc.Case.CaseType,
+                Status = cc.Case.Status.ToString(),
+                AssignedLawyerName = cc.Case.AssignedLawyer.FullName,
+                NextHearingDate = _context.Hearings
+                    .Where(h => h.CaseId == cc.CaseId && !h.IsDeleted
+                        && h.Status == Domain.Enums.HearingStatus.Scheduled
+                        && h.HearingDate > DateTime.UtcNow)
+                    .OrderBy(h => h.HearingDate)
+                    .Select(h => (DateTime?)h.HearingDate)
+                    .FirstOrDefault(),
+                DocumentsCount = _context.Documents.Count(d => d.CaseId == cc.CaseId && !d.IsDeleted),
+                CreatedAt = cc.Case.CreatedAt
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ClientHearingDto>> GetHearingsAsync(Guid clientId, Guid chamberId)
+    {
+        var clientCaseIds = await _context.ClientCases
+            .Where(cc => cc.ClientId == clientId && !cc.IsDeleted
+                && cc.Case != null && cc.Case.ChamberId == chamberId && !cc.Case.IsDeleted)
+            .Select(cc => cc.CaseId)
+            .ToListAsync();
+
+        return await _context.Hearings
+            .Where(h => clientCaseIds.Contains(h.CaseId) && !h.IsDeleted)
+            .Include(h => h.Case)
+            .OrderBy(h => h.HearingDate)
+            .Select(h => new ClientHearingDto
+            {
+                Id = h.Id,
+                CaseId = h.CaseId,
+                CaseTitle = h.Case.Title,
+                CaseNumber = h.Case.CaseNumber,
+                HearingDate = h.HearingDate,
+                Courtroom = h.Courtroom,
+                JudgeName = h.JudgeName,
+                Status = h.Status.ToString(),
+                Result = h.Result,
+                NextHearingDate = h.NextHearingDate
+            })
+            .ToListAsync();
     }
 
     private async Task<string> GenerateClientCode(Guid chamberId)

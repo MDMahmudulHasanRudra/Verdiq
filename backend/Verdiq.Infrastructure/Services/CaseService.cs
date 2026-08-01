@@ -408,6 +408,16 @@ public class CaseService : ICaseService
         BudgetLimit = c.BudgetLimit,
         ExpenseBudget = c.ExpenseBudget,
         NextHearingDate = c.NextHearingDate,
+        LastHearingDate = c.Hearings
+            .Where(h => !h.IsDeleted)
+            .OrderByDescending(h => h.HearingDate)
+            .Select(h => (DateTime?)h.HearingDate)
+            .FirstOrDefault(),
+        LastHearingResult = c.Hearings
+            .Where(h => !h.IsDeleted && !string.IsNullOrWhiteSpace(h.Result))
+            .OrderByDescending(h => h.HearingDate)
+            .Select(h => h.Result)
+            .FirstOrDefault(),
         CriticalDeadlines = c.CriticalDeadlines,
         LimitationExpiry = c.LimitationExpiry,
         Clients = c.ClientCases.Where(cc => !cc.IsDeleted).Select(cc => new ClientInfo

@@ -185,7 +185,7 @@ public class DocumentService : IDocumentService
         return (stream, previewType, document.OriginalFileName);
     }
 
-    public async Task<IEnumerable<DocumentResponseDto>> GetAllAsync(Guid chamberId, string? category = null, int page = 1, int pageSize = 10)
+    public async Task<IEnumerable<DocumentResponseDto>> GetAllAsync(Guid chamberId, string? category = null, int page = 1, int pageSize = 10, Guid? caseId = null, string? search = null)
     {
         var query = _context.Documents
             .Include(d => d.Case)
@@ -195,8 +195,20 @@ public class DocumentService : IDocumentService
             .Include(d => d.Comments)
             .Where(d => !d.IsDeleted && d.Case.ChamberId == chamberId);
 
+        if (caseId.HasValue)
+            query = query.Where(d => d.CaseId == caseId.Value);
+
         if (!string.IsNullOrWhiteSpace(category))
             query = query.Where(d => d.Category == category);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.ToLower();
+            query = query.Where(d =>
+                d.OriginalFileName.ToLower().Contains(term) ||
+                (d.Case != null && d.Case.CaseNumber.ToLower().Contains(term)) ||
+                (d.Case != null && d.Case.Title.ToLower().Contains(term)));
+        }
 
         var documents = await query
             .OrderByDescending(d => d.CreatedAt)

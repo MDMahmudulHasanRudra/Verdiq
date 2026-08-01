@@ -20,10 +20,10 @@ public class DocumentsController : BaseController
 
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<DocumentResponseDto>>>> GetAll(
-        int page = 1, int pageSize = 10, string? category = null)
+        int page = 1, int pageSize = 10, string? category = null, Guid? caseId = null, string? search = null)
     {
         var chamberId = GetChamberId();
-        var documents = await _documentService.GetAllAsync(chamberId, category, page, pageSize);
+        var documents = await _documentService.GetAllAsync(chamberId, category, page, pageSize, caseId, search);
         return Ok(ApiResponse<List<DocumentResponseDto>>.Ok(documents.ToList()));
     }
 

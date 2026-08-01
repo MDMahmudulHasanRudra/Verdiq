@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState, Loading } from "@/components/ui/loading";
 import { documentService } from "@/lib/services";
+import { useCases } from "@/lib/hooks";
 import { getErrorMessage, formatDateTime } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { FileText, Upload, Download, Trash2 } from "lucide-react";
@@ -24,13 +25,15 @@ export default function DocumentsPage() {
   const qc = useQueryClient();
   const [category, setCategory] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: documents, isLoading } = useQuery({
-    queryKey: ["documents", category, initialCaseId],
+    queryKey: ["documents", category, initialCaseId, search],
     queryFn: () =>
       documentService.list({
         category: category || undefined,
-        caseId: initialCaseId || undefined
+        caseId: initialCaseId || undefined,
+        search: search || undefined
       })
   });
 
@@ -39,6 +42,7 @@ export default function DocumentsPage() {
       documentService.upload(file, caseId, docCategory),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["case"] });
       setUploadOpen(false);
       toast.success("Document uploaded");
     },
@@ -74,6 +78,13 @@ export default function DocumentsPage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </Select>
+          <div className="relative flex-1">
+            <Input
+              placeholder="Search file, case number or title…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {initialCaseId ? (
             <div className="flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-2 text-xs text-primary-800">
               Filtered by case {initialCaseId.slice(0, 8)}…
@@ -124,12 +135,16 @@ export default function DocumentsPage() {
                   </td>
                   <td>
                     <div className="flex items-center gap-1">
-                      <button
+                      <a
                         className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
                         aria-label="Download"
+                        title="Download"
+                        href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api"}/documents/download/${d.id}`}
+                        target="_blank"
+                        rel="noreferrer"
                       >
                         <Download className="h-4 w-4" />
-                      </button>
+                      </a>
                       <button
                         onClick={() => deleteMutation.mutate(d.id)}
                         className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
@@ -176,13 +191,17 @@ function UploadDialog({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [caseId, setCaseId] = useState(initialCaseId);
-  const [docCategory, setDocCategory] = useState("Pleadings");
+  const [docCategory, setDocCategory] = useState("Evidence");
+
+  const { data: casesData } = useCases({ pageSize: 100 });
+  const cases = casesData?.data ?? [];
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title="Upload Document"
+      description="Attach a file to a case. Documents are stored securely and visible from the case page."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -200,8 +219,15 @@ function UploadDialog({
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </Field>
-        <Field label="Case ID" required>
-          <Input value={caseId} onChange={(e) => setCaseId(e.target.value)} placeholder="Paste the case GUID" />
+        <Field label="Case" required>
+          <Select value={caseId} onChange={(e) => setCaseId(e.target.value)}>
+            <option value="">Select a case…</option>
+            {cases.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.caseNumber} — {c.title}
+              </option>
+            ))}
+          </Select>
         </Field>
         <Field label="Category">
           <Select value={docCategory} onChange={(e) => setDocCategory(e.target.value)}>

@@ -75,6 +75,8 @@ export interface Case {
   budgetLimit: number | null;
   expenseBudget: number | null;
   nextHearingDate: string | null;
+  lastHearingDate: string | null;
+  lastHearingResult: string | null;
   criticalDeadlines: string | null;
   limitationExpiry: string | null;
   legalSections: CaseLegalSection[];

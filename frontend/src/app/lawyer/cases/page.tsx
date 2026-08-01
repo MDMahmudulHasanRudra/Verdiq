@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { Table, Pagination } from "@/components/ui/table";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState, Loading } from "@/components/ui/loading";
-import { useCases } from "@/lib/hooks";
+import { useCases, useClients } from "@/lib/hooks";
 import { caseService } from "@/lib/services";
 import { getErrorMessage, formatDate, cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -28,7 +28,8 @@ import {
   Gavel,
   FileText,
   CalendarDays,
-  Scale
+  Scale,
+  Check
 } from "lucide-react";
 import type { Case, CreateCaseInput, UpdateCaseInput } from "@/types/models";
 
@@ -46,6 +47,7 @@ interface CaseFormState {
   opponent: string;
   actsAndSections: string;
   description: string;
+  clientIds: string[];
 }
 
 const emptyForm = (): CaseFormState => ({
@@ -57,7 +59,8 @@ const emptyForm = (): CaseFormState => ({
   priority: "Medium",
   opponent: "",
   actsAndSections: "",
-  description: ""
+  description: "",
+  clientIds: []
 });
 
 const fromCase = (c: Case): CaseFormState => ({
@@ -69,13 +72,16 @@ const fromCase = (c: Case): CaseFormState => ({
   priority: c.priority || "Medium",
   opponent: c.opponent ?? "",
   actsAndSections: c.actsAndSections ?? "",
-  description: c.description ?? ""
+  description: c.description ?? "",
+  clientIds: c.clients.map((cl) => cl.id)
 });
 
 type ViewMode = "list" | "grid";
 
 export default function CasesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preClient = searchParams.get("client") ?? "";
   const toast = useToast();
   const qc = useQueryClient();
 
@@ -90,8 +96,16 @@ export default function CasesPage() {
   const [view, setView] = useState<ViewMode>("list");
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [createClientIds, setCreateClientIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<Case | null>(null);
   const [deleting, setDeleting] = useState<Case | null>(null);
+
+  useEffect(() => {
+    if (preClient) {
+      setCreateClientIds([preClient]);
+      setCreateOpen(true);
+    }
+  }, [preClient]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedSearch(search), 350);
@@ -384,7 +398,7 @@ export default function CasesPage() {
         title="New Case"
         description="Enter the basic case details to get started."
         submitLabel="Create Case"
-        initial={emptyForm()}
+        initial={{ ...emptyForm(), clientIds: createClientIds }}
         showStatus={false}
         onClose={() => setCreateOpen(false)}
         onSubmit={(form) =>
@@ -397,7 +411,7 @@ export default function CasesPage() {
             priority: form.priority || null,
             description: form.description || null,
             actsAndSections: form.actsAndSections || null,
-            clientIds: []
+            clientIds: form.clientIds
           })
         }
       />
@@ -423,7 +437,8 @@ export default function CasesPage() {
                 priority: form.priority || undefined,
                 opponent: form.opponent || null,
                 description: form.description || null,
-                actsAndSections: form.actsAndSections || null
+                actsAndSections: form.actsAndSections || null,
+                clientIds: form.clientIds
               }
             })
           }
@@ -582,6 +597,22 @@ function CaseFormDialog({
 
   const set = (k: keyof CaseFormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  const { data: clientsData } = useClients({ pageSize: 100 });
+  const clients = clientsData?.data ?? [];
+  const [clientSearch, setClientSearch] = useState("");
+
+  const toggleClient = (clientId: string) =>
+    setForm((f) => ({
+      ...f,
+      clientIds: f.clientIds.includes(clientId)
+        ? f.clientIds.filter((id) => id !== clientId)
+        : [...f.clientIds, clientId]
+    }));
+
+  const filteredClients = clientSearch
+    ? clients.filter((cl) => cl.name.toLowerCase().includes(clientSearch.toLowerCase()))
+    : clients;
+
   return (
     <Dialog
       open={open}
@@ -617,6 +648,49 @@ function CaseFormDialog({
               <option key={t} value={t}>{t}</option>
             ))}
           </Select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="mb-1.5 block text-sm font-medium text-ink">Linked Clients</label>
+          <div className="rounded-lg border border-line">
+            <div className="border-b border-line px-3 py-2">
+              <Input
+                placeholder="Search clients…"
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+              />
+            </div>
+            <div className="max-h-44 overflow-y-auto p-1">
+              {filteredClients.length > 0 ? (
+                filteredClients.map((cl) => {
+                  const selected = form.clientIds.includes(cl.id);
+                  return (
+                    <button
+                      type="button"
+                      key={cl.id}
+                      onClick={() => toggleClient(cl.id)}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-1.5 text-left text-sm transition-colors",
+                        selected ? "bg-primary-50 text-primary-800" : "text-ink hover:bg-slate-50"
+                      )}
+                    >
+                      <span className="truncate">
+                        {cl.name}
+                        <span className="ml-2 text-xs text-ink-muted">{cl.clientCode ?? cl.phone}</span>
+                      </span>
+                      {selected ? <Check className="h-4 w-4 shrink-0 text-primary-700" /> : null}
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="px-3 py-2 text-sm text-ink-muted">
+                  {clientSearch ? "No matching clients." : "No clients yet. Create clients from the Clients page."}
+                </p>
+              )}
+            </div>
+          </div>
+          {form.clientIds.length > 0 ? (
+            <p className="mt-1.5 text-xs text-ink-muted">{form.clientIds.length} client{form.clientIds.length !== 1 ? "s" : ""} linked</p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-ink">Filing Date</label>

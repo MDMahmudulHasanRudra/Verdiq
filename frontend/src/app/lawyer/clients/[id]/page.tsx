@@ -12,9 +12,9 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input, Field } from "@/components/ui/field";
 import { Loading, EmptyState } from "@/components/ui/loading";
 import { clientService, invoiceService } from "@/lib/services";
-import { getErrorMessage, formatDate, initials, formatCurrency } from "@/lib/utils";
+import { getErrorMessage, formatDate, initials, formatCurrency, formatDateTime } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { ArrowLeft, Phone, Mail, MapPin, UserPlus } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, UserPlus, FolderOpen, CalendarClock, ArrowUpRight } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 
 export default function ClientDetailPage() {
@@ -28,6 +28,18 @@ export default function ClientDetailPage() {
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
     queryFn: () => clientService.get(id),
+    enabled: !!id
+  });
+
+  const { data: clientCases } = useQuery({
+    queryKey: ["client", id, "cases"],
+    queryFn: () => clientService.cases(id),
+    enabled: !!id
+  });
+
+  const { data: clientHearings } = useQuery({
+    queryKey: ["client", id, "hearings"],
+    queryFn: () => clientService.hearings(id),
     enabled: !!id
   });
 
@@ -51,6 +63,9 @@ export default function ClientDetailPage() {
   if (!client) return <EmptyState title="Client not found" />;
 
   const c = client;
+  const upcomingHearings = (clientHearings ?? []).filter(
+    (h) => new Date(h.hearingDate) >= new Date() && h.status === "Scheduled"
+  );
 
   return (
     <div>
@@ -74,6 +89,9 @@ export default function ClientDetailPage() {
             <Button variant="outline" onClick={() => setPortalOpen(true)}>
               <UserPlus className="h-4 w-4" /> Portal Access
             </Button>
+            <Button onClick={() => router.push(`/lawyer/cases?client=${c.id}`)}>
+              <FolderOpen className="h-4 w-4" /> New Case
+            </Button>
           </>
         }
       />
@@ -85,7 +103,7 @@ export default function ClientDetailPage() {
         {c.riskLevel ? <Badge tone="amber">Risk: {c.riskLevel}</Badge> : null}
       </div>
 
-      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "cases", label: "Cases" }, { value: "invoices", label: "Invoices" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "cases", label: "Cases" }, { value: "hearings", label: "Hearings" }, { value: "invoices", label: "Invoices" }]} value={tab} onChange={setTab} />
 
       {tab === "overview" && (
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -131,8 +149,8 @@ export default function ClientDetailPage() {
                 <p className="text-xs text-ink-muted">Invoices</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-ink">{c.creditLimit ? formatCurrency(c.creditLimit) : "—"}</p>
-                <p className="text-xs text-ink-muted">Credit Limit</p>
+                <p className="text-2xl font-bold text-ink">{upcomingHearings.length}</p>
+                <p className="text-xs text-ink-muted">Upcoming hearings</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-ink">{formatDate(c.createdAt, "MMM YYYY")}</p>
@@ -146,9 +164,101 @@ export default function ClientDetailPage() {
       {tab === "cases" && (
         <div className="mt-5">
           <Card>
-            <CardHeader title="Linked Cases" />
+            <CardHeader title="Linked Cases" description="Cases this client is linked to and their next hearing day." />
             <CardContent>
-              <EmptyState title="Cases appear here" description="Link cases to this client from a case record." />
+              {clientCases && clientCases.length > 0 ? (
+                <div className="space-y-3">
+                  {clientCases.map((cs) => (
+                    <button
+                      key={cs.id}
+                      onClick={() => router.push(`/lawyer/cases/${cs.id}`)}
+                      className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg border border-line p-3 text-left transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs font-semibold text-primary-700">{cs.caseNumber}</p>
+                        <p className="truncate text-sm font-medium text-ink">{cs.title}</p>
+                        <p className="text-xs text-ink-muted">
+                          {cs.caseType} · {cs.assignedLawyerName}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-4">
+                        <div className="text-right">
+                          {cs.nextHearingDate ? (
+                            <>
+                              <p className="inline-flex items-center gap-1.5 text-sm font-medium text-gold-700">
+                                <CalendarClock className="h-3.5 w-3.5" />
+                                {formatDate(cs.nextHearingDate)}
+                              </p>
+                              <p className="text-xs text-ink-muted">Next hearing</p>
+                            </>
+                          ) : (
+                            <p className="text-xs text-ink-muted">No hearing scheduled</p>
+                          )}
+                        </div>
+                        <StatusBadge value={cs.status} />
+                        <ArrowUpRight className="h-4 w-4 text-ink-soft" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No cases linked"
+                  description="Create a case and link this client to it."
+                  action={
+                    <Button onClick={() => router.push(`/lawyer/cases?client=${c.id}`)}>
+                      <FolderOpen className="h-4 w-4" /> New Case for {c.name}
+                    </Button>
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {tab === "hearings" && (
+        <div className="mt-5">
+          <Card>
+            <CardHeader title="Hearings" description="Which case is heard on which day." />
+            <CardContent>
+              {clientHearings && clientHearings.length > 0 ? (
+                <div className="space-y-3">
+                  {clientHearings.map((h) => {
+                    const isUpcoming = new Date(h.hearingDate) >= new Date() && h.status === "Scheduled";
+                    return (
+                      <button
+                        key={h.id}
+                        onClick={() => router.push(`/lawyer/cases/${h.caseId}`)}
+                        className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg border border-line p-3 text-left transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs font-semibold text-primary-700">{h.caseNumber}</p>
+                          <p className="truncate text-sm font-medium text-ink">{h.caseTitle}</p>
+                          <p className="text-xs text-ink-muted">
+                            {h.courtroom ?? "Courtroom TBA"}
+                            {h.judgeName ? ` · Judge ${h.judgeName}` : ""}
+                            {h.result ? ` · Result: ${h.result}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-3">
+                          <div className="text-right">
+                            <p className={isUpcoming ? "text-sm font-semibold text-gold-700" : "text-sm text-ink-muted"}>
+                              {formatDateTime(h.hearingDate)}
+                            </p>
+                            {h.nextHearingDate ? (
+                              <p className="text-xs text-ink-muted">Next: {formatDate(h.nextHearingDate)}</p>
+                            ) : null}
+                          </div>
+                          <StatusBadge value={h.status} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState title="No hearings" description="Hearings across this client's cases will appear here." />
+              )}
             </CardContent>
           </Card>
         </div>

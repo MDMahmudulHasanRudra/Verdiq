@@ -28,6 +28,8 @@ export const clientService = {
   create: (input: CreateClientInput) => apiPost<Client>("/clients", input),
   update: (id: string, input: Partial<CreateClientInput> & { isActive?: boolean }) => apiPut<Client>(`/clients/${id}`, input),
   remove: (id: string) => apiDelete<object>(`/clients/${id}`),
+  cases: (id: string) => apiGet<import("@/types/models").ClientCaseSummary[]>(`/clients/${id}/cases`),
+  hearings: (id: string) => apiGet<import("@/types/models").ClientHearing[]>(`/clients/${id}/hearings`),
   grantPortalAccess: (clientId: string, data: { fullName: string; email: string; password: string; phone?: string }) =>
     apiPost<object>(`/clients/${clientId}/portal-access`, data),
   revokePortalAccess: (clientId: string) => apiPost<object>(`/clients/${clientId}/revoke-portal`)

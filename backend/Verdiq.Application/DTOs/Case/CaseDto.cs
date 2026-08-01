@@ -131,6 +131,8 @@ public class CaseResponseDto
     public decimal? BudgetLimit { get; set; }
     public decimal? ExpenseBudget { get; set; }
     public DateTime? NextHearingDate { get; set; }
+    public DateTime? LastHearingDate { get; set; }
+    public string? LastHearingResult { get; set; }
     public string? CriticalDeadlines { get; set; }
     public DateTime? LimitationExpiry { get; set; }
     public List<LegalSectionInfo> LegalSections { get; set; } = new();
