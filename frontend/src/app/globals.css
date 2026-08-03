@@ -148,6 +148,12 @@ body {
   }
 }
 
+/* Float animation for login page cards */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
