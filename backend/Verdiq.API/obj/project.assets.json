@@ -3320,19 +3320,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\mdmah\\.nuget\\packages\\": {}
+    "C:\\Users\\rudra\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.API\\Verdiq.API.csproj",
+      "projectUniqueName": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.API\\Verdiq.API.csproj",
       "projectName": "Verdiq.API",
-      "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.API\\Verdiq.API.csproj",
-      "packagesPath": "C:\\Users\\mdmah\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.API\\obj\\",
+      "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.API\\Verdiq.API.csproj",
+      "packagesPath": "C:\\Users\\rudra\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.API\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\mdmah\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\rudra\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
@@ -3345,11 +3345,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
-              "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj"
+            "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
+              "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj"
             },
-            "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj"
+            "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj"
             }
           }
         }
@@ -3413,7 +3413,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -3830,5 +3830,17 @@
         }
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'Microsoft.OpenApi' 2.4.1 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
+      "libraryId": "Microsoft.OpenApi",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }

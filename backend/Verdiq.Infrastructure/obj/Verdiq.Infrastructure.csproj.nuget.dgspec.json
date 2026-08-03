@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {}
+    "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {}
   },
   "projects": {
-    "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
+    "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj",
+        "projectUniqueName": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj",
         "projectName": "Verdiq.Application",
-        "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj",
-        "packagesPath": "C:\\Users\\mdmah\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\obj\\",
+        "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj",
+        "packagesPath": "C:\\Users\\rudra\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\mdmah\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\rudra\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -27,8 +27,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj": {
-                "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj"
+              "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj": {
+                "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj"
               }
             }
           }
@@ -71,7 +71,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -349,17 +349,17 @@
         }
       }
     },
-    "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj": {
+    "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj",
         "projectName": "Verdiq.Domain",
-        "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj",
-        "packagesPath": "C:\\Users\\mdmah\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\obj\\",
+        "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\Verdiq.Domain.csproj",
+        "packagesPath": "C:\\Users\\rudra\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\mdmah\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\rudra\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -406,7 +406,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -684,17 +684,17 @@
         }
       }
     },
-    "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {
+    "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj",
         "projectName": "Verdiq.Infrastructure",
-        "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\mdmah\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\obj\\",
+        "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\Verdiq.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\rudra\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\mdmah\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\rudra\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -707,8 +707,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
-                "projectPath": "C:\\Users\\mdmah\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj"
+              "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj": {
+                "projectPath": "C:\\Users\\rudra\\OneDrive\\Desktop\\Verdiq\\backend\\Verdiq.Application\\Verdiq.Application.csproj"
               }
             }
           }
@@ -769,7 +769,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
