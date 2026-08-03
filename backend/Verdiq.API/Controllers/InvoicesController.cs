@@ -21,7 +21,7 @@ public class InvoicesController : BaseController
     [HttpPost]
     public async Task<ActionResult<ApiResponse<InvoiceResponseDto>>> Create([FromBody] CreateInvoiceDto dto)
     {
-        var chamberId = GetUserId();
+        var chamberId = GetChamberId();
         var (success, message, data) = await _invoiceService.CreateAsync(dto, chamberId);
 
         if (!success)
@@ -34,7 +34,7 @@ public class InvoicesController : BaseController
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IEnumerable<InvoiceResponseDto>>>> GetAll([FromQuery] string? status)
     {
-        var chamberId = GetUserId();
+        var chamberId = GetChamberId();
         var invoices = await _invoiceService.GetAllAsync(chamberId, status);
         return Ok(ApiResponse<IEnumerable<InvoiceResponseDto>>.Ok(invoices));
     }

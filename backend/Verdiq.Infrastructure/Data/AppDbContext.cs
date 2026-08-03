@@ -1205,6 +1205,16 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.AssignedLawyerId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasOne(e => e.Client)
+                .WithMany()
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Case)
+                .WithMany()
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 

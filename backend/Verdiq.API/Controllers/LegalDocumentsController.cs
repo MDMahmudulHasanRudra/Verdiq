@@ -65,12 +65,33 @@ public class LegalDocumentsController : BaseController
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<LegalDocumentResponseDto>>> GetById(Guid id)
     {
-        var documents = await _legalDocumentService.GetAllAsync();
-        var document = documents.FirstOrDefault(d => d.Id == id);
+        var document = await _legalDocumentService.GetByIdAsync(id);
 
         if (document is null)
             return NotFound(ApiResponse<LegalDocumentResponseDto>.Fail("Legal document not found"));
 
         return Ok(ApiResponse<LegalDocumentResponseDto>.Ok(document));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ApiResponse<LegalDocumentResponseDto>>> Update(Guid id, [FromBody] UpdateLegalDocumentDto dto)
+    {
+        var (success, message, data) = await _legalDocumentService.UpdateAsync(id, dto);
+
+        if (!success)
+            return BadRequest(ApiResponse<LegalDocumentResponseDto>.Fail(message));
+
+        return Ok(ApiResponse<LegalDocumentResponseDto>.Ok(data!));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<string>>> Delete(Guid id)
+    {
+        var (success, message) = await _legalDocumentService.DeleteAsync(id);
+
+        if (!success)
+            return NotFound(ApiResponse<string>.Fail(message));
+
+        return Ok(ApiResponse<string>.Ok(message));
     }
 }

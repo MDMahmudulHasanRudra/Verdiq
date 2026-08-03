@@ -1,109 +1,50 @@
-# Remaining Tasks
+[x] Backend: fix InvoicesController chamber bug (GetUserId->GetChamberId)
+[x] Backend: lead conversion -> create Client + Case on stage ConvertedToClient
+[x] Backend: LegalDocuments update/delete + fix GetById
+[•] Frontend i18n infra: Bengali fonts, LanguageProvider, dictionaries (en/bn), language switcher
+[ ] Upgrade Leads page: edit/delete/search/analytics + i18n
+[ ] Upgrade Invoices page: client/case pickers, edit, mark-paid + i18n
+[ ] Upgrade Documents page: rename/edit, preview, versions + i18n
+[ ] Upgrade Tasks page: column moves, edit/delete, pickers + i18n
+[ ] Upgrade Legal Database page: proper forms, edit/delete, legal docs tab + i18n
+[ ] Upgrade Templates page: working 'Use' render flow, edit/delete, variables + i18n
+[ ] i18n: convert shared shell (sidebar, header, layouts, login, common UI components)
+[ ] i18n: convert remaining lawyer pages + client portal + super-admin
+[ ] Build-verify backend (docker) + frontend (npm build), commit
 
-## 0. Completed — Recent (August 2026)
+---
 
-- [x] **Fixed list-endpoint crash (Case / Hearing / Client / Expense pages)**
-  - Root cause: backend list endpoints return raw `PagedResponse<T>`, but `apiGet()` unwrapped only the inner `data` array.
-  - Fix: added `apiGetFull<T>()` in `frontend/src/lib/api.ts`; used by `caseService`, `clientService`, `hearingService`, `expenseService`, `legalDocumentService`.
-- [x] **Added proper error handling pages** — `error.tsx` (retry + backend-unreachable hint + error details), `global-error.tsx`, `not-found.tsx`.
-- [x] **Case module upgrade** — list/grid view toggle, edit + delete dialogs, inline quick status change, type/sort/status filters.
-- [x] **Hearings module upgrade** — case dropdown selector (no more GUID paste), Upcoming/All tabs, edit (result/next date/status) + delete.
-- [x] **Clients module upgrade** — backend `/api/clients` now supports `search`, `status`, `clientType` filters; edit (active toggle) + delete dialogs.
-- [x] **Judgments module** — per-case judgment records (caption, result, judgment date, next hearing, key findings) with list/create/soft-delete, attach + download judgment documents, export history as PDF (hand-rolled writer) / Excel-compatible CSV.
-- [x] **Case photos** — per-case photo upload (to cloud storage), thumbnail grid, lightbox, download, soft-delete.
-- [x] **Delete case re-authentication** — `DELETE /api/cases/{id}` now requires the caller's `email` + `password` (BCrypt-verified) in the request body; confirm dialog on the cases page.
-- [x] **Case Workflows / Processes** — user-created workflow presets (`/lawyer/workflows`, step builder with due-in-days, activate/deactivate) linkable to a case; steps unlock sequentially (locked until previous step completes) with due-date/overdue tracking, per-workflow progress, cancel/remove, case-detail Workflow tab + Overview progress snippet. Backend: `Workflow`/`WorkflowStep`/`CaseWorkflow`/`CaseWorkflowStep` entities, `WorkflowService`, `WorkflowsController` + `CaseWorkflowsController`.
-- [x] **Backend compile-verify + EF migrations** (done in Docker — no local .NET SDK):
-  - Backend builds clean via `docker compose up -d --build` (SDK image `mcr.microsoft.com/dotnet/sdk:10.0`).
-  - Migrations applied at startup via `MigrateAsync()`: `Judgments`/`CasePhotos` + `Workflows`/`WorkflowSteps`/`CaseWorkflows`/`CaseWorkflowSteps` all folded into one migration **`20260801140144_AddCaseWorkflows`** (pending-model-changes warning is gone; `__EFMigrationsHistory` contains it).
-  - `AddConfirmCaseDelete` — no schema change (body-only API change; nothing to migrate).
-  - Fixes along the way: `HearingService.cs` `Task` ambiguity (`System.Threading.Tasks.Task`) and `HearingStatus.Cancelled` (double-l); `WorkflowService.AddSteps` now assigns `OrderIndex` sequentially (client-sent indexes were silently collapsing to 0).
-- [x] **Manual test the Workflow feature end-to-end** (verified against `http://localhost:5000`, admin `admin@verdiq.com`/`admin123`):
-  - Create preset → steps snapshotted with correct `OrderIndex` 0/1; link to case → step A active/unlocked, step B locked.
-  - Sequential gating: completing B before A → 400 `Complete "A" first - the next step unlocks after it`; starting A twice → 400 `This step has already been started`; completing A unlocks B (`isActive=true`, `isLocked=false`, `percentComplete=50`).
-  - Cancel/remove and workflow completion (`Completed`, `percentComplete=100`) verified.
+## SESSION LOG — 2026-08-02 (session #2) — do NOT delete
 
+### Status: Tasks 1-3 DONE (backend), Task 4 (i18n infra) IN PROGRESS — frontend files created, NOT yet type-checked / integrated into UI components
 
-## 1.  Verify API (High Priority)
-- [ ] Start PostgreSQL container: `docker compose up -d db`
-- [ ] Start API server: `dotnet run --project Verdiq.API --urls http://localhost:5001`
-- [ ] Verify Swagger loads: `http://localhost:5001/swagger`
-- [ ] Test new API endpoints:
-  - `/api/teams` — CRUD operations
-  - `/api/accounting/charts` — Chart of Accounts CRUD
-  - `/api/accounting/journals` — Journal entry CRUD
-  - `/api/accounting/dashboard` — Dashboard stats
-  - `/api/accounting/profit-loss` — P&L report
-  - `/api/accounting/balance-sheet` — Balance sheet
-  - `/api/accounting/reports/monthly` — Monthly reports
-  - `/api/payroll/*` — Employee, Payroll, Attendance
-  - `/api/banking/*` — Bank accounts, transactions
-  - `/api/budget/*` — Budget CRUD
-  - `/api/fixed-assets/*` — Fixed asset CRUD
-  - `/api/tax/*` — Tax settings, transactions
-  - `/api/audit/*` — Audit log queries
+### Completed this session
+- **Task 1 — InvoicesController chamber bug**: `GetUserId()` → `GetChamberId()` in Create + GetAll (file `backend/Verdiq.API/Controllers/InvoicesController.cs`). VERIFIED in working tree.
+- **Task 2 — Lead conversion** (`backend/Verdiq.Infrastructure/Services/LeadService.cs`, `UpdateStageAsync`): on stage `ConvertedToClient`, creates a `Client` (via `IClientService.CreateAsync`) + `Case` (via `ICaseService.CreateAsync`) linked to the lead; sets `lead.ClientId`/`lead.CaseId`. Added `Lead.ClientId`/`CaseId` FKs + nav props (`Lead.cs`, `AppDbContext.cs`), DTO fields `ClientId/ClientName/CaseId/CaseTitle` in `LeadResponseDto`, `UpdateStageAsync` now takes `userId`, controller passes `GetUserId()`. Migration **`20260801163643_LeadClientCaseLinks`** (untracked, needs git add). VERIFIED builds.
+- **Task 3 — LegalDocuments**: added `GetByIdAsync` (real lookup, not GetAll filter), `UpdateAsync` (`UpdateLegalDocumentDto`), `DeleteAsync`; controller `GET/{id}`, `PUT/{id}`, `DELETE/{id}`. VERIFIED builds.
+- **Backend verify**: `dotnet build Verdiq.slnx` from `backend/` — **Build succeeded, 0 errors** (warnings only: NU1903 OpenApi vuln, CS0618 testcontainers obsolete).
 
-## 2. Test Frontend Routes (Medium Priority)
-- [ ] Start frontend: `npm run dev` (from `frontend/` directory)
-- [ ] Verify all new page routes compile and render:
-  - `/lawyer/teams` — Team management grid
-  - `/lawyer/accounting` — Dashboard with stats + trend
-  - `/lawyer/accounting/charts` — Chart of Accounts tree
-  - `/lawyer/accounting/journals` — Journal entry form
-  - `/lawyer/accounting/profit-loss` — P&L report
-  - `/lawyer/accounting/reports` — Monthly reports
-  - `/lawyer/payroll` — Employees/Payrolls/Attendance tabs
-  - `/lawyer/banking` — Account cards + transactions
-  - `/lawyer/budget` — Budget cards + vs-actuals
-  - `/lawyer/fixed-assets` — Asset register
-  - `/lawyer/tax` — Settings + Transactions tabs
-  - `/lawyer/audit` — Activity log with filters
+### Task 4 (i18n infra) — files created (ALL NEW, uncommitted, NOT verified)
+1. `frontend/src/lib/i18n/types.ts` — `Language`, `Dictionary` interface, `TranslationParams`. Namespaces: `common`, `nav`, `leads`, `invoices`, `documents`, `tasks`, `legalDatabase`, `templates`, `login`, `header`.
+2. `frontend/src/lib/i18n/en.ts` — English dictionary (fully populated to match `types.ts`).
+3. `frontend/src/lib/i18n/bn.ts` — Bengali dictionary (fully populated).
+4. `frontend/src/lib/i18n/index.tsx` — `LanguageProvider` (localStorage key `verdiq-language`, sets `<html lang>`, default `en`), `useLanguage()` hook returning `{ lang, setLang, toggleLang, t, dict }`, `interpolate()` helper. `t(key)` resolves dot-paths, falls back to `en` dict then the raw key.
+5. `frontend/src/components/layout/language-switcher.tsx` — `LanguageSwitcher` component (`Languages` icon + EN/BN label, calls `toggleLang`).
+6. `frontend/src/app/layout.tsx` — added `Hind_Siliguri` from `next/font/google` as `--font-bengali`; wrapped app in `<LanguageProvider>` (inside `Providers`, outside `ToastProvider`).
 
-## 3. Fix Warnings (Low Priority)
-- [ ] Resolve EF Core query filter warnings:
-  - Document ↔ DocumentActivity (required relationship with query filter)
-  - Document ↔ DocumentFavorite
-  - Document ↔ DocumentShare
-  - Task ↔ TaskAttachment
-  - Task ↔ TaskComment
-  - Task ↔ TaskWatcher
-  - Fix: Either make navigation optional or add matching filters to child entities
+### NEXT STEPS (do in this order)
+1. **Add Bengali font to CSS**: `frontend/src/app/globals.css` `@theme` — add `--font-sans` fallback chain to include `var(--font-bengali)` for Bangla glyphs (e.g. `--font-sans: var(--font-lato), var(--font-bengali), ...`). Must apply because Hind_Siliguri latin subset still renders Bangla via system fallback otherwise.
+2. **Verify i18n infra compiles**: run `npx tsc --noEmit` in `frontend/` (or `npm run build`).
+3. **Integrate switcher**: add `<LanguageSwitcher />` to `frontend/src/components/layout/header.tsx` (next to Bell icon).
+4. **Task 11 partially**: convert `sidebar.tsx` + `nav-config.tsx` labels to use `t()` (nav groups + item labels) and `header.tsx` strings — this makes the shell bilingual early.
+5. Then continue Task 4→5: **Upgrade Leads page** `frontend/src/app/lawyer/leads/page.tsx` — add edit/delete dialogs, server search, analytics cards + translate all strings via `useLanguage().t`. The `leads` dictionary namespace is already populated.
+6. Tasks 6-10 follow same pattern (page upgrades + use existing dict namespaces). If a dictionary key is missing, add to BOTH `en.ts` + `bn.ts` + `types.ts`.
+7. Task 13: `npx tsc --noEmit` + `npm run build` (frontend), `docker compose up -d --build` (backend), then commit.
 
-## 4. End-to-End Testing (Medium Priority)
-- [ ] Login with seed credentials (admin@verdiq.com / lawyer@verdiq.com)
-- [ ] Test Team CRUD flow
-- [ ] Test Accounting journal posting (debit = credit validation)
-- [ ] Test Payroll generate → approve → pay workflow
-- [ ] Test Banking reconciliation flow
-- [ ] Test Budget creation with vs-actual tracking
-- [ ] Test Fixed Asset disposal
-- [ ] Test Tax transaction recording
-
-## 5. Production Readiness (Future)
-- [ ] Review `DatabaseInitializer.cs` — should only seed data, not manage schema (migrations handle schema now)
-- [ ] Remove `EnsureCreatedAsync()` call if no longer needed
-- [ ] Remove raw SQL `CREATE TABLE IF NOT EXISTS` from `ApplySchemaUpdatesAsync()` for tables now managed by migrations
-- [ ] Add proper error handling + logging
-- [ ] Performance testing for accounting reports with large datasets
-
-## Useful Commands
-
-```powershell
-# Start PostgreSQL
-docker compose -f backend\docker-compose.yml up -d db
-
-# Build backend
-dotnet build backend\Verdiq.slnx
-
-# Run API
-dotnet run --project backend\Verdiq.API --urls http://localhost:5001
-
-# Apply migrations
-dotnet ef database update --project backend\Verdiq.Infrastructure --startup-project backend\Verdiq.API
-
-# Run frontend
-cd frontend && npm run dev
-
-# Check database tables
-docker exec verdiq-db psql -U postgres -d verdiq -c "\dt"
-```
+### REMINDERS / GOTCHAS
+- **Add migration to git**: `backend/Verdiq.Infrastructure/Migrations/20260801163643_LeadClientCaseLinks.cs` (+ Designer) are untracked — must be committed.
+- Frontend pages are all `"use client"` — `useLanguage()` works in any of them.
+- `Hind_Siliguri` subsets: only `latin` (it does include Bangla glyphs via variable font; if Bangla glyphs look wrong, add `subsets: ["latin", "bengali"]`).
+- `layout.tsx` is a server component — `LanguageProvider`/`ToastProvider` usage already follows the existing pattern (client components).
+- Do NOT delete the migration or the uncommitted backend/obj+bin churn; only commit intentional changes.
+- `NEXT_TASKS.md` was rewritten to this compact 13-line format — original long-form list is gone (in git history if needed).

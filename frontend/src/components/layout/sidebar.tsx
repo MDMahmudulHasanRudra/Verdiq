@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation";
 import { Scale, X } from "lucide-react";
 import { navGroups } from "@/components/layout/nav-config";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const { t } = useLanguage();
   const modules = user?.modules?.length ? user.modules : null;
 
   const filteredGroups = navGroups
@@ -51,7 +53,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           {filteredGroups.map((group) => (
             <div key={group.key}>
               <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-soft">
-                {group.label}
+                {t(group.i18nKey)}
               </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
@@ -73,7 +75,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                       )}
                     >
                       <Icon className={cn("h-4.5 w-4.5 h-[18px] w-[18px]", active ? "text-primary-700" : "text-ink-soft")} />
-                      {item.label}
+                      {t(item.i18nKey)}
                     </Link>
                   );
                 })}

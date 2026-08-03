@@ -21,4 +21,9 @@ public class Lead : BaseEntity
     public int Score { get; set; }
     public DateTime ConvertedAt { get; set; }
     public string? LostReason { get; set; }
+
+    public Guid? ClientId { get; set; }
+    public Client? Client { get; set; }
+    public Guid? CaseId { get; set; }
+    public Case? Case { get; set; }
 }

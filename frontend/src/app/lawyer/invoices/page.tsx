@@ -1,35 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Field, Textarea } from "@/components/ui/field";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState, Loading } from "@/components/ui/loading";
 import { useInvoices } from "@/lib/hooks";
-import { invoiceService } from "@/lib/services";
+import { invoiceService, clientService, caseService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { Receipt, Plus, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
+import { Receipt, Plus, CheckCircle2, Search, User, FolderOpen } from "lucide-react";
+import type { Client, Case } from "@/types/models";
 
 const statuses = ["", "Draft", "Pending", "Paid", "Overdue", "Cancelled"];
 
 export default function InvoicesPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [status, setStatus] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const { data: invoices, isLoading } = useInvoices(status || undefined);
 
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["invoices"] });
+
   const createMutation = useMutation({
     mutationFn: (input: Record<string, unknown>) => invoiceService.create(input),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["invoices"] });
+      invalidate();
       setCreateOpen(false);
-      toast.success("Invoice created");
+      toast.success(t("common.success"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -37,8 +43,8 @@ export default function InvoicesPage() {
   const markPaid = useMutation({
     mutationFn: (id: string) => invoiceService.markPaid(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Invoice marked as paid");
+      invalidate();
+      toast.success(t("invoices.paid"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -49,42 +55,44 @@ export default function InvoicesPage() {
   return (
     <div>
       <PageHeader
-        title="Invoices"
-        subtitle="Bill clients for your firm's legal services."
+        title={t("invoices.title")}
+        subtitle={t("invoices.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Invoice
+            <Plus className="h-4 w-4" /> {t("invoices.addInvoice")}
           </Button>
         }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="p-5">
-          <p className="text-sm text-ink-muted">Total Invoiced</p>
-          <p className="mt-1 text-2xl font-bold text-ink">
-            {formatCurrency((invoices ?? []).reduce((s, i) => s + i.amount, 0))}
-          </p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-ink-muted">Outstanding</p>
-          <p className="mt-1 text-2xl font-bold text-gold-700">{formatCurrency(totalPending)}</p>
-          <p className="mt-1 text-xs text-ink-muted">{pending.length} unpaid invoices</p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-sm text-ink-muted">Paid Invoices</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600">
-            {(invoices ?? []).filter((i) => i.status === "Paid").length}
-          </p>
-        </Card>
+        <StatCard
+          label={`${t("common.total")} (${t("invoices.invoice")})`}
+          value={formatCurrency((invoices ?? []).reduce((s, i) => s + i.amount, 0))}
+          icon={<Receipt className="h-5 w-5" />}
+          accent="primary"
+        />
+        <StatCard
+          label={t("common.status")}
+          value={formatCurrency(totalPending)}
+          icon={<Receipt className="h-5 w-5" />}
+          accent="gold"
+          trend={`${pending.length} ${t("invoices.unpaid")}`}
+        />
+        <StatCard
+          label={t("invoices.paid")}
+          value={(invoices ?? []).filter((i) => i.status === "Paid").length}
+          icon={<CheckCircle2 className="h-5 w-5" />}
+          accent="green"
+        />
       </div>
 
-      <Card className="mb-4 p-4">
+      <div className="mb-4">
         <Select className="sm:w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
           {statuses.map((s) => (
-            <option key={s} value={s}>{s === "" ? "All statuses" : s}</option>
+            <option key={s} value={s}>{s === "" ? t("common.all") : s}</option>
           ))}
         </Select>
-      </Card>
+      </div>
 
       <Card>
         {isLoading ? (
@@ -93,12 +101,12 @@ export default function InvoicesPage() {
           <table className="table-base">
             <thead>
               <tr>
-                <th>Invoice</th>
-                <th>Client</th>
-                <th>Case</th>
-                <th>Amount</th>
-                <th>Due Date</th>
-                <th>Status</th>
+                <th>{t("invoices.invoice")}</th>
+                <th>{t("invoices.client")}</th>
+                <th>{t("invoices.case")}</th>
+                <th>{t("invoices.amount")}</th>
+                <th>{t("invoices.dueDate")}</th>
+                <th>{t("common.status")}</th>
                 <th />
               </tr>
             </thead>
@@ -114,7 +122,7 @@ export default function InvoicesPage() {
                   <td>
                     {i.status !== "Paid" ? (
                       <Button size="sm" variant="subtle" onClick={() => markPaid.mutate(i.id)}>
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Mark Paid
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {t("invoices.markPaid")}
                       </Button>
                     ) : null}
                   </td>
@@ -125,9 +133,13 @@ export default function InvoicesPage() {
         ) : (
           <EmptyState
             icon={<Receipt className="h-10 w-10" />}
-            title="No invoices"
-            description="Create an invoice to bill your clients."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Invoice</Button>}
+            title={t("invoices.noInvoices")}
+            description={t("invoices.noInvoicesDesc")}
+            action={
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4" /> {t("invoices.addInvoice")}
+              </Button>
+            }
           />
         )}
       </Card>
@@ -146,6 +158,7 @@ function CreateInvoiceDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     clientId: "",
     caseId: "",
@@ -153,14 +166,31 @@ function CreateInvoiceDialog({
     dueDate: "",
     description: ""
   });
+  const [clientQuery, setClientQuery] = useState("");
+  const [caseQuery, setCaseQuery] = useState("");
+
+  const { data: clients } = useQuery({
+    queryKey: ["clients", "search", clientQuery],
+    queryFn: () => clientService.search(clientQuery),
+    enabled: open && clientQuery.trim().length >= 2
+  });
+
+  const { data: cases } = useQuery({
+    queryKey: ["cases", "search", caseQuery],
+    queryFn: () => caseService.search(caseQuery.trim()),
+    enabled: open && caseQuery.trim().length >= 2
+  });
+
+  const selectedClient = clients?.find((c) => c.id === form.clientId);
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Invoice"
+      title={t("invoices.addInvoice")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             disabled={!form.clientId || !form.amount}
             onClick={() =>
@@ -174,25 +204,99 @@ function CreateInvoiceDialog({
               })
             }
           >
-            Create Invoice
+            {t("common.create")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Client ID" required className="sm:col-span-2">
-          <Input value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} placeholder="Paste the client GUID" />
+        <Field label={t("invoices.client")} required className="sm:col-span-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+            <Input
+              value={clientQuery}
+              onChange={(e) => setClientQuery(e.target.value)}
+              placeholder={`${t("common.search")} ${t("invoices.client")}…`}
+              className="pl-9"
+            />
+          </div>
+          {form.clientId && selectedClient ? (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-primary-700">
+              <User className="h-4 w-4" /> {selectedClient.name}
+            </p>
+          ) : null}
+          {clientQuery.trim().length >= 2 && !selectedClient ? (
+            <ul className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-line bg-card">
+              {clients && clients.length > 0 ? (
+                clients.slice(0, 20).map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForm({ ...form, clientId: c.id });
+                        setClientQuery(c.name);
+                      }}
+                      className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm text-ink hover:bg-primary-50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-ink-muted" /> {c.name}
+                      </span>
+                      <span className="text-xs text-ink-muted">{c.phone || c.email}</span>
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="px-3 py-2 text-sm text-ink-muted">{t("common.noResults")}</li>
+              )}
+            </ul>
+          ) : null}
         </Field>
-        <Field label="Case ID">
-          <Input value={form.caseId} onChange={(e) => setForm({ ...form, caseId: e.target.value })} placeholder="Optional" />
+
+        <Field label={t("invoices.case")} className="sm:col-span-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+            <Input
+              value={caseQuery}
+              onChange={(e) => setCaseQuery(e.target.value)}
+              placeholder={`${t("common.search")} ${t("invoices.case")} (${t("common.optional")})…`}
+              className="pl-9"
+            />
+          </div>
+          {caseQuery.trim().length >= 2 ? (
+            <ul className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-line bg-card">
+              {cases && cases.length > 0 ? (
+                cases.slice(0, 20).map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForm({ ...form, caseId: c.id });
+                        setCaseQuery(c.title);
+                      }}
+                      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ink hover:bg-primary-50"
+                    >
+                      <FolderOpen className="h-4 w-4 shrink-0 text-ink-muted" />
+                      <span className="min-w-0">
+                        <span className="block truncate">{c.title}</span>
+                        <span className="block text-xs text-ink-muted">{c.caseNumber}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="px-3 py-2 text-sm text-ink-muted">{t("common.noResults")}</li>
+              )}
+            </ul>
+          ) : null}
         </Field>
-        <Field label="Amount (BDT)" required>
+
+        <Field label={`${t("invoices.amount")} (BDT)`} required>
           <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
         </Field>
-        <Field label="Due Date">
+        <Field label={t("invoices.dueDate")}>
           <Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
         </Field>
-        <Field label="Description" className="sm:col-span-2">
+        <Field label={t("invoices.description")} className="sm:col-span-2">
           <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
       </div>

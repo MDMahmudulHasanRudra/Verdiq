@@ -57,7 +57,8 @@ public class LeadsController : BaseController
     public async Task<ActionResult<ApiResponse<LeadResponseDto>>> UpdateStage(Guid id, [FromBody] UpdateLeadStageDto dto)
     {
         var chamberId = GetChamberId();
-        var lead = await _leadService.UpdateStageAsync(id, dto, chamberId);
+        var userId = GetUserId();
+        var lead = await _leadService.UpdateStageAsync(id, dto, chamberId, userId);
         if (lead == null) return NotFound(ApiResponse<LeadResponseDto>.Fail("Lead not found"));
         return Ok(ApiResponse<LeadResponseDto>.Ok(lead));
     }

@@ -6,16 +6,19 @@ import { useRouter } from "next/navigation";
 import { Bell, Menu, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Dropdown, DropdownItem } from "@/components/ui/dropdown";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { performLogout } from "@/lib/auth-actions";
 import { apiGet } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 
 export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const { success } = useToast();
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
 
   const { data: unread = 0 } = useQuery({
@@ -39,7 +42,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       <button
         onClick={onOpenSidebar}
         className="cursor-pointer rounded-lg p-2 text-ink-muted hover:bg-slate-100 lg:hidden"
-        aria-label="Open menu"
+        aria-label={t("header.openMenu")}
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -49,16 +52,17 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search cases, clients, documents…"
+          placeholder={t("nav.searchPlaceholder")}
           className="h-10 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm text-ink placeholder:text-ink-soft focus:border-primary-600 focus:outline-none"
         />
       </form>
 
       <div className="ml-auto flex items-center gap-1.5">
+        <LanguageSwitcher />
         <Link
           href="/lawyer/notifications"
           className="relative cursor-pointer rounded-lg p-2 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
-          aria-label="Notifications"
+          aria-label={t("header.notifications")}
         >
           <Bell className="h-5 w-5" />
           {unread > 0 ? (
@@ -95,7 +99,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                   router.push("/lawyer/settings");
                 }}
               >
-                Profile settings
+                {t("nav.profileSettings")}
               </DropdownItem>
               {user?.role === "Owner" ? (
                 <DropdownItem
@@ -104,7 +108,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                     router.push("/admin");
                   }}
                 >
-                  Admin panel
+                  {t("nav.adminPanel")}
                 </DropdownItem>
               ) : null}
               <DropdownItem
@@ -113,7 +117,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                   router.push("/lawyer/configuration");
                 }}
               >
-                Chamber configuration
+                {t("nav.chamberConfig")}
               </DropdownItem>
               <DropdownItem
                 danger
@@ -122,7 +126,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                   onLogout();
                 }}
               >
-                Sign out
+                {t("nav.signOut")}
               </DropdownItem>
             </>
           )}

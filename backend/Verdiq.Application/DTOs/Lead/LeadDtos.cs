@@ -56,6 +56,10 @@ public class LeadResponseDto
     public DateTime CreatedAt { get; set; }
     public DateTime? ConvertedAt { get; set; }
     public string? LostReason { get; set; }
+    public Guid? ClientId { get; set; }
+    public string? ClientName { get; set; }
+    public Guid? CaseId { get; set; }
+    public string? CaseTitle { get; set; }
 }
 
 public class LeadAnalyticsDto

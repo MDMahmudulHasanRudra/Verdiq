@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { EB_Garamond, Lato } from "next/font/google";
+import { EB_Garamond, Hind_Siliguri, Lato } from "next/font/google";
 import { Providers } from "@/lib/providers";
+import { LanguageProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -18,6 +19,13 @@ const lato = Lato({
   display: "swap"
 });
 
+const hindSiliguri = Hind_Siliguri({
+  subsets: ["latin", "bengali"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-bengali",
+  display: "swap"
+});
+
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Verdiq";
 
 export const metadata: Metadata = {
@@ -31,9 +39,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${garamond.variable} ${lato.variable} antialiased`}>
+      <body className={`${garamond.variable} ${lato.variable} ${hindSiliguri.variable} antialiased`}>
         <Providers>
-          <ToastProvider>{children}</ToastProvider>
+          <LanguageProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </LanguageProvider>
         </Providers>
       </body>
     </html>

@@ -11,6 +11,17 @@ public class CreateLegalDocumentDto
     public int? Year { get; set; }
 }
 
+public class UpdateLegalDocumentDto
+{
+    public string? Title { get; set; }
+    public string? Category { get; set; }
+    public string? Content { get; set; }
+    public string? Citation { get; set; }
+    public string? JudgeName { get; set; }
+    public string? Keywords { get; set; }
+    public int? Year { get; set; }
+}
+
 public class LegalDocumentResponseDto
 {
     public Guid Id { get; set; }

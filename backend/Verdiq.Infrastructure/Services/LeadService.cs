@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Verdiq.Application.DTOs.Case;
+using Verdiq.Application.DTOs.Client;
 using Verdiq.Application.DTOs.Lead;
 using Verdiq.Application.Interfaces;
 using Verdiq.Domain.Entities;
@@ -9,10 +11,14 @@ namespace Verdiq.Infrastructure.Services;
 public class LeadService : ILeadService
 {
     private readonly AppDbContext _context;
+    private readonly IClientService _clientService;
+    private readonly ICaseService _caseService;
 
-    public LeadService(AppDbContext context)
+    public LeadService(AppDbContext context, IClientService clientService, ICaseService caseService)
     {
         _context = context;
+        _clientService = clientService;
+        _caseService = caseService;
     }
 
     public async Task<IEnumerable<LeadResponseDto>> GetAllAsync(Guid chamberId)
@@ -86,7 +92,7 @@ public class LeadService : ILeadService
         return MapToDto(lead);
     }
 
-    public async Task<LeadResponseDto?> UpdateStageAsync(Guid id, UpdateLeadStageDto dto, Guid chamberId)
+    public async Task<LeadResponseDto?> UpdateStageAsync(Guid id, UpdateLeadStageDto dto, Guid chamberId, Guid userId)
     {
         var lead = await _context.Set<Lead>()
             .Include(l => l.AssignedLawyer)
@@ -100,6 +106,37 @@ public class LeadService : ILeadService
         if (dto.Stage == "ConvertedToClient")
         {
             lead.ConvertedAt = DateTime.UtcNow;
+
+            // One-time conversion: create a Client and a Case linked to this lead.
+            if (lead.ClientId == null)
+            {
+                var clientResult = await _clientService.CreateAsync(new CreateClientDto
+                {
+                    Name = lead.Name,
+                    Phone = lead.Phone,
+                    Email = lead.Email,
+                    CompanyName = lead.CompanyName,
+                    Notes = lead.Notes,
+                    ClientType = "Individual"
+                }, chamberId);
+
+                if (clientResult.Success && clientResult.Data != null)
+                {
+                    lead.ClientId = clientResult.Data.Id;
+
+                    var caseResult = await _caseService.CreateAsync(new CreateCaseDto
+                    {
+                        Title = $"{lead.Name} - {lead.CaseType ?? "Legal matter"}",
+                        CaseType = lead.CaseType ?? "General",
+                        Description = lead.Notes,
+                        AssignedLawyerId = lead.AssignedLawyerId,
+                        ClientIds = new List<Guid> { clientResult.Data.Id }
+                    }, lead.AssignedLawyerId ?? userId, chamberId);
+
+                    if (caseResult.Success && caseResult.Data != null)
+                        lead.CaseId = caseResult.Data.Id;
+                }
+            }
         }
 
         if (dto.Stage == "LostLead" && !string.IsNullOrEmpty(dto.LostReason))
@@ -108,7 +145,14 @@ public class LeadService : ILeadService
         }
 
         await _context.SaveChangesAsync();
-        return MapToDto(lead);
+
+        var result = await _context.Set<Lead>()
+            .Include(l => l.AssignedLawyer)
+            .Include(l => l.Client)
+            .Include(l => l.Case)
+            .FirstOrDefaultAsync(l => l.Id == id && l.ChamberId == chamberId && !l.IsDeleted);
+
+        return result == null ? null : MapToDto(result);
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid chamberId)
@@ -196,6 +240,10 @@ public class LeadService : ILeadService
             CreatedAt = l.CreatedAt,
             ConvertedAt = l.ConvertedAt == default ? null : l.ConvertedAt,
             LostReason = l.LostReason,
+            ClientId = l.ClientId,
+            ClientName = l.Client?.Name,
+            CaseId = l.CaseId,
+            CaseTitle = l.Case?.Title,
         };
     }
 

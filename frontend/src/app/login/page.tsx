@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/utils";
 import { Field, Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { useLanguage } from "@/lib/i18n";
 import { Suspense } from "react";
 
 function LoginForm() {
@@ -16,6 +18,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || undefined;
   const { error: toastError } = useToast();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("admin@verdiq.com");
   const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
@@ -48,11 +51,14 @@ function LoginForm() {
             <Scale className="h-8 w-8 text-gold-400" />
           </div>
           <h1 className="mt-4 font-display text-3xl font-bold text-ink">Verdiq</h1>
-          <p className="mt-1 text-sm text-ink-muted">Law Firm & Chamber Management System</p>
+          <p className="mt-1 text-sm text-ink-muted">{t("login.tagline")}</p>
+          <div className="mt-3">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <form onSubmit={onSubmit} className="card space-y-4 p-6">
-          <Field label="Email" required>
+          <Field label={t("login.email")} required>
             <Input
               type="email"
               value={email}
@@ -61,7 +67,7 @@ function LoginForm() {
               autoComplete="email"
             />
           </Field>
-          <Field label="Password" required>
+          <Field label={t("login.password")} required>
             <Input
               type="password"
               value={password}
@@ -72,14 +78,14 @@ function LoginForm() {
           </Field>
           <div className="flex items-center justify-between text-sm">
             <Link href="/register" className="font-medium text-primary-700 hover:underline">
-              Create chamber account
+              {t("login.createChamber")}
             </Link>
             <Link href="/super-admin/login" className="text-ink-muted hover:text-ink">
-              Super Admin
+              {t("login.superAdmin")}
             </Link>
           </div>
           <Button type="submit" size="lg" className="w-full" loading={loading}>
-            Sign in
+            {t("login.signIn")}
           </Button>
         </form>
 

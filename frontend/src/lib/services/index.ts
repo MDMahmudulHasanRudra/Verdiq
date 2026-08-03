@@ -1,4 +1,4 @@
-import { apiGet, apiGetFull, apiPost, apiPut, apiDelete, apiDownload } from "@/lib/api";
+import { apiGet, apiGetFull, apiPost, apiPut, apiDelete, apiPatch, apiDownload } from "@/lib/api";
 import type { Client, CreateClientInput } from "@/types/models";
 import type { PagedResponse } from "@/types/api";
 
@@ -89,6 +89,8 @@ export const documentService = {
     );
   },
   remove: (id: string) => apiDelete<object>(`/documents/${id}`),
+  update: (id: string, input: Record<string, unknown>) =>
+    apiPatch<import("@/types/models").Document>(`/documents/${id}`, input),
   get: (id: string) => apiGet<import("@/types/models").Document>(`/documents/${id}`)
 };
 
@@ -178,9 +180,13 @@ export const legalDocumentService = {
     });
     return apiGetFull<PagedResponse<import("@/types/models").LegalDocument>>(`/legal-documents?${qs.toString()}`);
   },
+  create: (input: Record<string, unknown>) => apiPost<import("@/types/models").LegalDocument>("/legal-documents", input),
   search: (q: string) => apiGet<import("@/types/models").LegalDocument[]>(`/legal-documents/search?q=${encodeURIComponent(q)}`),
   byCategory: (category: string) =>
-    apiGet<import("@/types/models").LegalDocument[]>(`/legal-documents/by-category/${encodeURIComponent(category)}`)
+    apiGet<import("@/types/models").LegalDocument[]>(`/legal-documents/by-category/${encodeURIComponent(category)}`),
+  update: (id: string, input: Record<string, unknown>) =>
+    apiPut<import("@/types/models").LegalDocument>(`/legal-documents/${id}`, input),
+  remove: (id: string) => apiDelete<string>(`/legal-documents/${id}`)
 };
 
 export const legalSectionService = {
@@ -366,6 +372,8 @@ export const bailService = {
 export const leadService = {
   list: () => apiGet<import("@/types/models").Lead[]>("/leads"),
   create: (input: Record<string, unknown>) => apiPost<import("@/types/models").Lead>("/leads", input),
+  update: (id: string, input: Record<string, unknown>) =>
+    apiPut<import("@/types/models").Lead>(`/leads/${id}`, input),
   updateStage: (id: string, stage: string, lostReason?: string) =>
     apiPost<import("@/types/models").Lead>(`/leads/${id}/stage`, { stage, lostReason }),
   analytics: () => apiGet<Record<string, unknown>>("/leads/analytics"),
