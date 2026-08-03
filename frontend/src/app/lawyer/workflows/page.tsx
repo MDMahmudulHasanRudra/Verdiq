@@ -12,12 +12,14 @@ import { EmptyState, Loading } from "@/components/ui/loading";
 import { caseWorkflows } from "@/lib/services";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Workflow, Plus, Pencil, Trash2, Power, GripVertical, Clock } from "lucide-react";
 import type { Workflow as WorkflowModel, CreateWorkflowInput, CreateWorkflowStepInput } from "@/types/models";
 
 export default function WorkflowsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<WorkflowModel | null>(null);
   const [deleting, setDeleting] = useState<WorkflowModel | null>(null);
@@ -71,11 +73,11 @@ export default function WorkflowsPage() {
   return (
     <div>
       <PageHeader
-        title="Workflows"
-        subtitle="Create repeatable case processes. Link a workflow to a case and steps unlock one after another."
+        title={t("workflows.title")}
+        subtitle={t("workflows.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Workflow
+            <Plus className="h-4 w-4" /> {t("workflows.addWorkflow")}
           </Button>
         }
       />
@@ -91,7 +93,7 @@ export default function WorkflowsPage() {
                   <span className="flex items-center gap-2">
                     <Workflow className="h-4 w-4 text-primary-700" />
                     {w.name}
-                    {!w.isActive ? <Badge tone="slate">Inactive</Badge> : null}
+                    {!w.isActive ? <Badge tone="slate">{t("workflows.inactive")}</Badge> : null}
                   </span>
                 }
                 description={
@@ -153,16 +155,16 @@ export default function WorkflowsPage() {
         <Card>
           <EmptyState
             icon={<Workflow className="h-10 w-10" />}
-            title="No workflows yet"
-            description="Create a workflow (e.g. a bail hearing process) and link it to cases. Steps unlock in sequence as each one is completed."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Workflow</Button>}
+            title={t("workflows.noWorkflows")}
+            description={t("workflows.noWorkflowsDesc")}
+            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> {t("workflows.addWorkflow")}</Button>}
           />
         </Card>
       )}
 
       <WorkflowDialog
         open={createOpen}
-        title="New Workflow"
+        title={t("workflows.addWorkflow")}
         onClose={() => setCreateOpen(false)}
         onSubmit={(input) => createMutation.mutate(input)}
       />
@@ -217,6 +219,7 @@ function WorkflowDialog({
   onSubmit: (input: CreateWorkflowInput) => void;
   initial?: WorkflowModel;
 }) {
+  const { t } = useLanguage();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [steps, setSteps] = useState<DraftStep[]>(
@@ -279,10 +282,10 @@ function WorkflowDialog({
     >
       <div className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Workflow name" required>
+          <Field label={t("workflows.stepName")} required>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Bail hearing process" />
           </Field>
-          <Field label="Description">
+          <Field label={t("workflows.stepType")}>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What does this process cover?" />
           </Field>
         </div>
@@ -290,7 +293,7 @@ function WorkflowDialog({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-medium text-ink">
-              Steps <span className="ml-1 text-xs font-normal text-ink-muted">({steps.length})</span>
+              {t("workflows.steps")} <span className="ml-1 text-xs font-normal text-ink-muted">({steps.length})</span>
             </p>
             <Button size="sm" variant="outline" onClick={addStep}>
               <Plus className="h-3.5 w-3.5" /> Add step
@@ -308,7 +311,7 @@ function WorkflowDialog({
                     </span>
                   </div>
                   <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
-                    <Field label="Step title" required className="sm:col-span-2">
+                    <Field label={t("workflows.stepName")} required className="sm:col-span-2">
                       <Input value={s.title} onChange={(e) => updateStep(s.key, { title: e.target.value })} placeholder="e.g. File bail petition" />
                     </Field>
                     <Field label="Due in (days)">
@@ -320,7 +323,7 @@ function WorkflowDialog({
                         placeholder="e.g. 7"
                       />
                     </Field>
-                    <Field label="Description" className="sm:col-span-3">
+                    <Field label={t("workflows.stepType")} className="sm:col-span-3">
                       <Textarea rows={2} value={s.description} onChange={(e) => updateStep(s.key, { description: e.target.value })} />
                     </Field>
                   </div>

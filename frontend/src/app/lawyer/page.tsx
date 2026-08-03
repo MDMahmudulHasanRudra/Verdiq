@@ -16,6 +16,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/loading";
 import { formatDate, timeAgo, initials, cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import { FolderOpen, Users, CalendarClock, Receipt, TrendingUp, ArrowRight, FileText } from "lucide-react";
 
 const activityIcon = {
@@ -25,6 +26,7 @@ const activityIcon = {
 } as const;
 
 export default function LawyerDashboardPage() {
+  const { t } = useLanguage();
   const user = useAuthStore((s) => s.user);
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: chart } = useCaseChart(12);
@@ -50,10 +52,10 @@ export default function LawyerDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">
-          Welcome back, {user?.fullName?.split(" ")[0] ?? "Counsel"}
+          {t("dashboard.welcomeBack")}, {user?.fullName?.split(" ")[0] ?? t("dashboard.counsel")}
         </h1>
         <p className="mt-1 text-sm text-ink-muted">
-          {formatDate(new Date().toISOString(), "dddd, D MMMM YYYY")} — here&apos;s what&apos;s happening at the firm.
+          {formatDate(new Date().toISOString(), "dddd, D MMMM YYYY")} — {t("dashboard.subtitle")}.
         </p>
       </div>
 

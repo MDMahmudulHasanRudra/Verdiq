@@ -12,6 +12,7 @@ import { Table, Pagination } from "@/components/ui/table";
 import { Dialog } from "@/components/ui/dialog";
 import { EmptyState, Loading } from "@/components/ui/loading";
 import { useCases, useClients } from "@/lib/hooks";
+import { useLanguage, interpolate } from "@/lib/i18n";
 import { caseService } from "@/lib/services";
 import { getErrorMessage, formatDate, cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -85,6 +86,7 @@ export default function CasesPage() {
   const preClient = searchParams.get("client") ?? "";
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -140,7 +142,7 @@ export default function CasesPage() {
     onSuccess: (data) => {
       invalidate();
       setCreateOpen(false);
-      toast.success("Case created");
+      toast.success(t("cases.caseCreated"));
       router.push(`/lawyer/cases/${data.id}`);
     },
     onError: (e) => toast.error(getErrorMessage(e))
@@ -151,7 +153,7 @@ export default function CasesPage() {
     onSuccess: () => {
       invalidate();
       setEditing(null);
-      toast.success("Case updated");
+      toast.success(t("cases.caseUpdated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -164,7 +166,7 @@ export default function CasesPage() {
       setDeleting(null);
       setDeletePassword("");
       setPage(1);
-      toast.success("Case deleted");
+      toast.success(t("cases.caseDeleted"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -179,11 +181,11 @@ export default function CasesPage() {
   return (
     <div>
       <PageHeader
-        title="Cases"
-        subtitle="Manage all firm cases across courts and practice areas."
+        title={t("nav.cases")}
+        subtitle={t("cases.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Case
+            <Plus className="h-4 w-4" /> {t("cases.newCase")}
           </Button>
         }
       />
@@ -295,13 +297,13 @@ export default function CasesPage() {
               <Table>
                 <thead>
                   <tr>
-                    <th>Case Number</th>
-                    <th>Title</th>
-                    <th>Court</th>
-                    <th>Assigned</th>
-                    <th>Next Hearing</th>
-                    <th>Status</th>
-                    <th>Priority</th>
+                    <th>{t("cases.caseNumber")}</th>
+                    <th>{t("cases.title")}</th>
+                    <th>{t("cases.court")}</th>
+                    <th>{t("cases.assigned")}</th>
+                    <th>{t("cases.nextHearing")}</th>
+                    <th>{t("cases.status")}</th>
+                    <th>{t("cases.priority")}</th>
                     <th className="text-right">Actions</th>
                   </tr>
                 </thead>

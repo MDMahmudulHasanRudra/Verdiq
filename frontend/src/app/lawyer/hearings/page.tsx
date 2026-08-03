@@ -15,6 +15,7 @@ import { useCases } from "@/lib/hooks";
 import { hearingService } from "@/lib/services";
 import { getErrorMessage, formatDateTime, cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { CalendarClock, Plus, PenLine, Trash2, AlertTriangle } from "lucide-react";
 import type { Hearing } from "@/types/models";
 
@@ -63,6 +64,7 @@ export default function HearingsPage() {
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
 
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<Tab>("upcoming");
@@ -133,11 +135,11 @@ export default function HearingsPage() {
   return (
     <div>
       <PageHeader
-        title="Hearings"
-        subtitle="Track upcoming and past court appearances."
+        title={t("hearings.title")}
+        subtitle={t("hearings.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Schedule Hearing
+            <Plus className="h-4 w-4" /> {t("hearings.schedule")}
           </Button>
         }
       />

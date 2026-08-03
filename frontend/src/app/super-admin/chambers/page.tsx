@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLanguage, interpolate } from "@/lib/i18n";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Field, Textarea } from "@/components/ui/field";
@@ -16,6 +17,7 @@ import { Building2, Plus } from "lucide-react";
 import type { SuperAdminChamber } from "@/types/super-admin";
 
 export default function SuperAdminChambersPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -32,7 +34,7 @@ export default function SuperAdminChambersPage() {
       qc.invalidateQueries({ queryKey: ["super-admin", "chambers"] });
       qc.invalidateQueries({ queryKey: ["super-admin", "dashboard"] });
       setCreateOpen(false);
-      toast.success("Chamber created");
+      toast.success(t("superAdmin.chambers.chamberCreated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -41,7 +43,7 @@ export default function SuperAdminChambersPage() {
     mutationFn: (v: { id: string; plan: string }) => superAdminService.updateChamberPlan(v.id, v.plan),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "chambers"] });
-      toast.success("Plan updated");
+      toast.success(t("superAdmin.chambers.planUpdated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -50,7 +52,7 @@ export default function SuperAdminChambersPage() {
     mutationFn: (id: string) => superAdminService.deleteChamber(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "chambers"] });
-      toast.success("Chamber deleted");
+      toast.success(t("superAdmin.chambers.chamberDeleted"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -59,11 +61,11 @@ export default function SuperAdminChambersPage() {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-white">Chambers</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage every law chamber on the platform.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t("superAdmin.chambers.title")}</h1>
+          <p className="mt-1 text-sm text-slate-400">{t("superAdmin.chambers.subtitle")}</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" /> Create Chamber
+          <Plus className="h-4 w-4" /> {t("superAdmin.chambers.createChamber")}
         </Button>
       </div>
 
@@ -74,14 +76,14 @@ export default function SuperAdminChambersPage() {
           <Table className="dark-table">
             <thead>
               <tr>
-                <th>Chamber</th>
-                <th>Plan</th>
-                <th>Users</th>
-                <th>Cases</th>
-                <th>Revenue</th>
-                <th>Created</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <th>{t("superAdmin.chambers.chamber")}</th>
+                <th>{t("superAdmin.chambers.plan")}</th>
+                <th>{t("superAdmin.chambers.users")}</th>
+                <th>{t("superAdmin.chambers.cases")}</th>
+                <th>{t("superAdmin.chambers.revenue")}</th>
+                <th>{t("superAdmin.chambers.created")}</th>
+                <th>{t("common.status")}</th>
+                <th className="text-right">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -97,9 +99,9 @@ export default function SuperAdminChambersPage() {
                       value={c.subscriptionPlan}
                       onChange={(e) => planMutation.mutate({ id: c.id, plan: e.target.value })}
                     >
-                      <option value="Free">Free</option>
-                      <option value="Pro">Pro</option>
-                      <option value="Chamber">Chamber</option>
+                      <option value="Free">{t("superAdmin.plans.free")}</option>
+                      <option value="Pro">{t("superAdmin.plans.pro")}</option>
+                      <option value="Chamber">{t("superAdmin.plans.chamber")}</option>
                     </Select>
                   </td>
                   <td className="text-slate-300">{c.usersCount}</td>
@@ -113,10 +115,10 @@ export default function SuperAdminChambersPage() {
                       size="sm"
                       className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
                       onClick={() => {
-                        if (confirm(`Delete ${c.name}? This cannot be undone.`)) deleteMutation.mutate(c.id);
+                        if (confirm(interpolate(t("superAdmin.chambers.deleteConfirm"), { name: c.name }))) deleteMutation.mutate(c.id);
                       }}
                     >
-                      Delete
+                      {t("common.delete")}
                     </Button>
                   </td>
                 </tr>
@@ -124,7 +126,7 @@ export default function SuperAdminChambersPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState icon={<Building2 className="h-10 w-10" />} title="No chambers" description="Create the first chamber to get started." />
+          <EmptyState icon={<Building2 className="h-10 w-10" />} title={t("superAdmin.chambers.noChambers")} description={t("superAdmin.chambers.noChambersDesc")} />
         )}
       </Card>
 
@@ -142,6 +144,7 @@ function CreateChamberDialog({
   onClose: () => void;
   onSubmit: (input: { name: string; address?: string; phone?: string; plan?: string }) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ name: "", address: "", phone: "", plan: "Pro" });
   const isFormValid = !!form.name;
 
@@ -149,32 +152,32 @@ function CreateChamberDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Create Chamber"
-      description="Register a new law chamber."
+      title={t("superAdmin.chambers.createChamber")}
+      description={t("superAdmin.chambers.createDesc")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button disabled={!isFormValid} onClick={() => onSubmit({ ...form, address: form.address || undefined, phone: form.phone || undefined })}>
-            Create Chamber
+            {t("superAdmin.chambers.createChamber")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Chamber Name" required className="sm:col-span-2">
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Rahman & Associates" />
+        <Field label={t("superAdmin.chambers.chamberName")} required className="sm:col-span-2">
+          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("superAdmin.chambers.chamberNamePlaceholder")} />
         </Field>
-        <Field label="Address" className="sm:col-span-2">
+        <Field label={t("superAdmin.chambers.address")} className="sm:col-span-2">
           <Textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </Field>
-        <Field label="Phone">
+        <Field label={t("common.phone")}>
           <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         </Field>
-        <Field label="Plan">
+        <Field label={t("superAdmin.chambers.plan")}>
           <Select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
-            <option value="Free">Free</option>
-            <option value="Pro">Pro</option>
-            <option value="Chamber">Chamber</option>
+            <option value="Free">{t("superAdmin.plans.free")}</option>
+            <option value="Pro">{t("superAdmin.plans.pro")}</option>
+            <option value="Chamber">{t("superAdmin.plans.chamber")}</option>
           </Select>
         </Field>
       </div>

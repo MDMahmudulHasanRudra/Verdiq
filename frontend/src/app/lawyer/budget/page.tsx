@@ -12,9 +12,11 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { budgetService } from "@/lib/services";
 import { getErrorMessage, formatCurrency } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { PiggyBank, Plus } from "lucide-react";
 
 export default function BudgetPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [year, setYear] = useState(new Date().getFullYear());
@@ -30,7 +32,7 @@ export default function BudgetPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budget"] });
       setCreateOpen(false);
-      toast.success("Budget created");
+      toast.success(t("budget.budgetCreated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -39,7 +41,7 @@ export default function BudgetPage() {
     mutationFn: (id: string) => budgetService.approve(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["budget"] });
-      toast.success("Budget approved");
+      toast.success(t("budget.budgetApproved"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -47,11 +49,11 @@ export default function BudgetPage() {
   return (
     <div>
       <PageHeader
-        title="Budget"
-        subtitle="Plan and monitor departmental and firm-wide spending."
+        title={t("budget.title")}
+        subtitle={t("budget.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Budget
+            <Plus className="h-4 w-4" /> {t("budget.newBudget")}
           </Button>
         }
       />
@@ -81,11 +83,11 @@ export default function BudgetPage() {
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-muted">Spent</span>
+                    <span className="text-ink-muted">{t("budget.spent")}</span>
                     <span className="font-medium text-ink">{formatCurrency(b.totalSpent)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-muted">Allocated</span>
+                    <span className="text-ink-muted">{t("budget.allocated")}</span>
                     <span className="font-medium text-ink">{formatCurrency(b.totalAmount)}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -95,13 +97,13 @@ export default function BudgetPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-ink-muted">{pct.toFixed(0)}% utilized</span>
-                    <span className="text-xs font-medium text-ink-muted">{formatCurrency(b.remaining)} remaining</span>
+                    <span className="text-xs text-ink-muted">{pct.toFixed(0)}% {t("budget.utilized")}</span>
+                    <span className="text-xs font-medium text-ink-muted">{formatCurrency(b.remaining)} {t("budget.remaining")}</span>
                   </div>
                 </div>
                 {b.status !== "Approved" ? (
                   <Button size="sm" variant="subtle" className="mt-4 w-full" onClick={() => approve.mutate(b.id)}>
-                    Approve
+                    {t("budget.approve")}
                   </Button>
                 ) : null}
               </Card>
@@ -112,9 +114,9 @@ export default function BudgetPage() {
         <Card>
           <EmptyState
             icon={<PiggyBank className="h-10 w-10" />}
-            title="No budgets"
-            description="Create a budget to track spending against targets."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Budget</Button>}
+            title={t("budget.noBudgets")}
+            description={t("budget.noBudgetsDesc")}
+            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> {t("budget.newBudget")}</Button>}
           />
         </Card>
       )}
@@ -133,6 +135,7 @@ function CreateBudgetDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     fiscalYear: String(new Date().getFullYear()),
@@ -143,10 +146,10 @@ function CreateBudgetDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Budget"
+      title={t("budget.newBudget")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             disabled={!form.name || !form.totalAmount}
             onClick={() =>
@@ -158,26 +161,26 @@ function CreateBudgetDialog({
               })
             }
           >
-            Create Budget
+            {t("budget.createBudget")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Budget Name" required>
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Operations 2026" />
+        <Field label={t("budget.budgetName")} required>
+          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("budget.budgetNamePlaceholder")} />
         </Field>
-        <Field label="Fiscal Year">
+        <Field label={t("budget.fiscalYear")}>
           <Select value={form.fiscalYear} onChange={(e) => setForm({ ...form, fiscalYear: e.target.value })}>
             {[2024, 2025, 2026, 2027].map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
           </Select>
         </Field>
-        <Field label="Total Amount (BDT)" required className="sm:col-span-2">
+        <Field label={t("budget.totalAmountBdt")} required className="sm:col-span-2">
           <Input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} />
         </Field>
-        <Field label="Description" className="sm:col-span-2">
+        <Field label={t("common.notes")} className="sm:col-span-2">
           <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
       </div>

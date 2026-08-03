@@ -11,18 +11,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/toast";
 import { Loading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { label: "Dashboard", href: "/client" },
-  { label: "My Cases", href: "/client/cases" },
-  { label: "Hearings", href: "/client/hearings" },
-  { label: "Documents", href: "/client/documents" },
-  { label: "Invoices", href: "/client/invoices" },
-  { label: "Messages", href: "/client/messages" }
-];
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { label: t("nav.dashboard"), href: "/client" },
+    { label: t("nav.cases"), href: "/client/cases" },
+    { label: t("nav.hearings"), href: "/client/hearings" },
+    { label: t("nav.documents"), href: "/client/documents" },
+    { label: t("nav.invoices"), href: "/client/invoices" },
+    { label: t("clientPortal.messages"), href: "/client/messages" }
+  ];
   const router = useRouter();
   const toast = useToast();
   const user = useAuthStore((s) => s.user);
@@ -46,12 +48,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [loading, user, router]);
 
   if (loading || !user) {
-    return <Loading label="Loading your portal…" />;
+    return <Loading label={t("clientPortal.loadingPortal")} />;
   }
 
   const onLogout = () => {
     performLogout();
-    toast.success("Signed out");
+    toast.success(t("clientPortal.signedOut"));
     router.replace("/login");
   };
 
@@ -62,7 +64,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <button
             className="cursor-pointer rounded-lg p-2 text-ink-muted hover:bg-slate-100 lg:hidden"
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
+            aria-label={t("clientPortal.toggleMenu")}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -72,7 +74,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </div>
             <div className="hidden sm:block">
               <p className="font-display text-lg font-bold leading-none text-ink">Verdiq</p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-ink-muted">Client Portal</p>
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-ink-muted">{t("clientPortal.tagline")}</p>
             </div>
           </Link>
 
@@ -98,7 +100,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <Link
               href="/client/messages"
               className="relative cursor-pointer rounded-lg p-2 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
-              aria-label="Messages"
+              aria-label={t("clientPortal.messages")}
             >
               <Bell className="h-5 w-5" />
               {unread > 0 ? (
@@ -110,7 +112,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <button
               onClick={onLogout}
               className="cursor-pointer rounded-lg p-2 text-ink-muted transition-colors hover:bg-slate-100 hover:text-red-500"
-              aria-label="Sign out"
+              aria-label={t("clientPortal.signOut")}
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -141,7 +143,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         {profile?.chamberName ? (
-          <p className="mb-6 text-center text-xs text-ink-muted">Served by {profile.chamberName}</p>
+          <p className="mb-6 text-center text-xs text-ink-muted">
+            {t("clientPortal.servedBy")} {profile.chamberName}
+          </p>
         ) : null}
         {children}
       </main>

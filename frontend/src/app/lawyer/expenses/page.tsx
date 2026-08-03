@@ -11,11 +11,13 @@ import { EmptyState, Loading } from "@/components/ui/loading";
 import { expenseService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Wallet, Plus } from "lucide-react";
 
 const categories = ["Travel", "Filing Fees", "Office Supplies", "Utilities", "Salary", "Other"];
 
 export default function ExpensesPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [category, setCategory] = useState("");
@@ -31,7 +33,7 @@ export default function ExpensesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
       setCreateOpen(false);
-      toast.success("Expense recorded");
+      toast.success(t("expenses.expenseRecorded"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -41,31 +43,31 @@ export default function ExpensesPage() {
   return (
     <div>
       <PageHeader
-        title="Expenses"
-        subtitle="Track firm expenditures and reimbursables."
+        title={t("expenses.title")}
+        subtitle={t("expenses.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Record Expense
+            <Plus className="h-4 w-4" /> {t("expenses.recordExpense")}
           </Button>
         }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Total (filtered)</p>
+          <p className="text-sm text-ink-muted">{t("expenses.totalFiltered")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{formatCurrency(total)}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Records</p>
+          <p className="text-sm text-ink-muted">{t("expenses.records")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{data?.data?.length ?? 0}</p>
         </Card>
       </div>
 
       <Card className="mb-4 p-4">
         <Select className="sm:w-48" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">All categories</option>
+          <option value="">{t("expenses.allCategories")}</option>
           {categories.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>{t(`expenses.categories.${c}`)}</option>
           ))}
         </Select>
       </Card>
@@ -77,12 +79,12 @@ export default function ExpensesPage() {
           <table className="table-base">
             <thead>
               <tr>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Case</th>
-                <th>Amount</th>
-                <th>Date</th>
-                <th>Recorded By</th>
+                <th>{t("expenses.description")}</th>
+                <th>{t("expenses.category")}</th>
+                <th>{t("expenses.case")}</th>
+                <th>{t("expenses.amount")}</th>
+                <th>{t("common.date")}</th>
+                <th>{t("expenses.recordedBy")}</th>
               </tr>
             </thead>
             <tbody>
@@ -101,9 +103,9 @@ export default function ExpensesPage() {
         ) : (
           <EmptyState
             icon={<Wallet className="h-10 w-10" />}
-            title="No expenses"
-            description="Record expenses for reimbursement and reporting."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> Record Expense</Button>}
+            title={t("expenses.noExpenses")}
+            description={t("expenses.noExpensesDesc")}
+            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> {t("expenses.recordExpense")}</Button>}
           />
         )}
       </Card>
@@ -122,6 +124,7 @@ function CreateExpenseDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -133,10 +136,10 @@ function CreateExpenseDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Record Expense"
+      title={t("expenses.recordExpense")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             disabled={!form.description || !form.amount}
             onClick={() =>
@@ -149,30 +152,30 @@ function CreateExpenseDialog({
               })
             }
           >
-            Record
+            {t("expenses.record")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Description" required className="sm:col-span-2">
+        <Field label={t("expenses.description")} required className="sm:col-span-2">
           <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
-        <Field label="Amount (BDT)" required>
+        <Field label={t("expenses.amountBdt")} required>
           <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
         </Field>
-        <Field label="Category">
+        <Field label={t("expenses.category")}>
           <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{t(`expenses.categories.${c}`)}</option>
             ))}
           </Select>
         </Field>
-        <Field label="Date">
+        <Field label={t("common.date")}>
           <Input type="date" value={form.expenseDate} onChange={(e) => setForm({ ...form, expenseDate: e.target.value })} />
         </Field>
-        <Field label="Case ID">
-          <Input value={form.caseId} onChange={(e) => setForm({ ...form, caseId: e.target.value })} placeholder="Optional" />
+        <Field label={t("expenses.caseId")}>
+          <Input value={form.caseId} onChange={(e) => setForm({ ...form, caseId: e.target.value })} placeholder={t("common.optional")} />
         </Field>
       </div>
     </Dialog>

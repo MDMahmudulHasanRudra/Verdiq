@@ -11,11 +11,13 @@ import { notificationService } from "@/lib/services";
 import { useMarkNotificationRead } from "@/lib/hooks";
 import { getErrorMessage, timeAgo } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Bell, CheckCheck, MailOpen } from "lucide-react";
 
 export default function NotificationsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const markRead = useMarkNotificationRead();
   const [unreadOnly, setUnreadOnly] = useState(false);
 
@@ -28,7 +30,7 @@ export default function NotificationsPage() {
     mutationFn: () => notificationService.markAllRead(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notifications"] });
-      toast.success("All notifications marked as read");
+      toast.success(t("notifications.allRead"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -36,11 +38,11 @@ export default function NotificationsPage() {
   return (
     <div>
       <PageHeader
-        title="Notifications"
-        subtitle="Stay on top of reminders, mentions and system updates."
+        title={t("notifications.title")}
+        subtitle={t("notifications.subtitle")}
         actions={
           <Button variant="outline" onClick={() => markAll.mutate()}>
-            <CheckCheck className="h-4 w-4" /> Mark all read
+            <CheckCheck className="h-4 w-4" /> {t("notifications.markAllRead")}
           </Button>
         }
       />
@@ -51,7 +53,7 @@ export default function NotificationsPage() {
           variant={unreadOnly ? "subtle" : "ghost"}
           onClick={() => setUnreadOnly((v) => !v)}
         >
-          Unread only
+          {t("notifications.unreadOnly")}
         </Button>
       </div>
 
@@ -85,7 +87,7 @@ export default function NotificationsPage() {
             ))}
           </div>
         ) : (
-          <EmptyState icon={<Bell className="h-10 w-10" />} title="No notifications" description="You're all caught up." />
+          <EmptyState icon={<Bell className="h-10 w-10" />} title={t("notifications.noNotifications")} description={t("notifications.noNotificationsDesc")} />
         )}
       </Card>
     </div>

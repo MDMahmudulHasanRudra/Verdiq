@@ -15,6 +15,7 @@ import { useClients } from "@/lib/hooks";
 import { clientService } from "@/lib/services";
 import { getErrorMessage, formatDate, initials } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Users, Plus, Search, PenLine, Trash2, ArrowUpRight } from "lucide-react";
 import type { Client, CreateClientInput } from "@/types/models";
 
@@ -57,6 +58,7 @@ export default function ClientsPage() {
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -125,11 +127,11 @@ export default function ClientsPage() {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        subtitle="Manage your clients and their matters."
+        title={t("nav.clients")}
+        subtitle={t("clients.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Client
+            <Plus className="h-4 w-4" /> {t("clients.newClient")}
           </Button>
         }
       />
@@ -175,12 +177,12 @@ export default function ClientsPage() {
             <Table>
               <thead>
                 <tr>
-                  <th>Client</th>
-                  <th>Contact</th>
-                  <th>Type</th>
-                  <th>Cases</th>
-                  <th>Status</th>
-                  <th>Created</th>
+                  <th>{t("clients.name")}</th>
+                  <th>{t("clients.contact")}</th>
+                  <th>{t("clients.type")}</th>
+                  <th>{t("clients.cases")}</th>
+                  <th>{t("teams.status")}</th>
+                  <th>{t("teams.joined")}</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -245,15 +247,15 @@ export default function ClientsPage() {
         ) : (
           <EmptyState
             icon={<Users className="h-10 w-10" />}
-            title={debouncedSearch || clientType || status ? "No matching clients" : "No clients yet"}
+            title={debouncedSearch || clientType || status ? "No matching clients" : t("clients.newClient")}
             description={
               debouncedSearch || clientType || status
                 ? "Try clearing some filters or changing your search."
-                : "Add a client to link them to cases and invoices."
+                : t("clients.subtitle")
             }
             action={
               <Button onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4" /> New Client
+                <Plus className="h-4 w-4" /> {t("clients.newClient")}
               </Button>
             }
           />
@@ -262,7 +264,7 @@ export default function ClientsPage() {
 
       <ClientFormDialog
         open={createOpen}
-        title="New Client"
+        title={t("clients.newClient")}
         description="Basic client information to get started."
         submitLabel="Create Client"
         isEdit={false}
@@ -286,7 +288,7 @@ export default function ClientsPage() {
           open
           title="Edit Client"
           description={editing.clientCode || editing.email}
-          submitLabel="Save Changes"
+          submitLabel={t("configuration.saveChanges")}
           isEdit
           initial={fromClient(editing)}
           onClose={() => setEditing(null)}
@@ -321,7 +323,7 @@ export default function ClientsPage() {
               disabled={deleteMutation.isPending}
               onClick={() => deleting && deleteMutation.mutate(deleting.id)}
             >
-              <Trash2 className="h-4 w-4" /> Delete Client
+              <Trash2 className="h-4 w-4" /> {t("cases.caseDeleted")}
             </Button>
           </>
         }

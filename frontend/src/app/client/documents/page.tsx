@@ -8,8 +8,10 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { clientPortalService } from "@/lib/services";
 import { formatDate } from "@/lib/utils";
 import { FileText } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientDocumentsPage() {
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery({
     queryKey: ["client", "documents"],
     queryFn: () => clientPortalService.documents()
@@ -17,7 +19,7 @@ export default function ClientDocumentsPage() {
 
   return (
     <div>
-      <PageHeader title="Documents" subtitle="Files your chamber has shared with you." />
+      <PageHeader title={t("clientDocs.title")} subtitle={t("clientDocs.subtitle")} />
 
       <Card>
         {isLoading ? (
@@ -26,11 +28,11 @@ export default function ClientDocumentsPage() {
           <Table>
             <thead>
               <tr>
-                <th>File</th>
-                <th>Case</th>
-                <th>Category</th>
-                <th>Size</th>
-                <th>Shared On</th>
+                <th>{t("clientDocs.file")}</th>
+                <th>{t("clientDocs.case")}</th>
+                <th>{t("clientDocs.category")}</th>
+                <th>{t("clientDocs.size")}</th>
+                <th>{t("clientDocs.sharedOn")}</th>
               </tr>
             </thead>
             <tbody>
@@ -49,7 +51,7 @@ export default function ClientDocumentsPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState icon={<FileText className="h-10 w-10" />} title="No documents shared" description="Files shared by your chamber will appear here." />
+          <EmptyState icon={<FileText className="h-10 w-10" />} title={t("clientDocs.noDocuments")} description={t("clientDocs.noDocumentsDesc")} />
         )}
       </Card>
     </div>

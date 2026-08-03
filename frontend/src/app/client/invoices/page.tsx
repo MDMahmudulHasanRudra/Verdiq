@@ -9,8 +9,10 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { clientPortalService } from "@/lib/services";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Receipt } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientInvoicesPage() {
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery({
     queryKey: ["client", "invoices"],
     queryFn: () => clientPortalService.invoices()
@@ -18,7 +20,7 @@ export default function ClientInvoicesPage() {
 
   return (
     <div>
-      <PageHeader title="Invoices" subtitle="Your billing summary." />
+      <PageHeader title={t("clientInvoices.title")} subtitle={t("clientInvoices.subtitle")} />
 
       <Card>
         {isLoading ? (
@@ -27,13 +29,13 @@ export default function ClientInvoicesPage() {
           <Table>
             <thead>
               <tr>
-                <th>Invoice</th>
-                <th>Case</th>
-                <th>Amount</th>
-                <th>Paid</th>
-                <th>Balance</th>
-                <th>Due Date</th>
-                <th>Status</th>
+                <th>{t("clientInvoices.invoice")}</th>
+                <th>{t("clientInvoices.case")}</th>
+                <th>{t("clientInvoices.amount")}</th>
+                <th>{t("clientInvoices.paid")}</th>
+                <th>{t("clientInvoices.balance")}</th>
+                <th>{t("clientInvoices.dueDate")}</th>
+                <th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +56,7 @@ export default function ClientInvoicesPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState icon={<Receipt className="h-10 w-10" />} title="No invoices" description="Invoices issued to you will appear here." />
+          <EmptyState icon={<Receipt className="h-10 w-10" />} title={t("clientInvoices.noInvoices")} description={t("clientInvoices.noInvoicesDesc")} />
         )}
       </Card>
     </div>

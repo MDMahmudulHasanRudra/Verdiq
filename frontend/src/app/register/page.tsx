@@ -11,12 +11,14 @@ import { getErrorMessage } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import type { Chamber } from "@/types/api";
+import { useLanguage } from "@/lib/i18n";
 
 const ROLES = ["SeniorLawyer", "JuniorLawyer", "Assistant", "Accountant"];
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [chambers, setChambers] = useState<Chamber[]>([]);
   const [chamberId, setChamberId] = useState("");
   const [fullName, setFullName] = useState("");
@@ -34,7 +36,7 @@ export default function RegisterPage() {
       .then((res) => {
         setChambers(res.data.data || []);
       })
-      .catch(() => toast("error", "Could not load chambers"))
+      .catch(() => toast("error", t("register.couldNotLoadChambers")))
       .finally(() => setLoadingChambers(false));
   }, [toast]);
 

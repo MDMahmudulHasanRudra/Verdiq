@@ -7,21 +7,23 @@ import { Scale, X, ShieldAlert, LayoutDashboard, Building2, Users, BadgeCheck, K
 import { tokenStore, cookieStore } from "@/lib/api";
 import { Loading } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
-const navItems = [
-  { label: "Dashboard", href: "/super-admin/dashboard", icon: LayoutDashboard },
-  { label: "Chambers", href: "/super-admin/chambers", icon: Building2 },
-  { label: "Users", href: "/super-admin/users", icon: Users },
-  { label: "Subscriptions", href: "/super-admin/subscriptions", icon: BadgeCheck },
-  { label: "Permissions", href: "/super-admin/permissions", icon: KeyRound },
-  { label: "Audit Logs", href: "/super-admin/audit-logs", icon: ScrollText },
-  { label: "System Config", href: "/super-admin/config", icon: Settings },
-  { label: "System Health", href: "/super-admin/health", icon: Activity }
+const navItems: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { label: "superAdmin.dashboard", href: "/super-admin/dashboard", icon: LayoutDashboard },
+  { label: "superAdmin.chambers", href: "/super-admin/chambers", icon: Building2 },
+  { label: "superAdmin.users", href: "/super-admin/users", icon: Users },
+  { label: "superAdmin.subscriptions", href: "/super-admin/subscriptions", icon: BadgeCheck },
+  { label: "superAdmin.permissions", href: "/super-admin/permissions", icon: KeyRound },
+  { label: "superAdmin.auditLogs", href: "/super-admin/audit-logs", icon: ScrollText },
+  { label: "superAdmin.systemConfig", href: "/super-admin/config", icon: Settings },
+  { label: "superAdmin.systemHealth", href: "/super-admin/health", icon: Activity }
 ];
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -34,7 +36,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   }, [router]);
 
   if (!ready) {
-    return <Loading label="Loading console…" />;
+    return <Loading label={t("superAdmin.consoleLoading")} />;
   }
 
   const admin = tokenStore.saGetUser<{ name?: string; userId?: string; role?: string }>();
@@ -63,10 +65,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </div>
             <div>
               <p className="font-display text-lg font-bold leading-none text-white">Verdiq</p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-slate-400">Super Admin</p>
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-slate-400">{t("superAdmin.superAdmin")}</p>
             </div>
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="cursor-pointer text-slate-400 lg:hidden" aria-label="Close menu">
+          <button onClick={() => setSidebarOpen(false)} className="cursor-pointer text-slate-400 lg:hidden" aria-label={t("superAdmin.closeMenu")}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -86,7 +88,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 )}
               >
                 <Icon className="h-[18px] w-[18px]" />
-                {item.label}
+                {t(item.label)}
               </Link>
             );
           })}
@@ -98,7 +100,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               <ShieldAlert className="h-4 w-4 text-gold-400" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-white">{admin?.name ?? "Super Admin"}</p>
+              <p className="truncate text-sm font-medium text-white">{admin?.name ?? t("superAdmin.superAdmin")}</p>
               <p className="truncate text-xs text-slate-400">{admin?.userId}</p>
             </div>
           </div>
@@ -106,7 +108,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             onClick={onLogout}
             className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-red-400"
           >
-            <LogOut className="h-4 w-4" /> Sign out
+            <LogOut className="h-4 w-4" /> {t("nav.signOut")}
           </button>
         </div>
       </aside>
@@ -116,13 +118,13 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <button
             onClick={() => setSidebarOpen(true)}
             className="cursor-pointer rounded-lg p-2 text-slate-400 hover:bg-slate-800 lg:hidden"
-            aria-label="Open menu"
+            aria-label={t("header.openMenu")}
           >
             <Scale className="h-5 w-5" />
           </button>
-          <p className="text-sm text-slate-400">Console</p>
+          <p className="text-sm text-slate-400">{t("superAdmin.console")}</p>
           <div className="ml-auto flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1 text-xs font-medium text-gold-400">
-            <Activity className="h-3.5 w-3.5" /> Platform-wide access
+            <Activity className="h-3.5 w-3.5" /> {t("superAdmin.platformAccess")}
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>

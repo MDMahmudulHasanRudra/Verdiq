@@ -12,9 +12,11 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { bankingService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDateTime } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Landmark, Plus } from "lucide-react";
 
 export default function BankingPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -36,7 +38,7 @@ export default function BankingPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["banking"] });
       setCreateOpen(false);
-      toast.success("Bank account added");
+      toast.success(t("banking.bankAccountAdded"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -46,11 +48,11 @@ export default function BankingPage() {
   return (
     <div>
       <PageHeader
-        title="Banking"
-        subtitle="Firm bank accounts and transactions."
+        title={t("banking.title")}
+        subtitle={t("banking.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Add Account
+            <Plus className="h-4 w-4" /> {t("banking.addAccount")}
           </Button>
         }
       />
@@ -61,7 +63,7 @@ export default function BankingPage() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-1">
             <Card className="bg-primary-800 p-5 text-white">
-              <p className="text-sm text-primary-200">Total Balance</p>
+              <p className="text-sm text-primary-200">{t("banking.totalBalance")}</p>
               <p className="mt-1 text-3xl font-bold">{formatCurrency(totalBalance)}</p>
             </Card>
             {accounts && accounts.length > 0 ? (
@@ -92,13 +94,13 @@ export default function BankingPage() {
               ))
             ) : (
               <Card>
-                <EmptyState icon={<Landmark className="h-10 w-10" />} title="No bank accounts" description="Add a firm bank account." />
+                <EmptyState icon={<Landmark className="h-10 w-10" />} title={t("banking.noBankAccounts")} description={t("banking.noBankAccountsDesc")} />
               </Card>
             )}
           </div>
 
           <Card className="xl:col-span-2">
-            <CardHeader title={selectedId ? "Transactions" : "Select an account"} />
+            <CardHeader title={selectedId ? t("banking.transactions") : t("banking.selectAnAccount")} />
             <CardContent>
               {selectedId && transactions && transactions.length > 0 ? (
                 <div className="space-y-3">
@@ -118,9 +120,9 @@ export default function BankingPage() {
                   ))}
                 </div>
               ) : selectedId ? (
-                <EmptyState title="No transactions" description="Transactions for this account will appear here." />
+                <EmptyState title={t("banking.noTransactions")} description={t("banking.noTransactionsDesc")} />
               ) : (
-                <EmptyState title="No account selected" description="Choose a bank account to view transactions." />
+                <EmptyState title={t("banking.noAccountSelected")} description={t("banking.noAccountSelectedDesc")} />
               )}
             </CardContent>
           </Card>
@@ -141,6 +143,7 @@ function CreateAccountDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     accountName: "",
     bankName: "",
@@ -152,32 +155,32 @@ function CreateAccountDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add Bank Account"
+      title={t("banking.addBankAccount")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={!form.accountName || !form.bankName} onClick={() => onSubmit(form)}>Add Account</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button disabled={!form.accountName || !form.bankName} onClick={() => onSubmit(form)}>{t("banking.addAccount")}</Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Account Name" required>
+        <Field label={t("banking.accountName")} required>
           <Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} />
         </Field>
-        <Field label="Bank Name" required>
+        <Field label={t("banking.bankName")} required>
           <Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} />
         </Field>
-        <Field label="Account Number">
+        <Field label={t("banking.accountNumber")}>
           <Input value={form.accountNumber} onChange={(e) => setForm({ ...form, accountNumber: e.target.value })} />
         </Field>
-        <Field label="Account Type">
+        <Field label={t("banking.accountType")}>
           <Select value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value })}>
-            {["Current", "Savings", "Fixed Deposit", "Mobile Wallet"].map((t) => (
-              <option key={t} value={t}>{t}</option>
+            {["Current", "Savings", "Fixed Deposit", "Mobile Wallet"].map((type) => (
+              <option key={type} value={type}>{t("banking.accountTypes." + type)}</option>
             ))}
           </Select>
         </Field>
-        <Field label="Opening Balance">
+        <Field label={t("banking.openingBalance")}>
           <Input type="number" value={form.openingBalance} onChange={(e) => setForm({ ...form, openingBalance: e.target.value })} />
         </Field>
       </div>

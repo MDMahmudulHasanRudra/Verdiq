@@ -10,8 +10,10 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { clientPortalService } from "@/lib/services";
 import { formatDate } from "@/lib/utils";
 import { FolderOpen } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientCasesPage() {
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery({
     queryKey: ["client", "cases"],
     queryFn: () => clientPortalService.cases()
@@ -19,7 +21,7 @@ export default function ClientCasesPage() {
 
   return (
     <div>
-      <PageHeader title="My Cases" subtitle="Track the progress of your legal matters." />
+      <PageHeader title={t("clientCases.title")} subtitle={t("clientCases.subtitle")} />
 
       <Card>
         {isLoading ? (
@@ -28,12 +30,12 @@ export default function ClientCasesPage() {
           <Table>
             <thead>
               <tr>
-                <th>Case Number</th>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Lawyer</th>
-                <th>Next Hearing</th>
-                <th>Status</th>
+                <th>{t("clientCases.caseNumber")}</th>
+                <th>{t("clientCases.titleCol")}</th>
+                <th>{t("clientCases.caseType")}</th>
+                <th>{t("clientCases.lawyer")}</th>
+                <th>{t("clientCases.nextHearing")}</th>
+                <th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +56,7 @@ export default function ClientCasesPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState icon={<FolderOpen className="h-10 w-10" />} title="No cases shared" description="Your chamber hasn't shared any cases with you yet." />
+          <EmptyState icon={<FolderOpen className="h-10 w-10" />} title={t("clientCases.noCases")} description={t("clientCases.noCasesDesc")} />
         )}
       </Card>
     </div>

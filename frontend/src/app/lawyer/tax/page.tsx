@@ -12,11 +12,13 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { taxService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Percent, Plus } from "lucide-react";
 
 export default function TaxPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [year, setYear] = useState(new Date().getFullYear());
   const [createOpen, setCreateOpen] = useState(false);
   const [transOpen, setTransOpen] = useState(false);
@@ -50,20 +52,20 @@ export default function TaxPage() {
     onError: (e) => toast.error(getErrorMessage(e))
   });
 
-  const totalTax = (transactions ?? []).reduce((s, t) => s + t.taxAmount, 0);
+  const totalTax = (transactions ?? []).reduce((s, tx) => s + tx.taxAmount, 0);
 
   return (
     <div>
       <PageHeader
-        title="Tax"
-        subtitle="VAT, income tax and tax transaction tracking."
+        title={t("tax.title")}
+        subtitle={t("tax.subtitle")}
         actions={
           <>
             <Button variant="outline" onClick={() => setTransOpen(true)}>
-              <Plus className="h-4 w-4" /> Record Tax
+              <Plus className="h-4 w-4" /> {t("tax.addEntry")}
             </Button>
             <Button onClick={() => setCreateOpen(true)}>
-              <Percent className="h-4 w-4" /> Tax Setting
+              <Percent className="h-4 w-4" /> {t("tax.taxType")}
             </Button>
           </>
         }
@@ -71,15 +73,15 @@ export default function TaxPage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Tax Settings</p>
+          <p className="text-sm text-ink-muted">{t("tax.taxType")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{settings?.length ?? 0}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Tax Paid ({year})</p>
+          <p className="text-sm text-ink-muted">{t("tax.paid")} ({year})</p>
           <p className="mt-1 text-2xl font-bold text-ink">{formatCurrency(totalTax)}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Tax Records</p>
+          <p className="text-sm text-ink-muted">{t("tax.period")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{transactions?.length ?? 0}</p>
         </Card>
       </div>
@@ -94,7 +96,7 @@ export default function TaxPage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
-          <CardHeader title="Tax Settings" />
+          <CardHeader title={t("tax.taxType")} />
           {isLoading ? (
             <Loading />
           ) : settings && settings.length > 0 ? (
@@ -113,34 +115,34 @@ export default function TaxPage() {
               ))}
             </CardContent>
           ) : (
-            <EmptyState title="No tax settings" />
+            <EmptyState title={t("tax.noEntries")} />
           )}
         </Card>
 
         <Card>
-          <CardHeader title={`Tax Transactions (${year})`} />
+          <CardHeader title={`${t("tax.title")} (${year})`} />
           {isLoading ? (
             <Loading />
           ) : transactions && transactions.length > 0 ? (
             <CardContent className="space-y-3">
-              {transactions.map((t) => (
-                <div key={t.id} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
+              {transactions.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
                   <div>
-                    <p className="text-sm font-medium text-ink">{t.taxTypeName}</p>
+                    <p className="text-sm font-medium text-ink">{tx.taxTypeName}</p>
                     <p className="text-xs text-ink-muted">
-                      {t.referenceNumber} · {formatDate(t.transactionDate)}
-                      {t.challanNo ? ` · Challan ${t.challanNo}` : ""}
+                      {tx.referenceNumber} · {formatDate(tx.transactionDate)}
+                      {tx.challanNo ? ` · Challan ${tx.challanNo}` : ""}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-ink">{formatCurrency(t.taxAmount)}</p>
-                    <p className="text-xs text-ink-muted">on {formatCurrency(t.taxableAmount)}</p>
+                    <p className="text-sm font-semibold text-ink">{formatCurrency(tx.taxAmount)}</p>
+                    <p className="text-xs text-ink-muted">on {formatCurrency(tx.taxableAmount)}</p>
                   </div>
                 </div>
               ))}
             </CardContent>
           ) : (
-            <EmptyState title="No tax transactions" />
+            <EmptyState title={t("tax.noEntries")} />
           )}
         </Card>
       </div>
@@ -166,12 +168,13 @@ function CreateSettingDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ taxType: "VAT", name: "", rate: "15", threshold: "", description: "" });
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Tax Setting"
+      title={`${t("tax.addEntry")} - ${t("tax.taxType")}`}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -188,10 +191,10 @@ function CreateSettingDialog({
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Tax Type">
+        <Field label={t("tax.taxType")}>
           <Select value={form.taxType} onChange={(e) => setForm({ ...form, taxType: e.target.value })}>
-            {["VAT", "Income Tax", "Advance Tax", "Other"].map((t) => (
-              <option key={t} value={t}>{t}</option>
+            {["VAT", "Income Tax", "Advance Tax", "Other"].map((ty) => (
+              <option key={ty} value={ty}>{ty}</option>
             ))}
           </Select>
         </Field>
@@ -204,7 +207,7 @@ function CreateSettingDialog({
         <Field label="Threshold (BDT)">
           <Input type="number" value={form.threshold} onChange={(e) => setForm({ ...form, threshold: e.target.value })} />
         </Field>
-        <Field label="Description" className="sm:col-span-2">
+        <Field label={t("tax.status")} className="sm:col-span-2">
           <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
       </div>
@@ -225,6 +228,7 @@ function CreateTransDialog({
   year: number;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     taxSettingId: "",
     taxableAmount: "",
@@ -235,7 +239,7 @@ function CreateTransDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Record Tax Transaction"
+      title={`${t("tax.addEntry")}`}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -257,7 +261,7 @@ function CreateTransDialog({
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Tax Setting" required className="sm:col-span-2">
+        <Field label={t("tax.taxType")} required className="sm:col-span-2">
           <Select value={form.taxSettingId} onChange={(e) => setForm({ ...form, taxSettingId: e.target.value })}>
             <option value="">Select a tax type</option>
             {settings.map((s) => (
@@ -265,10 +269,10 @@ function CreateTransDialog({
             ))}
           </Select>
         </Field>
-        <Field label="Taxable Amount (BDT)" required>
+        <Field label={t("tax.amount")} required>
           <Input type="number" value={form.taxableAmount} onChange={(e) => setForm({ ...form, taxableAmount: e.target.value })} />
         </Field>
-        <Field label="Transaction Date">
+        <Field label={t("tax.dueDate")}>
           <Input type="date" value={form.transactionDate} onChange={(e) => setForm({ ...form, transactionDate: e.target.value })} />
         </Field>
         <Field label="Challan No." className="sm:col-span-2">

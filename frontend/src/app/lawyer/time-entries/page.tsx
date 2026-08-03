@@ -13,11 +13,13 @@ import { timeEntryService } from "@/lib/services";
 import { useStartTimer, useStopTimer } from "@/lib/hooks";
 import { getErrorMessage, formatCurrency, formatDateTime } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Play, Square, Plus, Clock } from "lucide-react";
 
 export default function TimeEntriesPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [createOpen, setCreateOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
@@ -54,11 +56,11 @@ export default function TimeEntriesPage() {
   return (
     <div>
       <PageHeader
-        title="Time Entries"
-        subtitle="Track billable hours with a live timer."
+        title={t("timeEntries.title")}
+        subtitle={t("timeEntries.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Add Manual Entry
+            <Plus className="h-4 w-4" /> {t("timeEntries.addEntry")}
           </Button>
         }
       />
@@ -83,18 +85,18 @@ export default function TimeEntriesPage() {
       ) : null}
 
       <Card>
-        <CardHeader title="All Time Entries" />
+        <CardHeader title={`${t("timeEntries.title")}`} />
         {isLoading ? (
           <Loading />
         ) : entries && entries.length > 0 ? (
           <table className="table-base">
             <thead>
               <tr>
-                <th>Description</th>
-                <th>Case</th>
-                <th>Duration</th>
-                <th>Rate</th>
-                <th>Amount</th>
+                <th>{t("timeEntries.description")}</th>
+                <th>{t("timeEntries.case")}</th>
+                <th>{t("timeEntries.hours")}</th>
+                <th>{t("timeEntries.rate")}</th>
+                <th>{t("timeEntries.total")}</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -116,8 +118,8 @@ export default function TimeEntriesPage() {
         ) : (
           <EmptyState
             icon={<Clock className="h-10 w-10" />}
-            title="No time entries"
-            description="Start a timer while you work to capture billable time."
+            title={t("timeEntries.noEntries")}
+            description={t("timeEntries.noEntriesDesc")}
             action={
               running ? null : (
                 <Button
@@ -139,6 +141,7 @@ export default function TimeEntriesPage() {
 
 function NewEntryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const startTimer = useStartTimer();
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     caseId: "",
     description: "",
@@ -149,7 +152,7 @@ function NewEntryDialog({ open, onClose }: { open: boolean; onClose: () => void 
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Time Entry"
+      title={t("timeEntries.addEntry")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -171,13 +174,13 @@ function NewEntryDialog({ open, onClose }: { open: boolean; onClose: () => void 
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Description" required className="sm:col-span-2">
+        <Field label={t("timeEntries.description")} required className="sm:col-span-2">
           <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
-        <Field label="Case ID">
+        <Field label={t("timeEntries.case")}>
           <Input value={form.caseId} onChange={(e) => setForm({ ...form, caseId: e.target.value })} placeholder="Optional GUID" />
         </Field>
-        <Field label="Hourly Rate (BDT)">
+        <Field label={t("timeEntries.rate")}>
           <Input type="number" value={form.hourlyRate} onChange={(e) => setForm({ ...form, hourlyRate: e.target.value })} />
         </Field>
       </div>

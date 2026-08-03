@@ -13,11 +13,13 @@ import { useQuery } from "@tanstack/react-query";
 import { bailService } from "@/lib/services";
 import { getErrorMessage, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { Handshake, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
+import { Handshake, Plus } from "lucide-react";
 
 export default function BailsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [createOpen, setCreateOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
 
@@ -36,24 +38,14 @@ export default function BailsPage() {
     onError: (e) => toast.error(getErrorMessage(e))
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: { status: string; revokedReason?: string } }) =>
-      bailService.updateStatus(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["bails"] });
-      toast.success("Bail status updated");
-    },
-    onError: (e) => toast.error(getErrorMessage(e))
-  });
-
   return (
     <div>
       <PageHeader
-        title="Bails"
-        subtitle="Track bail applications, bonds and sureties."
+        title={t("bails.title")}
+        subtitle={t("bails.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Bail Record
+            <Plus className="h-4 w-4" /> {t("bails.addBail")}
           </Button>
         }
       />
@@ -65,8 +57,8 @@ export default function BailsPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="">All statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Granted">Granted</option>
+          <option value="Pending">{t("bails.pending")}</option>
+          <option value="Granted">{t("bails.granted")}</option>
           <option value="Revoked">Revoked</option>
           <option value="Forfeited">Forfeited</option>
         </Select>
@@ -79,11 +71,9 @@ export default function BailsPage() {
           <table className="table-base">
             <thead>
               <tr>
-                <th>Case</th>
-                <th>Bail Amount</th>
-                <th>Hearing Date</th>
-                <th>Bond No.</th>
-                <th>Surety</th>
+                <th>{t("bails.case")}</th>
+                <th>{t("bails.bailApplication")}</th>
+                <th>{t("bails.hearingDate")}</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -98,8 +88,6 @@ export default function BailsPage() {
                     {b.bailAmount ? `৳${b.bailAmount.toLocaleString()}` : "—"}
                   </td>
                   <td className="text-ink-muted">{b.bailHearingDate ? formatDate(b.bailHearingDate) : "—"}</td>
-                  <td className="text-ink-muted">{b.bondNumber ?? "—"}</td>
-                  <td className="text-ink-muted">{b.suretyName ?? "—"}</td>
                   <td>
                     <StatusBadge value={b.status} />
                   </td>
@@ -110,9 +98,9 @@ export default function BailsPage() {
         ) : (
           <EmptyState
             icon={<Handshake className="h-10 w-10" />}
-            title="No bail records"
-            description="Track bail applications and bonds from here."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> New Bail Record</Button>}
+            title={t("bails.noBails")}
+            description={t("bails.noBailsDesc")}
+            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> {t("bails.addBail")}</Button>}
           />
         )}
       </Card>
@@ -131,6 +119,7 @@ function CreateBailDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     caseId: "",
     bailAmount: "",
@@ -144,7 +133,7 @@ function CreateBailDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="New Bail Record"
+      title={t("bails.addBail")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>

@@ -10,6 +10,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Loading, EmptyState } from "@/components/ui/loading";
 import { StatusBadge } from "@/components/ui/badge";
 import { searchService } from "@/lib/services";
+import { useLanguage } from "@/lib/i18n";
 import { Search as SearchIcon, FolderOpen, Users, FileText, Scale } from "lucide-react";
 
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -22,6 +23,7 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 export default function SearchPage() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useLanguage();
   const [q, setQ] = useState(params.get("q") ?? "");
 
   const { data, isLoading } = useQuery({
@@ -34,14 +36,14 @@ export default function SearchPage() {
 
   return (
     <div>
-      <PageHeader title="Search" subtitle="Find cases, clients, documents and more across the firm." />
+      <PageHeader title={t("search.title")} subtitle={t("search.subtitle")} />
       <Card className="mb-6 p-4">
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
           <Input
             autoFocus
             className="pl-9"
-            placeholder="Search the whole firm…"
+            placeholder={t("search.placeholder")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -50,13 +52,13 @@ export default function SearchPage() {
 
       {q.trim().length === 0 ? (
         <Card>
-          <EmptyState icon={<SearchIcon className="h-10 w-10" />} title="Type to search" description="Search case numbers, client names, document titles and legal sections." />
+          <EmptyState icon={<SearchIcon className="h-10 w-10" />} title={t("search.typeToSearch")} description={t("search.typeToSearchDesc")} />
         </Card>
       ) : isLoading ? (
-        <Loading label="Searching…" />
+        <Loading label={t("search.searching")} />
       ) : results.length > 0 ? (
         <Card>
-          <CardHeader title={`Results (${data?.totalCount ?? results.length})`} />
+          <CardHeader title={`${t("search.noResults")} (${data?.totalCount ?? results.length})`} />
           <CardContent className="divide-y divide-line-soft">
             {results.map((r) => {
               const type = String(r.type).toLowerCase();
@@ -85,7 +87,7 @@ export default function SearchPage() {
         </Card>
       ) : (
         <Card>
-          <EmptyState title="No results" description={`Nothing matched "${q}".`} />
+          <EmptyState title={t("search.noResults")} description={`${t("search.noResultsDesc")} "${q}".`} />
         </Card>
       )}
     </div>

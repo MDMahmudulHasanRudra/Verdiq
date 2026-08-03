@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/lib/i18n";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
@@ -12,6 +13,7 @@ import { formatDateTime } from "@/lib/utils";
 import { ScrollText } from "lucide-react";
 
 export default function SuperAdminAuditLogsPage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
@@ -28,13 +30,13 @@ export default function SuperAdminAuditLogsPage() {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-white">Audit Logs</h1>
-          <p className="mt-1 text-sm text-slate-400">Platform-wide activity trail.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t("superAdmin.auditLogs.title")}</h1>
+          <p className="mt-1 text-sm text-slate-400">{t("superAdmin.auditLogs.subtitle")}</p>
         </div>
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter by user or action…"
+          placeholder={t("superAdmin.auditLogs.searchPlaceholder")}
           className="w-full max-w-xs border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
         />
       </div>
@@ -47,11 +49,11 @@ export default function SuperAdminAuditLogsPage() {
             <Table className="dark-table">
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Entity</th>
-                  <th>IP</th>
-                  <th>Timestamp</th>
+                  <th>{t("superAdmin.auditLogs.user")}</th>
+                  <th>{t("superAdmin.auditLogs.action")}</th>
+                  <th>{t("superAdmin.auditLogs.entity")}</th>
+                  <th>{t("superAdmin.auditLogs.ip")}</th>
+                  <th>{t("superAdmin.auditLogs.timestamp")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,7 +79,7 @@ export default function SuperAdminAuditLogsPage() {
             <Pagination page={page} totalPages={Math.ceil(filtered.length / 50)} onChange={setPage} />
           </>
         ) : (
-          <EmptyState dark icon={<ScrollText className="h-10 w-10" />} title="No audit logs" description="Activity logs will appear here as events occur." />
+          <EmptyState dark icon={<ScrollText className="h-10 w-10" />} title={t("superAdmin.auditLogs.noLogs")} description={t("superAdmin.auditLogs.noLogsDesc")} />
         )}
       </Card>
     </div>

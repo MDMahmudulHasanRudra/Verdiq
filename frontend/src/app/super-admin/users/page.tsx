@@ -12,12 +12,14 @@ import { EmptyState, Loading } from "@/components/ui/loading";
 import { superAdminService } from "@/lib/services/super-admin-service";
 import { getErrorMessage, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Users, Plus, KeyRound } from "lucide-react";
 import type { SuperAdminUser } from "@/types/super-admin";
 
 export default function SuperAdminUsersPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [createOpen, setCreateOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<SuperAdminUser | null>(null);
 
@@ -31,7 +33,7 @@ export default function SuperAdminUsersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "users"] });
       setCreateOpen(false);
-      toast.success("User created");
+      toast.success(t("superAdmin.users.userCreated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -40,7 +42,7 @@ export default function SuperAdminUsersPage() {
     mutationFn: (id: string) => superAdminService.toggleUserStatus(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "users"] });
-      toast.success("Status toggled");
+      toast.success(t("superAdmin.users.statusToggled"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -50,7 +52,7 @@ export default function SuperAdminUsersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "users"] });
       setResetTarget(null);
-      toast.success("Password reset");
+      toast.success(t("superAdmin.users.passwordReset"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -59,11 +61,11 @@ export default function SuperAdminUsersPage() {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-white">Users</h1>
-          <p className="mt-1 text-sm text-slate-400">Every user account across all chambers.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t("superAdmin.users.title")}</h1>
+          <p className="mt-1 text-sm text-slate-400">{t("superAdmin.users.subtitle")}</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" /> Create User
+          <Plus className="h-4 w-4" /> {t("superAdmin.users.createUser")}
         </Button>
       </div>
 
@@ -74,13 +76,13 @@ export default function SuperAdminUsersPage() {
           <Table className="dark-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Chamber</th>
-                <th>Role</th>
-                <th>Plan</th>
-                <th>Joined</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <th>{t("superAdmin.users.user")}</th>
+                <th>{t("superAdmin.chambers.title")}</th>
+                <th>{t("superAdmin.users.role")}</th>
+                <th>{t("superAdmin.users.plan")}</th>
+                <th>{t("superAdmin.users.joined")}</th>
+                <th>{t("superAdmin.users.status")}</th>
+                <th className="text-right">{t("superAdmin.users.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -103,7 +105,7 @@ export default function SuperAdminUsersPage() {
                         className="text-primary-300 hover:bg-primary-500/10 hover:text-primary-200"
                         onClick={() => setResetTarget(u)}
                       >
-                        <KeyRound className="h-3.5 w-3.5" /> Reset Password
+                        <KeyRound className="h-3.5 w-3.5" /> {t("superAdmin.users.resetPassword")}
                       </Button>
                       <Button
                         variant="ghost"
@@ -112,7 +114,7 @@ export default function SuperAdminUsersPage() {
                         onClick={() => toggleMutation.mutate(u.id)}
                         loading={toggleMutation.isPending && toggleMutation.variables === u.id}
                       >
-                        {u.isActive ? "Suspend" : "Activate"}
+                        {u.isActive ? t("superAdmin.users.suspend") : t("superAdmin.users.activate")}
                       </Button>
                     </div>
                   </td>
@@ -121,7 +123,7 @@ export default function SuperAdminUsersPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState dark icon={<Users className="h-10 w-10" />} title="No users" description="Users will appear here once chambers register." />
+          <EmptyState dark icon={<Users className="h-10 w-10" />} title={t("superAdmin.users.noUsers")} description={t("superAdmin.users.noUsersDesc")} />
         )}
       </Card>
 
@@ -140,6 +142,7 @@ function CreateUserDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "Owner", chamberId: "" });
   const isFormValid = form.fullName && form.email && form.password;
 
@@ -147,26 +150,26 @@ function CreateUserDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Create User"
-      description="Provision a user in any chamber."
+      title={t("superAdmin.users.createUser")}
+      description={t("superAdmin.users.provisionUser")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={!isFormValid} onClick={() => onSubmit(form)}>Create User</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button disabled={!isFormValid} onClick={() => onSubmit(form)}>{t("superAdmin.users.createUser")}</Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Full Name" required>
+        <Field label={t("superAdmin.users.fullName")} required>
           <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
         </Field>
-        <Field label="Email" required>
+        <Field label={t("superAdmin.users.email")} required>
           <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </Field>
-        <Field label="Password" required>
+        <Field label={t("superAdmin.users.password")} required>
           <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         </Field>
-        <Field label="Role">
+        <Field label={t("superAdmin.users.role")}>
           <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
             <option value="Owner">Owner</option>
             <option value="SeniorLawyer">Senior Lawyer</option>
@@ -176,8 +179,8 @@ function CreateUserDialog({
             <option value="Client">Client</option>
           </Select>
         </Field>
-        <Field label="Chamber ID" className="sm:col-span-2">
-          <Input value={form.chamberId} onChange={(e) => setForm({ ...form, chamberId: e.target.value })} placeholder="Paste the chamber GUID" />
+        <Field label={t("superAdmin.users.chamberId")} className="sm:col-span-2">
+          <Input value={form.chamberId} onChange={(e) => setForm({ ...form, chamberId: e.target.value })} placeholder={t("superAdmin.users.chamberIdPlaceholder")} />
         </Field>
       </div>
     </Dialog>
@@ -193,22 +196,23 @@ function ResetPasswordDialog({
   onClose: () => void;
   onSubmit: (password: string) => void;
 }) {
+  const { t } = useLanguage();
   const [password, setPassword] = useState("");
 
   return (
     <Dialog
       open={!!user}
       onClose={onClose}
-      title="Reset Password"
-      description={user ? `Set a new password for ${user.fullName}.` : ""}
+      title={t("superAdmin.users.resetPassword")}
+      description={user ? `${t("superAdmin.users.resetPasswordFor")} ${user.fullName}.` : ""}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={!password} onClick={() => onSubmit(password)}>Reset Password</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button disabled={!password} onClick={() => onSubmit(password)}>{t("superAdmin.users.resetPassword")}</Button>
         </>
       }
     >
-      <Field label="New Password" required>
+      <Field label={t("superAdmin.users.newPassword")} required>
         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
     </Dialog>

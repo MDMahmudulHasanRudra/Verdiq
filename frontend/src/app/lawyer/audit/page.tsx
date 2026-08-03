@@ -1,70 +1,61 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
-import { Table, Pagination } from "@/components/ui/table";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Loading, EmptyState } from "@/components/ui/loading";
+import { StatusBadge } from "@/components/ui/badge";
 import { auditService } from "@/lib/services";
-import { formatDateTime } from "@/lib/utils";
-import { useToast } from "@/components/ui/toast";
-import { ShieldCheck } from "lucide-react";
-import type { PagedResponse } from "@/types/api";
+import { timeAgo } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
+import { ScrollText } from "lucide-react";
 
 export default function AuditPage() {
-  const toast = useToast();
-  const [page, setPage] = useState(1);
-
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery({
-    queryKey: ["audit", "logs", page],
-    queryFn: () => auditService.logs({ page, pageSize: 20 })
+    queryKey: ["audit-logs"],
+    queryFn: () => auditService.logs()
   });
 
-  const logs = ((data as PagedResponse<Record<string, unknown>> | undefined)?.data ??
-    (data as unknown as Record<string, unknown>[] | undefined) ??
-    []) as Record<string, unknown>[];
+  const logs = (data as Record<string, unknown>)?.logs ?? [];
 
   return (
     <div>
-      <PageHeader title="Audit Logs" subtitle="A trail of actions across the firm." />
+      <PageHeader title={t("audit.title")} subtitle={t("audit.subtitle")} />
       <Card>
-        {isLoading ? (
-          <Loading />
-        ) : logs.length > 0 ? (
-          <>
-            <Table>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Entity</th>
-                  <th>Details</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((l) => (
-                  <tr key={String(l.id)}>
-                    <td className="font-medium text-ink">{String(l.userName ?? l.user ?? "—")}</td>
-                    <td className="text-ink-muted">{String(l.action ?? l.actionType ?? "—")}</td>
-                    <td className="text-ink-muted">{String(l.entity ?? l.entityName ?? "—")}</td>
-                    <td className="max-w-64 truncate text-ink-muted">{String(l.description ?? l.details ?? "—")}</td>
-                    <td className="text-ink-muted">{formatDateTime(String(l.createdAt ?? l.timestamp ?? ""))}</td>
+        <CardHeader title={`${t("audit.title")} (${Array.isArray(logs) ? logs.length : 0})`} />
+        <CardContent>
+          {isLoading ? (
+            <Loading />
+          ) : !Array.isArray(logs) || logs.length === 0 ? (
+            <EmptyState icon={<ScrollText className="h-10 w-10" />} title={t("audit.noLogs")} description={t("audit.noLogsDesc")} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-line-soft text-left text-xs font-medium text-ink-soft uppercase tracking-wider">
+                    <th className="px-4 py-3">{t("audit.user")}</th>
+                    <th className="px-4 py-3">{t("audit.action")}</th>
+                    <th className="px-4 py-3">{t("audit.entity")}</th>
+                    <th className="px-4 py-3">{t("audit.details")}</th>
+                    <th className="px-4 py-3">{t("audit.when")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-            <Pagination
-              page={page}
-              totalPages={(data as PagedResponse<Record<string, unknown>> | undefined)?.totalPages ?? 1}
-              totalCount={(data as PagedResponse<Record<string, unknown>> | undefined)?.totalCount}
-              onChange={setPage}
-            />
-          </>
-        ) : (
-          <EmptyState icon={<ShieldCheck className="h-10 w-10" />} title="No audit logs yet" description="Actions will be recorded here as the team works." />
-        )}
+                </thead>
+                <tbody className="divide-y divide-line-soft">
+                  {logs.map((l: Record<string, unknown>) => (
+                    <tr key={String(l.id)} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-ink">{String(l.user_name ?? l.userName ?? "—")}</td>
+                      <td className="px-4 py-3"><StatusBadge value={String(l.action)} /></td>
+                      <td className="px-4 py-3 text-ink-muted">{String(l.entity ?? "—")}</td>
+                      <td className="max-w-sm truncate px-4 py-3 text-ink-muted">{String(l.details ?? "—")}</td>
+                      <td className="px-4 py-3 text-xs text-ink-soft">{l.created_at ? timeAgo(String(l.created_at)) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

@@ -14,12 +14,14 @@ import { EmptyState, Loading } from "@/components/ui/loading";
 import { adminService } from "@/lib/services";
 import { getErrorMessage, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Users, Activity, DollarSign, ShieldAlert, Plus } from "lucide-react";
 import type { AdminUser } from "@/types/models";
 
 export default function AdminPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -57,11 +59,11 @@ export default function AdminPage() {
   return (
     <div>
       <PageHeader
-        title="Admin"
-        subtitle="Manage chamber users and monitor system health."
+        title={t("admin.title")}
+        subtitle={t("admin.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Add User
+            <Plus className="h-4 w-4" /> {t("admin.manageUsers")}
           </Button>
         }
       />
@@ -92,11 +94,11 @@ export default function AdminPage() {
           <Table>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Role</th>
+                <th>{t("teams.member")}</th>
+                <th>{t("teams.role")}</th>
                 <th>Cases</th>
-                <th>Joined</th>
-                <th>Status</th>
+                <th>{t("teams.joined")}</th>
+                <th>{t("teams.status")}</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
@@ -152,6 +154,7 @@ function CreateUserDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "JuniorLawyer" });
   const isFormValid = form.fullName && form.email && form.password;
 
@@ -159,7 +162,7 @@ function CreateUserDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add User"
+      title={t("admin.manageUsers")}
       description="Invite a new member to the chamber."
       footer={
         <>
@@ -172,13 +175,13 @@ function CreateUserDialog({
         <Field label="Full Name" required>
           <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
         </Field>
-        <Field label="Email" required>
+        <Field label={t("teams.email")} required>
           <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </Field>
         <Field label="Password" required>
           <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         </Field>
-        <Field label="Role">
+        <Field label={t("teams.role")}>
           <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
             <option value="SeniorLawyer">Senior Lawyer</option>
             <option value="JuniorLawyer">Junior Lawyer</option>

@@ -12,9 +12,11 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { fixedAssetService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { Boxes, Plus } from "lucide-react";
 
 export default function FixedAssetsPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -29,7 +31,7 @@ export default function FixedAssetsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fixed-assets"] });
       setCreateOpen(false);
-      toast.success("Asset added");
+      toast.success(t("fixedAssets.assetAdded"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -39,7 +41,7 @@ export default function FixedAssetsPage() {
       fixedAssetService.dispose(id, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["fixed-assets"] });
-      toast.success("Asset disposed");
+      toast.success(t("fixedAssets.assetDisposed"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -49,26 +51,26 @@ export default function FixedAssetsPage() {
   return (
     <div>
       <PageHeader
-        title="Fixed Assets"
-        subtitle="Track firm equipment, vehicles and property with depreciation."
+        title={t("fixedAssets.title")}
+        subtitle={t("fixedAssets.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Add Asset
+            <Plus className="h-4 w-4" /> {t("fixedAssets.addAsset")}
           </Button>
         }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Assets</p>
+          <p className="text-sm text-ink-muted">{t("fixedAssets.assets")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{assets?.length ?? 0}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Total Book Value</p>
+          <p className="text-sm text-ink-muted">{t("fixedAssets.totalBookValue")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{formatCurrency(totalValue)}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Active Assets</p>
+          <p className="text-sm text-ink-muted">{t("fixedAssets.activeAssets")}</p>
           <p className="mt-1 text-2xl font-bold text-emerald-600">
             {(assets ?? []).filter((a) => a.status !== "Disposed").length}
           </p>
@@ -82,13 +84,13 @@ export default function FixedAssetsPage() {
           <table className="table-base">
             <thead>
               <tr>
-                <th>Asset</th>
-                <th>Category</th>
-                <th>Purchase Date</th>
-                <th>Cost</th>
-                <th>Book Value</th>
-                <th>Depreciation</th>
-                <th>Status</th>
+                <th>{t("fixedAssets.asset")}</th>
+                <th>{t("fixedAssets.category")}</th>
+                <th>{t("fixedAssets.purchaseDate")}</th>
+                <th>{t("fixedAssets.cost")}</th>
+                <th>{t("fixedAssets.bookValue")}</th>
+                <th>{t("fixedAssets.depreciation")}</th>
+                <th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,9 +115,9 @@ export default function FixedAssetsPage() {
         ) : (
           <EmptyState
             icon={<Boxes className="h-10 w-10" />}
-            title="No fixed assets"
-            description="Add firm assets to track depreciation."
-            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> Add Asset</Button>}
+            title={t("fixedAssets.noFixedAssets")}
+            description={t("fixedAssets.noFixedAssetsDesc")}
+            action={<Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" /> {t("fixedAssets.addAsset")}</Button>}
           />
         )}
       </Card>
@@ -134,6 +136,7 @@ function CreateAssetDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     category: "Office Equipment",
@@ -146,10 +149,10 @@ function CreateAssetDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add Asset"
+      title={t("fixedAssets.addAsset")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             disabled={!form.name || !form.purchaseCost}
             onClick={() =>
@@ -163,36 +166,36 @@ function CreateAssetDialog({
               })
             }
           >
-            Add Asset
+            {t("fixedAssets.addAsset")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Asset Name" required>
+        <Field label={t("fixedAssets.assetName")} required>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </Field>
-        <Field label="Category">
+        <Field label={t("fixedAssets.category")}>
           <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             {["Office Equipment", "Furniture", "Vehicles", "Property", "Electronics", "Other"].map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{t(`fixedAssets.assetCategories.${c}`)}</option>
             ))}
           </Select>
         </Field>
-        <Field label="Purchase Cost (BDT)" required>
+        <Field label={t("fixedAssets.purchaseCostBdt")} required>
           <Input type="number" value={form.purchaseCost} onChange={(e) => setForm({ ...form, purchaseCost: e.target.value })} />
         </Field>
-        <Field label="Purchase Date">
+        <Field label={t("fixedAssets.purchaseDate")}>
           <Input type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })} />
         </Field>
-        <Field label="Depreciation Method">
+        <Field label={t("fixedAssets.depreciationMethod")}>
           <Select value={form.depreciationMethod} onChange={(e) => setForm({ ...form, depreciationMethod: e.target.value })}>
             {["Straight-Line", "Reducing Balance", "Sum-of-Years"].map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>{t(`fixedAssets.depreciationMethods.${m}`)}</option>
             ))}
           </Select>
         </Field>
-        <Field label="Serial Number">
+        <Field label={t("fixedAssets.serialNumber")}>
           <Input value={form.serialNumber} onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} />
         </Field>
       </div>

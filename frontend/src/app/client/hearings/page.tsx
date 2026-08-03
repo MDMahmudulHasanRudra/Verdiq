@@ -9,8 +9,10 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { clientPortalService } from "@/lib/services";
 import { formatDateTime } from "@/lib/utils";
 import { CalendarClock } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientHearingsPage() {
+  const { t } = useLanguage();
   const { data, isLoading } = useQuery({
     queryKey: ["client", "hearings"],
     queryFn: () => clientPortalService.hearings()
@@ -18,7 +20,7 @@ export default function ClientHearingsPage() {
 
   return (
     <div>
-      <PageHeader title="Hearings" subtitle="Your scheduled court appearances." />
+      <PageHeader title={t("clientHearings.title")} subtitle={t("clientHearings.subtitle")} />
 
       <Card>
         {isLoading ? (
@@ -27,11 +29,11 @@ export default function ClientHearingsPage() {
           <Table>
             <thead>
               <tr>
-                <th>Case</th>
-                <th>Hearing Date</th>
-                <th>Courtroom</th>
-                <th>Judge</th>
-                <th>Status</th>
+                <th>{t("clientHearings.case")}</th>
+                <th>{t("clientHearings.hearingDate")}</th>
+                <th>{t("clientHearings.courtroom")}</th>
+                <th>{t("clientHearings.judge")}</th>
+                <th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -50,7 +52,7 @@ export default function ClientHearingsPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState icon={<CalendarClock className="h-10 w-10" />} title="No hearings" description="Your chamber hasn't scheduled any hearings for you yet." />
+          <EmptyState icon={<CalendarClock className="h-10 w-10" />} title={t("clientHearings.noHearings")} description={t("clientHearings.noHearingsDesc")} />
         )}
       </Card>
     </div>

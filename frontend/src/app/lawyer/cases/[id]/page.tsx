@@ -17,6 +17,7 @@ import { Input, Select, Field, Textarea } from "@/components/ui/field";
 import { Loading, EmptyState } from "@/components/ui/loading";
 import { getErrorMessage, formatDate, formatDateTime, API_URL } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import {
   ArrowLeft,
   CalendarClock,
@@ -50,6 +51,7 @@ export default function CaseDetailPage() {
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const { data: caseData, isLoading } = useCase(id);
   const { data: activities } = useCaseActivities(id);
   const { data: procedures } = useCaseProcedures(id);
@@ -99,10 +101,10 @@ export default function CaseDetailPage() {
         actions={
           <>
             <Button variant="outline" onClick={() => router.push(`/lawyer/documents?caseId=${c.id}`)}>
-              <FileUp className="h-4 w-4" /> Documents
+              <FileUp className="h-4 w-4" /> {t("clientDetail.documents")}
             </Button>
             <Button onClick={() => setHearingOpen(true)}>
-              <CalendarClock className="h-4 w-4" /> Schedule Hearing
+              <CalendarClock className="h-4 w-4" /> {t("hearings.schedule")}
             </Button>
           </>
         }
@@ -128,12 +130,12 @@ export default function CaseDetailPage() {
         ) : null}
       </div>
 
-      <Tabs tabs={[{ value: "overview", label: "Overview" }, { value: "parties", label: "Parties" }, { value: "hearings", label: "Hearings" }, { value: "judgments", label: "Judgments" }, { value: "documents", label: "Documents" }, { value: "photos", label: "Photos" }, { value: "procedures", label: "Procedures" }, { value: "workflow", label: "Workflow" }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ value: "overview", label: t("clientDetail.overview") }, { value: "parties", label: "Parties" }, { value: "hearings", label: t("hearings.title") }, { value: "judgments", label: "Judgments" }, { value: "documents", label: t("clientDetail.documents") }, { value: "photos", label: "Photos" }, { value: "procedures", label: "Procedures" }, { value: "workflow", label: t("workflows.title") }, { value: "activity", label: "Activity" }]} value={tab} onChange={setTab} />
 
       {tab === "overview" && (
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
-            <CardHeader title="Case Details" />
+            <CardHeader title={t("clientDetail.overview")} />
             <CardContent>
               <dl className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                 <InfoRow label="Court" value={c.courtName} />
@@ -151,13 +153,13 @@ export default function CaseDetailPage() {
               </dl>
               {c.description ? (
                 <div className="mt-6">
-                  <h4 className="mb-1 text-sm font-semibold text-ink">Description</h4>
+                  <h4 className="mb-1 text-sm font-semibold text-ink">{t("clientDetail.notes")}</h4>
                   <p className="text-sm text-ink-muted">{c.description}</p>
                 </div>
               ) : null}
               {c.actsAndSections ? (
                 <div className="mt-4">
-                  <h4 className="mb-1 text-sm font-semibold text-ink">Acts & Sections</h4>
+                  <h4 className="mb-1 text-sm font-semibold text-ink">Acts &amp; Sections</h4>
                   <p className="text-sm text-ink-muted">{c.actsAndSections}</p>
                 </div>
               ) : null}

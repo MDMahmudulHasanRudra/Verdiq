@@ -11,9 +11,11 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { accountingService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { TrendingUp, Plus } from "lucide-react";
 
 export default function AccountingPage() {
+  const { t } = useLanguage();
   const toast = useToast();
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -37,7 +39,7 @@ export default function AccountingPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["accounting"] });
       setCreateOpen(false);
-      toast.success("Journal entry created");
+      toast.success(t("accounting.journalEntryCreated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -45,11 +47,11 @@ export default function AccountingPage() {
   return (
     <div>
       <PageHeader
-        title="Accounting"
-        subtitle="Chart of accounts, journals and financial reports."
+        title={t("accounting.title")}
+        subtitle={t("accounting.subtitle")}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> Journal Entry
+            <Plus className="h-4 w-4" /> {t("accounting.journalEntry")}
           </Button>
         }
       />
@@ -59,34 +61,34 @@ export default function AccountingPage() {
       ) : (
         <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="Total Revenue" value={d?.totalRevenue as number} />
-            <SummaryCard label="Total Expenses" value={d?.totalExpenses as number} tone="gold" />
-            <SummaryCard label="Net Profit" value={d?.netProfit as number} tone="green" />
-            <SummaryCard label="Outstanding Receivables" value={d?.outstandingReceivables as number} tone="red" />
+            <SummaryCard label={t("accounting.totalRevenue")} value={d?.totalRevenue as number} />
+            <SummaryCard label={t("accounting.totalExpenses")} value={d?.totalExpenses as number} tone="gold" />
+            <SummaryCard label={t("accounting.netProfit")} value={d?.netProfit as number} tone="green" />
+            <SummaryCard label={t("accounting.outstandingReceivables")} value={d?.outstandingReceivables as number} tone="red" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <Card>
-              <CardHeader title="Profit & Loss" />
+              <CardHeader title={t("accounting.profitLoss")} />
               <CardContent className="space-y-2">
-                <PnlRow label="Revenue" value={pnl?.revenue as number} />
-                <PnlRow label="Cost of Services" value={pnl?.costOfServices as number} />
-                <PnlRow label="Operating Expenses" value={pnl?.operatingExpenses as number} />
+                <PnlRow label={t("accounting.revenue")} value={pnl?.revenue as number} />
+                <PnlRow label={t("accounting.costOfServices")} value={pnl?.costOfServices as number} />
+                <PnlRow label={t("accounting.operatingExpenses")} value={pnl?.operatingExpenses as number} />
                 <div className="border-t border-line pt-2">
-                  <PnlRow label="Net Profit" value={pnl?.netProfit as number} bold />
+                  <PnlRow label={t("accounting.netProfit")} value={pnl?.netProfit as number} bold />
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader title="Recent Journal Entries" />
+              <CardHeader title={t("accounting.recentJournalEntries")} />
               <CardContent>
                 {journals && (journals as unknown as Record<string, unknown>[])?.length ? (
                   <div className="space-y-3">
                     {(journals as unknown as Record<string, unknown>[]).slice(0, 8).map((j) => (
                       <div key={String(j.id)} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
                         <div>
-                          <p className="text-sm font-medium text-ink">{String(j.description ?? "Journal entry")}</p>
+                          <p className="text-sm font-medium text-ink">{String(j.description ?? t("accounting.journalEntry"))}</p>
                           <p className="text-xs text-ink-muted">{formatDate(String(j.entryDate ?? j.createdAt ?? ""))}</p>
                         </div>
                         <p className="text-sm font-semibold text-ink">{formatCurrency(Number(j.totalAmount ?? j.amount ?? 0))}</p>
@@ -94,7 +96,7 @@ export default function AccountingPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState title="No journal entries" />
+                  <EmptyState title={t("accounting.noJournalEntries")} />
                 )}
               </CardContent>
             </Card>
@@ -144,6 +146,7 @@ function CreateJournalDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     description: "",
     entryDate: new Date().toISOString().slice(0, 10),
@@ -155,10 +158,10 @@ function CreateJournalDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Journal Entry"
+      title={t("accounting.journalEntry")}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
           <Button
             disabled={!form.description || !form.amount}
             onClick={() =>
@@ -171,25 +174,25 @@ function CreateJournalDialog({
               })
             }
           >
-            Post Entry
+            {t("accounting.postEntry")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Description" required className="sm:col-span-2">
+        <Field label={t("accounting.description")} required className="sm:col-span-2">
           <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
-        <Field label="Entry Date">
+        <Field label={t("accounting.entryDate")}>
           <Input type="date" value={form.entryDate} onChange={(e) => setForm({ ...form, entryDate: e.target.value })} />
         </Field>
-        <Field label="Amount (BDT)" required>
+        <Field label={t("accounting.amount")} required>
           <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
         </Field>
-        <Field label="Debit Account ID">
+        <Field label={t("accounting.debitAccountId")}>
           <Input value={form.debitAccountId} onChange={(e) => setForm({ ...form, debitAccountId: e.target.value })} />
         </Field>
-        <Field label="Credit Account ID">
+        <Field label={t("accounting.creditAccountId")}>
           <Input value={form.creditAccountId} onChange={(e) => setForm({ ...form, creditAccountId: e.target.value })} />
         </Field>
       </div>

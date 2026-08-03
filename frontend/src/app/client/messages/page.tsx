@@ -12,10 +12,12 @@ import { clientPortalService } from "@/lib/services";
 import { getErrorMessage, formatDateTime, timeAgo } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { MessageSquare, Send } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function ClientMessagesPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [content, setContent] = useState("");
 
   const { data: messages, isLoading } = useQuery({
@@ -35,14 +37,14 @@ export default function ClientMessagesPage() {
       setContent("");
       qc.invalidateQueries({ queryKey: ["client", "messages"] });
       qc.invalidateQueries({ queryKey: ["client", "unread"] });
-      toast.success("Message sent");
+      toast.success(t("clientMessages.sent"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
 
   return (
     <div>
-      <PageHeader title="Messages" subtitle="Communicate securely with your law chamber." />
+      <PageHeader title={t("clientMessages.title")} subtitle={t("clientMessages.subtitle")} />
 
       <Card className="flex h-[60vh] flex-col">
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
@@ -73,8 +75,8 @@ export default function ClientMessagesPage() {
           ) : (
             <EmptyState
               icon={<MessageSquare className="h-10 w-10" />}
-              title="No messages yet"
-              description="Send a message to your chamber to start the conversation."
+              title={t("clientMessages.noMessages")}
+              description={t("clientMessages.noMessagesDesc")}
             />
           )}
         </div>
@@ -90,17 +92,17 @@ export default function ClientMessagesPage() {
             rows={2}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Type a message…"
+            placeholder={t("clientMessages.typeMessage")}
             className="flex-1"
           />
           <Button type="submit" disabled={!content.trim() || !profile?.id} loading={sendMutation.isPending}>
-            <Send className="h-4 w-4" /> Send
+            <Send className="h-4 w-4" /> {t("clientMessages.send")}
           </Button>
         </form>
       </Card>
 
       <p className="mt-3 text-xs text-ink-soft">
-        {messages?.length ? `Last message ${formatDateTime(messages[messages.length - 1].createdAt)}` : ""}
+        {messages?.length ? `${t("clientMessages.lastMessage")} ${formatDateTime(messages[messages.length - 1].createdAt)}` : ""}
       </p>
     </div>
   );

@@ -12,12 +12,14 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { payrollService } from "@/lib/services";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { ArrowLeftRight, Plus, UserPlus } from "lucide-react";
 import type { Employee } from "@/types/models";
 
 export default function PayrollPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [employeeOpen, setEmployeeOpen] = useState(false);
@@ -66,15 +68,15 @@ export default function PayrollPage() {
   return (
     <div>
       <PageHeader
-        title="Payroll"
-        subtitle="Manage employees, salaries and monthly runs."
+        title={t("payroll.title")}
+        subtitle={t("payroll.subtitle")}
         actions={
           <>
             <Button variant="outline" onClick={() => setEmployeeOpen(true)}>
-              <UserPlus className="h-4 w-4" /> Employee
+              <UserPlus className="h-4 w-4" /> {t("payroll.employee")}
             </Button>
             <Button onClick={() => setPayrollOpen(true)}>
-              <Plus className="h-4 w-4" /> Run Payroll
+              <Plus className="h-4 w-4" /> {t("payroll.addRecord")}
             </Button>
           </>
         }
@@ -82,15 +84,15 @@ export default function PayrollPage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Employees</p>
+          <p className="text-sm text-ink-muted">{t("payroll.employee")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{employees?.length ?? 0}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">{monthName(month)} {year} Net Payroll</p>
+          <p className="text-sm text-ink-muted">{monthName(month)} {year} {t("payroll.netPay")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{formatCurrency(totalPayroll)}</p>
         </Card>
         <Card className="p-5">
-          <p className="text-sm text-ink-muted">Payroll Runs</p>
+          <p className="text-sm text-ink-muted">{t("payroll.period")}</p>
           <p className="mt-1 text-2xl font-bold text-ink">{payrolls?.length ?? 0}</p>
         </Card>
       </div>
@@ -110,20 +112,20 @@ export default function PayrollPage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
-          <CardHeader title="Employees" />
+          <CardHeader title={t("payroll.employee")} />
           {isLoading ? (
             <Loading />
           ) : employees && employees.length > 0 ? (
             <CardContent className="space-y-3">
-              {employees.map((e) => (
-                <div key={e.id} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
+              {employees.map((emp) => (
+                <div key={emp.id} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
                   <div>
-                    <p className="text-sm font-medium text-ink">{e.fullName}</p>
-                    <p className="text-xs text-ink-muted">{e.designation} · {e.department}</p>
+                    <p className="text-sm font-medium text-ink">{emp.fullName}</p>
+                    <p className="text-xs text-ink-muted">{emp.designation} · {emp.department}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-ink">{formatCurrency(e.baseSalary)}</span>
-                    <StatusBadge value={e.status} />
+                    <span className="text-sm font-semibold text-ink">{formatCurrency(emp.baseSalary)}</span>
+                    <StatusBadge value={emp.status} />
                   </div>
                 </div>
               ))}
@@ -131,14 +133,14 @@ export default function PayrollPage() {
           ) : (
             <EmptyState
               icon={<UserPlus className="h-10 w-10" />}
-              title="No employees"
-              action={<Button size="sm" onClick={() => setEmployeeOpen(true)}><Plus className="h-4 w-4" /> Add Employee</Button>}
+              title={t("payroll.noRecords")}
+              action={<Button size="sm" onClick={() => setEmployeeOpen(true)}><Plus className="h-4 w-4" /> {t("payroll.addRecord")}</Button>}
             />
           )}
         </Card>
 
         <Card>
-          <CardHeader title={`Payroll Runs · ${monthName(month)} ${year}`} />
+          <CardHeader title={`${t("payroll.title")} · ${monthName(month)} ${year}`} />
           {isLoading ? (
             <Loading />
           ) : payrolls && payrolls.length > 0 ? (
@@ -163,9 +165,9 @@ export default function PayrollPage() {
           ) : (
             <EmptyState
               icon={<ArrowLeftRight className="h-10 w-10" />}
-              title="No payroll runs"
-              description={`Run payroll for ${monthName(month)} ${year}.`}
-              action={<Button size="sm" onClick={() => setPayrollOpen(true)}><Plus className="h-4 w-4" /> Run Payroll</Button>}
+              title={t("payroll.noRecords")}
+              description={`${t("payroll.addRecord")} ${monthName(month)} ${year}.`}
+              action={<Button size="sm" onClick={() => setPayrollOpen(true)}><Plus className="h-4 w-4" /> {t("payroll.addRecord")}</Button>}
             />
           )}
         </Card>
@@ -190,6 +192,7 @@ function AddEmployeeDialog({
   onClose: () => void;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     designation: "",
@@ -200,7 +203,7 @@ function AddEmployeeDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add Employee"
+      title={t("payroll.addRecord")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -216,22 +219,22 @@ function AddEmployeeDialog({
               })
             }
           >
-            Add Employee
+            {t("payroll.addRecord")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Name" required className="sm:col-span-2">
+        <Field label={t("payroll.employee")} required className="sm:col-span-2">
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </Field>
-        <Field label="Designation">
+        <Field label={t("payroll.baseSalary")}>
           <Input value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} />
         </Field>
-        <Field label="Department">
+        <Field label={t("payroll.allowances")}>
           <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
         </Field>
-        <Field label="Base Salary (BDT)" required className="sm:col-span-2">
+        <Field label={t("payroll.baseSalary")} required className="sm:col-span-2">
           <Input type="number" value={form.baseSalary} onChange={(e) => setForm({ ...form, baseSalary: e.target.value })} />
         </Field>
       </div>
@@ -254,13 +257,14 @@ function RunPayrollDialog({
   year: number;
   onSubmit: (input: Record<string, unknown>) => void;
 }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ employeeId: "", grossSalary: "", deductions: "0", bonuses: "0" });
   const selected = employees.find((e) => e.id === form.employeeId);
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Run Payroll"
+      title={t("payroll.addRecord")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -277,13 +281,13 @@ function RunPayrollDialog({
               })
             }
           >
-            Create Payroll
+            {t("payroll.addRecord")}
           </Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Employee" required className="sm:col-span-2">
+        <Field label={t("payroll.employee")} required className="sm:col-span-2">
           <Select
             value={form.employeeId}
             onChange={(e) => {
@@ -302,18 +306,18 @@ function RunPayrollDialog({
             ))}
           </Select>
         </Field>
-        <Field label="Gross Salary (BDT)" required>
+        <Field label={t("payroll.baseSalary")} required>
           <Input type="number" value={form.grossSalary} onChange={(e) => setForm({ ...form, grossSalary: e.target.value })} />
         </Field>
-        <Field label="Bonuses (BDT)">
+        <Field label={t("payroll.allowances")}>
           <Input type="number" value={form.bonuses} onChange={(e) => setForm({ ...form, bonuses: e.target.value })} />
         </Field>
-        <Field label="Deductions (BDT)" className="sm:col-span-2">
+        <Field label={t("payroll.deductions")} className="sm:col-span-2">
           <Input type="number" value={form.deductions} onChange={(e) => setForm({ ...form, deductions: e.target.value })} />
         </Field>
         {selected ? (
           <p className="text-xs text-ink-muted">
-            Net pay: {formatCurrency(Number(form.grossSalary || 0) + Number(form.bonuses || 0) - Number(form.deductions || 0))}
+            {t("payroll.netPay")}: {formatCurrency(Number(form.grossSalary || 0) + Number(form.bonuses || 0) - Number(form.deductions || 0))}
           </p>
         ) : null}
       </div>

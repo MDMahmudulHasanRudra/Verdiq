@@ -9,12 +9,14 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { superAdminService } from "@/lib/services/super-admin-service";
 import { getErrorMessage, formatCurrency, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { BadgeCheck } from "lucide-react";
 import type { SuperAdminSubscription } from "@/types/super-admin";
 
 export default function SuperAdminSubscriptionsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
 
   const { data, isLoading } = useQuery({
     queryKey: ["super-admin", "subscriptions"],
@@ -26,7 +28,7 @@ export default function SuperAdminSubscriptionsPage() {
       superAdminService.updateUserSubscription(v.id, v.input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "subscriptions"] });
-      toast.success("Subscription updated");
+      toast.success(t("superAdmin.subscriptions.subscriptionUpdated"));
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -34,8 +36,8 @@ export default function SuperAdminSubscriptionsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-white">Subscriptions</h1>
-        <p className="mt-1 text-sm text-slate-400">Billing status of every chamber subscription.</p>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t("superAdmin.subscriptions.title")}</h1>
+        <p className="mt-1 text-sm text-slate-400">{t("superAdmin.subscriptions.subtitle")}</p>
       </div>
 
       <Card className="border-slate-800 bg-slate-900">
@@ -45,12 +47,12 @@ export default function SuperAdminSubscriptionsPage() {
           <Table className="dark-table">
             <thead>
               <tr>
-                <th>Chamber</th>
-                <th>Owner</th>
-                <th>Plan</th>
-                <th>Period</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <th>{t("superAdmin.subscriptions.chamber")}</th>
+                <th>{t("superAdmin.subscriptions.owner")}</th>
+                <th>{t("superAdmin.subscriptions.plan")}</th>
+                <th>{t("superAdmin.subscriptions.period")}</th>
+                <th>{t("common.status")}</th>
+                <th className="text-right">{t("superAdmin.subscriptions.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -79,7 +81,7 @@ export default function SuperAdminSubscriptionsPage() {
                           })
                         }
                       >
-                        {s.plan === "Pro" ? "Upgrade to Chamber" : "Downgrade to Pro"}
+                        {s.plan === "Pro" ? t("superAdmin.subscriptions.upgradeToChamber") : t("superAdmin.subscriptions.downgradeToPro")}
                       </Button>
                       {s.cancelAtPeriodEnd ? (
                         <Button
@@ -88,7 +90,7 @@ export default function SuperAdminSubscriptionsPage() {
                           className="text-slate-300 hover:bg-slate-700/40 hover:text-white"
                           onClick={() => updateMutation.mutate({ id: s.id, input: { cancelAtPeriodEnd: false } })}
                         >
-                          Reinstate
+                          {t("superAdmin.subscriptions.reinstate")}
                         </Button>
                       ) : null}
                     </div>
@@ -98,7 +100,7 @@ export default function SuperAdminSubscriptionsPage() {
             </tbody>
           </Table>
         ) : (
-          <EmptyState dark icon={<BadgeCheck className="h-10 w-10" />} title="No subscriptions" description="Subscriptions will appear here once chambers upgrade." />
+          <EmptyState dark icon={<BadgeCheck className="h-10 w-10" />} title={t("superAdmin.subscriptions.noSubscriptions")} description={t("superAdmin.subscriptions.noSubscriptionsDesc")} />
         )}
       </Card>
     </div>

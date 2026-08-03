@@ -9,10 +9,12 @@ import { useToast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/utils";
 import { Field, Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 
 export default function SuperAdminLoginPage() {
   const router = useRouter();
   const toast = useToast();
+  const { t } = useLanguage();
   const [userId, setUserId] = useState("superadmin");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

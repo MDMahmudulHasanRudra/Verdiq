@@ -9,6 +9,7 @@ import { Loading, EmptyState } from "@/components/ui/loading";
 import { superAdminService } from "@/lib/services/super-admin-service";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useLanguage } from "@/lib/i18n";
 import { KeyRound } from "lucide-react";
 import type { Permission } from "@/types/super-admin";
 
@@ -17,6 +18,7 @@ const ROLE_OPTIONS = ["SuperAdmin", "Owner", "SeniorLawyer", "JuniorLawyer", "As
 export default function SuperAdminPermissionsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { t } = useLanguage();
   const [role, setRole] = useState("SeniorLawyer");
 
   const { data: permissions, isLoading: permsLoading } = useQuery({
@@ -33,7 +35,7 @@ export default function SuperAdminPermissionsPage() {
     mutationFn: (permissionIds: string[]) => superAdminService.assignRolePermissions(role, permissionIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["super-admin", "role-permissions"] });
-      toast.success(`Updated permissions for ${role}`);
+      toast.success(`${t("superAdmin.permissions.updatedPermissions")} ${role}`);
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -57,8 +59,8 @@ export default function SuperAdminPermissionsPage() {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-white">Permissions</h1>
-          <p className="mt-1 text-sm text-slate-400">Control what each role can do across the platform.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-white">{t("superAdmin.permissions.title")}</h1>
+          <p className="mt-1 text-sm text-slate-400">{t("superAdmin.permissions.subtitle")}</p>
         </div>
         <Select className="w-52 border-slate-700 bg-slate-800 text-white" value={role} onChange={(e) => setRole(e.target.value)}>
           {ROLE_OPTIONS.map((r) => (
@@ -104,16 +106,16 @@ export default function SuperAdminPermissionsPage() {
         </div>
       ) : (
         <Card className="border-slate-800 bg-slate-900">
-          <EmptyState dark icon={<KeyRound className="h-10 w-10" />} title="No permissions" description="Seed permissions in the system to configure roles." />
+          <EmptyState dark icon={<KeyRound className="h-10 w-10" />} title={t("superAdmin.permissions.noPermissions")} description={t("superAdmin.permissions.noPermissionsDesc")} />
         </Card>
       )}
 
       {assignMutation.isPending ? (
-        <p className="mt-4 text-sm text-slate-400">Saving permission changes…</p>
+        <p className="mt-4 text-sm text-slate-400">{t("superAdmin.permissions.saving")}</p>
       ) : (
         <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
           <Button variant="ghost" size="sm" className="text-slate-300" onClick={() => assignMutation.mutate(Array.from(currentIds))}>
-            Save current role
+            {t("superAdmin.permissions.saveCurrentRole")}
           </Button>
         </p>
       )}
