@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { useCase, useCaseActivities, useCaseProcedures } from "@/lib/hooks";
-import { caseService, hearingService, documentService, judgmentService, casePhotoService, caseWorkflows } from "@/lib/services";
+import { useCase, useCaseActivities } from "@/lib/hooks";
+import { caseService, hearingService, documentService, judgmentService, casePhotoService, caseWorkflows, legalSectionService } from "@/lib/services";
 import { downloadBlob } from "@/lib/api";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -38,13 +38,20 @@ import {
   Link2,
   Ban,
   ListChecks,
-  AlertCircle
+  AlertCircle,
+  Copy,
+  Save,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink
 } from "lucide-react";
 import type { Hearing, Judgment, CreateJudgmentInput, CasePhoto, CaseWorkflow, CaseWorkflowStep, Workflow } from "@/types/models";
+import { FileUploadZone, type PendingFile } from "@/components/ui/file-upload-zone";
+import { DocumentPreview } from "@/components/ui/document-preview";
 
 const hearingStatuses = ["Scheduled", "Adjourned", "Completed", "Canceled"];
 const results = ["Adjourned", "Granted", "Rejected", "Heard", "Deferred", "Dismissed"];
-const docCategories = ["Pleadings", "Evidence", "Court Orders", "Correspondence", "Contracts", "Fees", "Other"];
 
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +61,6 @@ export default function CaseDetailPage() {
   const { t } = useLanguage();
   const { data: caseData, isLoading } = useCase(id);
   const { data: activities } = useCaseActivities(id);
-  const { data: procedures } = useCaseProcedures(id);
   const [tab, setTab] = useState("overview");
   const [hearingOpen, setHearingOpen] = useState(false);
 
@@ -72,8 +78,31 @@ export default function CaseDetailPage() {
   const completeProcedure = useMutation({
     mutationFn: (procedureId: string) => caseService.completeProcedure(id, procedureId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["case", id, "procedures"] });
+      qc.invalidateQueries({ queryKey: ["case", id] });
       toast.success("Procedure completed");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState("");
+
+  const saveNotes = useMutation({
+    mutationFn: (notes: string) => caseService.update(id, { internalNotes: notes }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["case", id] });
+      setEditingNotes(false);
+      toast.success("Notes saved");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: () => caseService.duplicate(id),
+    onSuccess: (newCase) => {
+      qc.invalidateQueries({ queryKey: ["cases"] });
+      toast.success(`Case duplicated as ${newCase.caseNumber}`);
+      router.push(`/lawyer/cases/${newCase.id}`);
     },
     onError: (e) => toast.error(getErrorMessage(e))
   });
@@ -100,6 +129,15 @@ export default function CaseDetailPage() {
         subtitle={`${c.courtName} · Filed ${formatDate(c.filingDate)}`}
         actions={
           <>
+            <Button variant="outline" onClick={() => {
+              setNotesValue(c.internalNotes ?? "");
+              setEditingNotes(true);
+            }}>
+              <PenLine className="h-4 w-4" /> Notes
+            </Button>
+            <Button variant="outline" onClick={() => duplicateMutation.mutate()} disabled={duplicateMutation.isPending}>
+              <Copy className="h-4 w-4" /> {duplicateMutation.isPending ? "Duplicating..." : "Duplicate"}
+            </Button>
             <Button variant="outline" onClick={() => router.push(`/lawyer/documents?caseId=${c.id}`)}>
               <FileUp className="h-4 w-4" /> {t("clientDetail.documents")}
             </Button>
@@ -163,6 +201,37 @@ export default function CaseDetailPage() {
                   <p className="text-sm text-ink-muted">{c.actsAndSections}</p>
                 </div>
               ) : null}
+
+              <div className="mt-6 border-t border-line pt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-ink">Internal Notes</h4>
+                  {!editingNotes ? (
+                    <Button size="sm" variant="ghost" onClick={() => {
+                      setNotesValue(c.internalNotes ?? "");
+                      setEditingNotes(true);
+                    }}>
+                      <PenLine className="h-3.5 w-3.5" /> Edit
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => saveNotes.mutate(notesValue)} disabled={saveNotes.isPending}>
+                      <Save className="h-3.5 w-3.5" /> {saveNotes.isPending ? "Saving..." : "Save"}
+                    </Button>
+                  )}
+                </div>
+                {editingNotes ? (
+                  <Textarea
+                    value={notesValue}
+                    onChange={(e) => setNotesValue(e.target.value)}
+                    rows={4}
+                    placeholder="Add internal notes about this case..."
+                    className="w-full"
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm text-ink-muted">
+                    {c.internalNotes || "No notes yet."}
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -190,23 +259,40 @@ export default function CaseDetailPage() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader title="Stats" />
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-2xl font-bold text-ink">{c.hearingsCount}</p>
-                  <p className="text-xs text-ink-muted">Hearings</p>
+              <CardHeader title="Quick Stats" />
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <p className="text-2xl font-bold text-ink">{c.hearingsCount}</p>
+                    <p className="text-xs text-ink-muted">Hearings</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <p className="text-2xl font-bold text-ink">{c.documentsCount}</p>
+                    <p className="text-xs text-ink-muted">Documents</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-ink">{c.documentsCount}</p>
-                  <p className="text-xs text-ink-muted">Documents</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-ink">{c.complexityScore ?? "—"}</p>
-                  <p className="text-xs text-ink-muted">Complexity</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-ink">{c.retainerAmount ? `৳${c.retainerAmount.toLocaleString()}` : "—"}</p>
-                  <p className="text-xs text-ink-muted">Retainer</p>
+                {c.retainerAmount ? (
+                  <div className="rounded-lg bg-emerald-50 p-3">
+                    <p className="text-lg font-bold text-emerald-800">৳{c.retainerAmount.toLocaleString()}</p>
+                    <p className="text-xs text-emerald-600">Retainer Amount</p>
+                  </div>
+                ) : null}
+                {c.limitationExpiry ? (
+                  <div className="rounded-lg bg-amber-50 p-3">
+                    <p className="text-sm font-semibold text-amber-800">{formatDate(c.limitationExpiry)}</p>
+                    <p className="text-xs text-amber-600">Limitation Expiry</p>
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="subtle" onClick={() => setTab("hearings")} className="flex-1">
+                    <CalendarDays className="h-3.5 w-3.5" /> Hearings
+                  </Button>
+                  <Button size="sm" variant="subtle" onClick={() => setTab("documents")} className="flex-1">
+                    <FileText className="h-3.5 w-3.5" /> Docs
+                  </Button>
+                  <Button size="sm" variant="subtle" onClick={() => setTab("workflow")} className="flex-1">
+                    <WorkflowIcon className="h-3.5 w-3.5" /> Flow
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -261,32 +347,7 @@ export default function CaseDetailPage() {
 
       {tab === "procedures" && (
         <div className="mt-5">
-          <Card>
-            <CardHeader title="Case Procedures" description="Checklist generated from the applicable legal sections." />
-            <CardContent className="space-y-3">
-              {procedures && procedures.length > 0 ? (
-                (procedures as { id: string; title: string; description: string; isCompleted: boolean; dueDate?: string | null }[]).map((p) => (
-                  <div key={p.id} className="flex items-start justify-between gap-4 rounded-lg border border-line p-3">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className={p.isCompleted ? "mt-0.5 h-5 w-5 text-emerald-500" : "mt-0.5 h-5 w-5 text-slate-300"} />
-                      <div>
-                        <p className={`text-sm font-medium ${p.isCompleted ? "text-ink-muted line-through" : "text-ink"}`}>{p.title}</p>
-                        {p.description ? <p className="mt-0.5 text-xs text-ink-muted">{p.description}</p> : null}
-                        {p.dueDate ? <p className="mt-1 text-xs text-amber-600">Due {formatDate(p.dueDate)}</p> : null}
-                      </div>
-                    </div>
-                    {!p.isCompleted ? (
-                      <Button size="sm" variant="subtle" onClick={() => completeProcedure.mutate(p.id)}>
-                        Mark done
-                      </Button>
-                    ) : null}
-                  </div>
-                ))
-              ) : (
-                <EmptyState title="No procedures" description="Generate a procedure checklist from the Legal Database." />
-              )}
-            </CardContent>
-          </Card>
+          <ProceduresTab caseId={c.id} legalSections={c.legalSections} />
         </div>
       )}
 
@@ -298,28 +359,7 @@ export default function CaseDetailPage() {
 
       {tab === "activity" && (
         <div className="mt-5">
-          <Card>
-            <CardHeader title="Case Activity" />
-            <CardContent>
-              <div className="space-y-4">
-                {activities && activities.length > 0 ? (
-                  activities.map((a) => (
-                    <div key={a.id} className="flex items-start gap-3">
-                      <Gavel className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" />
-                      <div>
-                        <p className="text-sm text-ink">{a.description || a.activityType}</p>
-                        <p className="text-xs text-ink-muted">
-                          {a.createdByName ?? a.createdBy} · {formatDateTime(a.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <EmptyState title="No activity logged" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ActivityTab activities={activities ?? []} />
         </div>
       )}
 
@@ -570,13 +610,29 @@ function HearingEditDialog({
   );
 }
 
-let pendingFile: File | null = null;
-let pendingCategory = "Evidence";
+const evidenceCategories = [
+  { value: "Evidence", label: "Evidence" },
+  { value: "Pleadings", label: "Pleadings" },
+  { value: "Court Orders", label: "Court Orders" },
+  { value: "Correspondence", label: "Correspondence" },
+  { value: "Contracts", label: "Contracts" },
+  { value: "Witness Statements", label: "Witness Statements" },
+  { value: "Expert Reports", label: "Expert Reports" },
+  { value: "Fees", label: "Fees" },
+  { value: "Other", label: "Other" }
+];
+
+const docCategories = ["Pleadings", "Evidence", "Court Orders", "Correspondence", "Contracts", "Fees", "Other"];
 
 function DocumentsTab({ caseId }: { caseId: string }) {
   const toast = useToast();
   const qc = useQueryClient();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("Evidence");
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [previewDoc, setPreviewDoc] = useState<{ id: string; name: string; type: string } | null>(null);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ["documents", "case", caseId],
@@ -585,13 +641,23 @@ function DocumentsTab({ caseId }: { caseId: string }) {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: ({ file, docCategory }: { file: File; docCategory: string }) =>
-      documentService.upload(file, caseId, docCategory),
+    mutationFn: async ({ file, category }: { file: File; category: string }) => {
+      const form = new FormData();
+      form.append("file", file);
+      const url = `${API_URL}/documents/upload?caseId=${caseId}&category=${encodeURIComponent(category)}`;
+      const token = typeof window !== "undefined" ? localStorage.getItem("verdiq_access_token") : null;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form
+      });
+      if (!resp.ok) throw new Error("Upload failed");
+      return resp.json();
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["documents", "case", caseId] });
       qc.invalidateQueries({ queryKey: ["documents"] });
       qc.invalidateQueries({ queryKey: ["case", caseId] });
-      setUploadOpen(false);
       toast.success("Document uploaded");
     },
     onError: (e) => toast.error(getErrorMessage(e))
@@ -607,54 +673,187 @@ function DocumentsTab({ caseId }: { caseId: string }) {
     onError: (e) => toast.error(getErrorMessage(e))
   });
 
+  const handleFilesAdd = (newFiles: File[]) => {
+    const items: PendingFile[] = newFiles.map((f) => ({
+      file: f,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      status: "pending" as const,
+      progress: 0
+    }));
+    setPendingFiles((prev) => [...prev, ...items]);
+  };
+
+  const handleFileRemove = (id: string) => {
+    setPendingFiles((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const handleUploadAll = async () => {
+    const pending = pendingFiles.filter((f) => f.status === "pending");
+    for (const pf of pending) {
+      setPendingFiles((prev) =>
+        prev.map((f) => (f.id === pf.id ? { ...f, status: "uploading" as const, progress: 0 } : f))
+      );
+      try {
+        const form = new FormData();
+        form.append("file", pf.file);
+        const token = typeof window !== "undefined" ? localStorage.getItem("verdiq_access_token") : null;
+        const url = `${API_URL}/documents/upload?caseId=${caseId}&category=${encodeURIComponent(selectedCategory)}`;
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", url);
+          if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded * 100) / e.total);
+              setPendingFiles((prev) =>
+                prev.map((f) => (f.id === pf.id ? { ...f, progress: pct } : f))
+              );
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Upload failed (${xhr.status})`));
+          };
+          xhr.onerror = () => reject(new Error("Network error"));
+          xhr.send(form);
+        });
+        setPendingFiles((prev) =>
+          prev.map((f) => (f.id === pf.id ? { ...f, status: "done" as const, progress: 100 } : f))
+        );
+      } catch {
+        setPendingFiles((prev) =>
+          prev.map((f) => (f.id === pf.id ? { ...f, status: "error" as const, error: "Failed" } : f))
+        );
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["documents", "case", caseId] });
+    qc.invalidateQueries({ queryKey: ["case", caseId] });
+    const doneCount = pendingFiles.filter((f) => f.status === "done" || f.status === "uploading").length;
+    if (doneCount > 0) toast.success(`${doneCount} document(s) uploaded`);
+    setTimeout(() => setPendingFiles((prev) => prev.filter((f) => f.status !== "done")), 2000);
+  };
+
+  const filteredDocs = (documents ?? []).filter((d) => {
+    if (filterCategory && d.category !== filterCategory) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        d.originalFileName?.toLowerCase().includes(q) ||
+        d.fileName?.toLowerCase().includes(q) ||
+        d.category?.toLowerCase().includes(q) ||
+        d.tags?.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  const groupedDocs = filteredDocs.reduce(
+    (acc, d) => {
+      const cat = d.category || "Other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(d);
+      return acc;
+    },
+    {} as Record<string, typeof filteredDocs>
+  );
+
   return (
     <>
       <Card>
         <CardHeader
           title="Evidence & Documents"
-          description="Upload evidence and documents for this case. They are stored securely and linked to the case."
+          description="Upload, organize and manage all case documents. Drag and drop files or click to browse."
           action={
             <Button size="sm" onClick={() => setUploadOpen(true)}>
-              <Plus className="h-4 w-4" /> Upload Evidence
+              <Plus className="h-4 w-4" /> Upload Files
             </Button>
           }
         />
         <CardContent>
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 pl-9"
+              />
+              <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
+            </div>
+            <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="h-9 w-44">
+              <option value="">All categories</option>
+              {evidenceCategories.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </Select>
+          </div>
+
           {isLoading ? (
             <Loading />
-          ) : documents && documents.length > 0 ? (
-            <div className="space-y-3">
-              {documents.map((d) => (
-                <div key={d.id} className="flex items-center justify-between gap-4 rounded-lg border border-line p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50">
-                      <FileText className="h-4 w-4 text-primary-700" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-ink">{d.originalFileName ?? d.fileName}</p>
-                      <p className="text-xs text-ink-muted">
-                        {d.category} · {d.fileType} · {d.fileSize ? `${(d.fileSize / 1024).toFixed(0)} KB` : "—"} · v{d.version}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <a
-                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
-                      aria-label="Download"
-                      title="Download"
-                      href={`${API_URL}/documents/download/${d.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
-                    <button
-                      onClick={() => deleteMutation.mutate(d.id)}
-                      className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+          ) : filteredDocs.length > 0 ? (
+            <div className="space-y-5">
+              {Object.entries(groupedDocs).map(([category, docs]) => (
+                <div key={category}>
+                  <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    <FileText className="h-3.5 w-3.5" />
+                    {category}
+                    <Badge tone="slate">{docs.length}</Badge>
+                  </h4>
+                  <div className="space-y-2">
+                    {docs.map((d) => (
+                      <div
+                        key={d.id}
+                        className="group flex items-center justify-between gap-4 rounded-lg border border-line p-3 transition-colors hover:bg-slate-50/50"
+                      >
+                        <button
+                          onClick={() => setPreviewDoc({ id: d.id, name: d.originalFileName ?? d.fileName, type: d.fileType })}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50">
+                            <FileText className="h-4 w-4 text-primary-700" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-ink group-hover:text-primary-700">
+                              {d.originalFileName ?? d.fileName}
+                            </p>
+                            <p className="text-xs text-ink-muted">
+                              {d.fileType?.split("/").pop()?.toUpperCase() ?? "FILE"}
+                              {" · "}
+                              {d.fileSize ? (d.fileSize > 1048576 ? `${(d.fileSize / 1048576).toFixed(1)} MB` : `${(d.fileSize / 1024).toFixed(0)} KB`) : "—"}
+                              {d.version > 1 ? ` · v${d.version}` : ""}
+                              {d.viewCount > 0 ? ` · ${d.viewCount} views` : ""}
+                            </p>
+                          </div>
+                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => setPreviewDoc({ id: d.id, name: d.originalFileName ?? d.fileName, type: d.fileType })}
+                            className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
+                            title="Preview"
+                          >
+                            <FileUp className="h-4 w-4" />
+                          </button>
+                          <a
+                            className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-slate-100 hover:text-ink"
+                            aria-label="Download"
+                            title="Download"
+                            href={`${API_URL}/documents/download/${d.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                          <button
+                            onClick={() => deleteMutation.mutate(d.id)}
+                            className="cursor-pointer rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-red-50 hover:text-red-600"
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -665,7 +864,7 @@ function DocumentsTab({ caseId }: { caseId: string }) {
               description="Upload evidence, court orders and correspondence for this case."
               action={
                 <Button onClick={() => setUploadOpen(true)}>
-                  <Plus className="h-4 w-4" /> Upload Evidence
+                  <Plus className="h-4 w-4" /> Upload Files
                 </Button>
               }
             />
@@ -675,67 +874,52 @@ function DocumentsTab({ caseId }: { caseId: string }) {
 
       <Dialog
         open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        title="Upload Evidence / Document"
-        description="Attach a file to this case. It will be stored securely and linked to the case."
+        onClose={() => { setUploadOpen(false); setPendingFiles([]); }}
+        title="Upload Evidence / Documents"
+        description="Drag and drop files or click to browse. All files are stored securely and linked to this case."
+        size="lg"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setUploadOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => { setUploadOpen(false); setPendingFiles([]); }}>Cancel</Button>
             <Button
-              disabled={!pendingFile || uploadMutation.isPending}
-              onClick={() => pendingFile && uploadMutation.mutate({ file: pendingFile, docCategory: pendingCategory })}
+              disabled={pendingFiles.filter((f) => f.status === "pending").length === 0}
+              onClick={handleUploadAll}
             >
-              <FileUp className="h-4 w-4" /> Upload
+              <FileUp className="h-4 w-4" /> Upload {pendingFiles.filter((f) => f.status === "pending").length} File(s)
             </Button>
           </>
         }
       >
-        <UploadForm
-          initialCategory={pendingCategory}
-          onReady={(file, docCategory) => {
-            pendingFile = file;
-            pendingCategory = docCategory;
-          }}
-        />
+        <div className="space-y-4">
+          <Field label="Category">
+            <Select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+              {evidenceCategories.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </Select>
+          </Field>
+          <FileUploadZone
+            files={pendingFiles}
+            onFilesAdd={handleFilesAdd}
+            onFileRemove={handleFileRemove}
+            multiple
+            maxFiles={20}
+            maxSizeMb={50}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.txt,.rtf"
+          />
+        </div>
       </Dialog>
-    </>
-  );
-}
 
-function UploadForm({
-  initialCategory,
-  onReady
-}: {
-  initialCategory: string;
-  onReady: (file: File, docCategory: string) => void;
-}) {
-  const [file, setFile] = useState<File | null>(null);
-  const [docCategory, setDocCategory] = useState(initialCategory);
-
-  const update = (f: File | null, cat: string) => {
-    setFile(f);
-    setDocCategory(cat);
-    if (f) onReady(f, cat);
-  };
-
-  return (
-    <div className="space-y-4">
-      <Field label="File" required>
-        <input
-          type="file"
-          className="w-full text-sm text-ink file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-800 file:transition-colors hover:file:bg-primary-100"
-          onChange={(e) => update(e.target.files?.[0] ?? null, docCategory)}
+      {previewDoc && (
+        <DocumentPreview
+          documentId={previewDoc.id}
+          fileName={previewDoc.name}
+          fileType={previewDoc.type}
+          open={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
         />
-      </Field>
-      <Field label="Category">
-        <Select value={docCategory} onChange={(e) => update(file, e.target.value)}>
-          {docCategories.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </Select>
-      </Field>
-      {!file ? <p className="text-xs text-ink-muted">Choose a file to enable upload.</p> : null}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -1551,6 +1735,7 @@ function WorkflowCard({
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   return (
+    <>
     <Card>
       <CardHeader
         title={
@@ -1660,8 +1845,9 @@ function WorkflowCard({
           ))}
         </ol>
       </CardContent>
+    </Card>
 
-      <Dialog
+    <Dialog
         open={confirmCancel}
         onClose={() => setConfirmCancel(false)}
         title="Cancel workflow"
@@ -1677,6 +1863,276 @@ function WorkflowCard({
       >
         <p className="text-sm text-ink-muted">You can still remove it from the case afterwards.</p>
       </Dialog>
+    </>
+  );
+}
+
+function ActivityTab({ activities }: { activities: { id: string; activityType: string; description: string; createdBy: string; createdByName?: string; createdAt: string; isClientVisible?: boolean }[] }) {
+  const [filter, setFilter] = useState<string>("all");
+
+  const activityIconMap: Record<string, React.ReactNode> = {
+    CaseCreated: <Plus className="h-4 w-4 text-blue-500" />,
+    CaseUpdated: <PenLine className="h-4 w-4 text-amber-500" />,
+    HearingScheduled: <CalendarClock className="h-4 w-4 text-purple-500" />,
+    HearingCompleted: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+    DocumentUploaded: <FileUp className="h-4 w-4 text-cyan-500" />,
+    ProcedureCompleted: <ListChecks className="h-4 w-4 text-emerald-500" />,
+    JudgmentAdded: <Gavel className="h-4 w-4 text-red-500" />,
+    NotesUpdated: <PenLine className="h-4 w-4 text-ink-soft" />,
+    StatusChanged: <AlertCircle className="h-4 w-4 text-orange-500" />,
+  };
+
+  const activityTypes = ["all", ...new Set(activities.map((a) => a.activityType))];
+  const filtered = filter === "all" ? activities : activities.filter((a) => a.activityType === filter);
+
+  const getActivityLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      CaseCreated: "Case Created",
+      CaseUpdated: "Case Updated",
+      HearingScheduled: "Hearing Scheduled",
+      HearingCompleted: "Hearing Completed",
+      DocumentUploaded: "Document Uploaded",
+      ProcedureCompleted: "Procedure Completed",
+      JudgmentAdded: "Judgment Added",
+      NotesUpdated: "Notes Updated",
+      StatusChanged: "Status Changed"
+    };
+    return labels[type] ?? type.replace(/([A-Z])/g, " $1").trim();
+  };
+
+  return (
+    <Card>
+      <CardHeader title="Case Activity" description="Complete log of all changes and actions on this case." />
+      <CardContent>
+        {activities.length > 0 ? (
+          <>
+            {activityTypes.length > 2 ? (
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {activityTypes.map((t) => (
+                  <Button key={t} size="sm" variant={filter === t ? "subtle" : "ghost"} onClick={() => setFilter(t)}>
+                    {t === "all" ? "All" : getActivityLabel(t)}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="relative space-y-0">
+              <div className="absolute left-[19px] top-2 bottom-2 w-px bg-line" />
+              {filtered.map((a) => (
+                <div key={a.id} className="relative flex gap-3 py-3">
+                  <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-white">
+                    {activityIconMap[a.activityType] ?? <Gavel className="h-4 w-4 text-ink-soft" />}
+                  </div>
+                  <div className="min-w-0 flex-1 pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-ink">{getActivityLabel(a.activityType)}</span>
+                      {a.isClientVisible ? <Badge tone="blue" className="text-[10px]">Client visible</Badge> : null}
+                    </div>
+                    {a.description && a.description !== a.activityType ? (
+                      <p className="mt-0.5 text-sm text-ink-muted">{a.description}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-ink-muted">
+                      {a.createdByName ?? a.createdBy} · {formatDateTime(a.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyState
+            icon={<ListChecks className="h-10 w-10" />}
+            title="No activity logged"
+            description="Actions on this case — scheduling hearings, uploading documents, updating status — will appear here."
+          />
+        )}
+      </CardContent>
     </Card>
+  );
+}
+
+function ProceduresTab({ caseId, legalSections }: { caseId: string; legalSections: { id: string; legalSectionId: string; sectionCode: string; sectionTitle: string; lawName: string; procedures: { id: string; procedureTitle: string; stepNumber: number; description: string | null; requiredDocuments: string | null; recommendedTimeline: string | null; responsibleRole: string | null; isMandatory: boolean; isCompleted: boolean; completedAt: string | null; completedBy: string | null; notes: string | null }[] }[] }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [genOpen, setGenOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    legalSections.forEach((s) => { init[s.id] = true; });
+    return init;
+  });
+
+  const { data: allSections, isLoading: sectionsLoading } = useQuery({
+    queryKey: ["legal-sections"],
+    queryFn: () => legalSectionService.list(),
+    enabled: genOpen
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: (legalSectionId: string) => caseService.generateProcedures(caseId, legalSectionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      toast.success("Procedures generated");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const completeProcedure = useMutation({
+    mutationFn: (procedureId: string) => caseService.completeProcedure(caseId, procedureId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["case", caseId] });
+      toast.success("Procedure completed");
+    },
+    onError: (e) => toast.error(getErrorMessage(e))
+  });
+
+  const linkedSectionIds = new Set(legalSections.map((s) => s.legalSectionId));
+  const availableSections = (allSections ?? []).filter(
+    (s) => !linkedSectionIds.has(s.id) && (search === "" || s.sectionCode.toLowerCase().includes(search.toLowerCase()) || s.sectionTitle.toLowerCase().includes(search.toLowerCase()) || s.lawName.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const totalProcedures = legalSections.reduce((sum, s) => sum + s.procedures.length, 0);
+  const completedProcedures = legalSections.reduce((sum, s) => sum + s.procedures.filter((p) => p.isCompleted).length, 0);
+  const progress = totalProcedures > 0 ? Math.round((completedProcedures / totalProcedures) * 100) : 0;
+
+  const toggleSection = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Legal Procedures"
+          description="Procedures linked from the Legal Database, grouped by section."
+          action={
+            <Button size="sm" onClick={() => setGenOpen(true)}>
+              <Plus className="h-4 w-4" /> Generate from Legal DB
+            </Button>
+          }
+        />
+        <CardContent>
+          {totalProcedures > 0 ? (
+            <div className="mb-5">
+              <div className="flex items-center justify-between text-xs text-ink-muted">
+                <span>{completedProcedures} of {totalProcedures} completed</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          ) : null}
+
+          {legalSections.length > 0 ? (
+            <div className="space-y-4">
+              {legalSections.map((section) => {
+                const sectionDone = section.procedures.filter((p) => p.isCompleted).length;
+                const isOpen = expanded[section.id] !== false;
+                return (
+                  <div key={section.id} className="rounded-lg border border-line">
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      className="flex w-full cursor-pointer items-center gap-3 p-3 text-left hover:bg-slate-50/60"
+                    >
+                      {isOpen ? <ChevronDown className="h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="h-4 w-4 shrink-0 text-ink-muted" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-primary-700">{section.sectionCode}</span>
+                          <span className="text-sm font-medium text-ink">{section.sectionTitle}</span>
+                        </div>
+                        <p className="text-xs text-ink-muted">{section.lawName}</p>
+                      </div>
+                      <span className="shrink-0 text-xs text-ink-muted">{sectionDone}/{section.procedures.length}</span>
+                    </button>
+                    {isOpen ? (
+                      <div className="space-y-1 border-t border-line px-3 py-2">
+                        {section.procedures.sort((a, b) => a.stepNumber - b.stepNumber).map((proc) => (
+                          <div key={proc.id} className="flex items-start gap-3 rounded-md px-2 py-2 hover:bg-slate-50">
+                            <button
+                              onClick={() => !proc.isCompleted && completeProcedure.mutate(proc.id)}
+                              className="mt-0.5 shrink-0 cursor-pointer"
+                              disabled={proc.isCompleted}
+                            >
+                              <CheckCircle2 className={proc.isCompleted ? "h-5 w-5 text-emerald-500" : "h-5 w-5 text-slate-300 hover:text-emerald-400"} />
+                            </button>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-ink-muted">#{proc.stepNumber}</span>
+                                <p className={`text-sm font-medium ${proc.isCompleted ? "text-ink-muted line-through" : "text-ink"}`}>{proc.procedureTitle}</p>
+                                {proc.isMandatory && !proc.isCompleted ? <Badge tone="red" className="text-[10px]">Required</Badge> : null}
+                              </div>
+                              {proc.description ? <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">{proc.description}</p> : null}
+                              <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-ink-muted">
+                                {proc.responsibleRole ? <span>Role: {proc.responsibleRole}</span> : null}
+                                {proc.recommendedTimeline ? <span>Timeline: {proc.recommendedTimeline}</span> : null}
+                                {proc.requiredDocuments ? <span>Docs: {proc.requiredDocuments}</span> : null}
+                              </div>
+                              {proc.completedAt ? <p className="mt-1 text-[11px] text-emerald-600">Completed {formatDateTime(proc.completedAt)}{proc.completedBy ? ` by ${proc.completedBy}` : ""}</p> : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              icon={<ListChecks className="h-10 w-10" />}
+              title="No procedures linked"
+              description="Generate procedure checklists from the Legal Database to track required steps for this case."
+              action={<Button onClick={() => setGenOpen(true)}><Plus className="h-4 w-4" /> Generate from Legal DB</Button>}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={genOpen}
+        onClose={() => { setGenOpen(false); setSearch(""); }}
+        title="Generate Procedures from Legal Database"
+        description="Select a legal section to generate its procedure checklist for this case."
+        size="lg"
+      >
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <Input
+              placeholder="Search by section code, title, or law name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {sectionsLoading ? (
+            <Loading label="Loading legal sections..." />
+          ) : availableSections.length > 0 ? (
+            <div className="max-h-80 space-y-2 overflow-y-auto">
+              {availableSections.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => { generateMutation.mutate(s.id); setGenOpen(false); setSearch(""); }}
+                  disabled={generateMutation.isPending}
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-line p-3 text-left transition-colors hover:border-primary-300 hover:bg-primary-50/40 disabled:opacity-50"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-primary-700">{s.sectionCode}</span>
+                      <span className="text-sm font-medium text-ink">{s.sectionTitle}</span>
+                    </div>
+                    <p className="text-xs text-ink-muted">{s.lawName} · {s.procedureCount} procedures</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-ink-muted" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-ink-muted">
+              {search ? "No matching sections found." : "All available sections are already linked."}
+            </p>
+          )}
+        </div>
+      </Dialog>
+    </>
   );
 }

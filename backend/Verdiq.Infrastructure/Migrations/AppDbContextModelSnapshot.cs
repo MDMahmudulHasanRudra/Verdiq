@@ -283,6 +283,10 @@ namespace Verdiq.Infrastructure.Migrations
                     b.Property<DateTime?>("BailHearingDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("BailType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("BondNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -299,6 +303,9 @@ namespace Verdiq.Infrastructure.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("NextHearingDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
@@ -1400,6 +1407,98 @@ namespace Verdiq.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ClientCases", (string)null);
+                });
+
+            modelBuilder.Entity("Verdiq.Domain.Entities.ClientPastAffair", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActsAndSections")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CaseNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CaseTitle")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CaseType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("ChamberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClosingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CourtName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("FilingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCriminal")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JudgeName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("LawyerName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Opponent")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Outcome")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Verdict")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChamberId");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("ClientPastAffairs", (string)null);
                 });
 
             modelBuilder.Entity("Verdiq.Domain.Entities.Document", b =>
@@ -4702,6 +4801,25 @@ namespace Verdiq.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Case");
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("Verdiq.Domain.Entities.ClientPastAffair", b =>
+                {
+                    b.HasOne("Verdiq.Domain.Entities.Chamber", "Chamber")
+                        .WithMany()
+                        .HasForeignKey("ChamberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Verdiq.Domain.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chamber");
 
                     b.Navigation("Client");
                 });

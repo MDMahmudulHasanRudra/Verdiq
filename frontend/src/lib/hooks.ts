@@ -113,7 +113,7 @@ export function useDocuments(params: { page?: number; pageSize?: number; categor
   });
 }
 
-export function useTasks(params: { status?: string; assignedTo?: string } = {}) {
+export function useTasks(params: { status?: string; priority?: string; assignedTo?: string } = {}) {
   return useQuery({ queryKey: ["tasks", params], queryFn: () => taskService.list(params) });
 }
 

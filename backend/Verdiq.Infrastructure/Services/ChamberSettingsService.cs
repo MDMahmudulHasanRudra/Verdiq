@@ -50,17 +50,22 @@ public class ChamberSettingsService : IChamberSettingsService
             ? JsonSerializer.Deserialize<Dictionary<string, object>>(settings.SettingsJson, JsonOptions) ?? new()
             : CreateDefaultSettings();
 
-        if (dto.General != null) current["general"] = dto.General;
-        if (dto.CaseDefaults != null) current["caseDefaults"] = dto.CaseDefaults;
-        if (dto.ClientManagement != null) current["clientManagement"] = dto.ClientManagement;
-        if (dto.Billing != null) current["billing"] = dto.Billing;
-        if (dto.DocumentManagement != null) current["documentManagement"] = dto.DocumentManagement;
-        if (dto.HearingsReminders != null) current["hearingsReminders"] = dto.HearingsReminders;
-        if (dto.LegalDrafting != null) current["legalDrafting"] = dto.LegalDrafting;
-        if (dto.Notifications != null) current["notifications"] = dto.Notifications;
-        if (dto.AiAssistant != null) current["aiAssistant"] = dto.AiAssistant;
-        if (dto.SecuritySession != null) current["securitySession"] = dto.SecuritySession;
-        if (dto.DashboardUi != null) current["dashboardUi"] = dto.DashboardUi;
+        if (dto.General != null) current["general"] = MergeSection(GetSection(current, "general"), dto.General);
+        if (dto.Branding != null) current["branding"] = MergeSection(GetSection(current, "branding"), dto.Branding);
+        if (dto.CaseDefaults != null) current["caseDefaults"] = MergeSection(GetSection(current, "caseDefaults"), dto.CaseDefaults);
+        if (dto.ClientManagement != null) current["clientManagement"] = MergeSection(GetSection(current, "clientManagement"), dto.ClientManagement);
+        if (dto.Billing != null) current["billing"] = MergeSection(GetSection(current, "billing"), dto.Billing);
+        if (dto.DocumentManagement != null) current["documentManagement"] = MergeSection(GetSection(current, "documentManagement"), dto.DocumentManagement);
+        if (dto.HearingsReminders != null) current["hearingsReminders"] = MergeSection(GetSection(current, "hearingsReminders"), dto.HearingsReminders);
+        if (dto.LegalDrafting != null) current["legalDrafting"] = MergeSection(GetSection(current, "legalDrafting"), dto.LegalDrafting);
+        if (dto.Communications != null) current["communications"] = MergeSection(GetSection(current, "communications"), dto.Communications);
+        if (dto.Notifications != null) current["notifications"] = MergeSection(GetSection(current, "notifications"), dto.Notifications);
+        if (dto.AiAssistant != null) current["aiAssistant"] = MergeSection(GetSection(current, "aiAssistant"), dto.AiAssistant);
+        if (dto.SecuritySession != null) current["securitySession"] = MergeSection(GetSection(current, "securitySession"), dto.SecuritySession);
+        if (dto.DashboardUi != null) current["dashboardUi"] = MergeSection(GetSection(current, "dashboardUi"), dto.DashboardUi);
+        if (dto.Integrations != null) current["integrations"] = MergeSection(GetSection(current, "integrations"), dto.Integrations);
+        if (dto.DataRetention != null) current["dataRetention"] = MergeSection(GetSection(current, "dataRetention"), dto.DataRetention);
+        if (dto.Workflow != null) current["workflow"] = MergeSection(GetSection(current, "workflow"), dto.Workflow);
 
         if (settings == null)
         {
@@ -140,10 +145,20 @@ public class ChamberSettingsService : IChamberSettingsService
                 ["address"] = "",
                 ["phone"] = "",
                 ["email"] = "",
+                ["website"] = "",
                 ["timezone"] = "Asia/Dhaka",
                 ["dateFormat"] = "DD-MM-YYYY",
                 ["currency"] = "BDT",
                 ["language"] = "en",
+                ["fiscalYearStart"] = "July",
+            },
+            ["branding"] = new Dictionary<string, object>
+            {
+                ["themeColor"] = "#0f766e",
+                ["accentColor"] = "#f59e0b",
+                ["showBranding"] = true,
+                ["appName"] = "Verdiq",
+                ["appNameBn"] = "ভার্দিক",
             },
             ["caseDefaults"] = new Dictionary<string, object>
             {
@@ -153,6 +168,13 @@ public class ChamberSettingsService : IChamberSettingsService
                 ["priorityLevels"] = new[] { "Low", "Medium", "High", "Urgent" },
                 ["statuses"] = new[] { "Active", "Pending", "Closed", "Appeal", "Withdrawn" },
                 ["courtPresets"] = new[] { "Dhaka District Court", "High Court Division", "Supreme Court" },
+            },
+            ["workflow"] = new Dictionary<string, object>
+            {
+                ["autoCaseNumbering"] = true,
+                ["defaultCaseStatus"] = "Active",
+                ["requireWorkflowNotes"] = false,
+                ["allowCaseReopen"] = true,
             },
             ["clientManagement"] = new Dictionary<string, object>
             {
@@ -164,6 +186,8 @@ public class ChamberSettingsService : IChamberSettingsService
             ["billing"] = new Dictionary<string, object>
             {
                 ["taxRatePercent"] = 15,
+                ["invoiceDueDays"] = 14,
+                ["lateFeePercent"] = 2,
                 ["invoicePrefix"] = "INV",
                 ["paymentMethods"] = new[] { "Bkash", "Nagad", "Card", "Bank Transfer", "Cash" },
                 ["expenseCategories"] = new[] { "Court Fees", "Stamp Fees", "Transport", "Stationery", "Admin", "Other" },
@@ -175,6 +199,13 @@ public class ChamberSettingsService : IChamberSettingsService
                 ["allowedMimeTypes"] = new[] { "application/pdf", "image/jpeg", "image/png", "application/msword" },
                 ["enableOcr"] = false,
                 ["storageProvider"] = "local",
+            },
+            ["communications"] = new Dictionary<string, object>
+            {
+                ["defaultReminderChannel"] = "email",
+                ["allowSms"] = false,
+                ["allowWhatsApp"] = false,
+                ["allowEmail"] = true,
             },
             ["hearingsReminders"] = new Dictionary<string, object>
             {
@@ -211,6 +242,19 @@ public class ChamberSettingsService : IChamberSettingsService
                 ["maxLoginAttempts"] = 5,
                 ["lockoutDurationMinutes"] = 15,
             },
+            ["integrations"] = new Dictionary<string, object>
+            {
+                ["googleDriveEnabled"] = false,
+                ["dropboxEnabled"] = false,
+                ["storageProvider"] = "local",
+                ["emailProvider"] = "smtp",
+            },
+            ["dataRetention"] = new Dictionary<string, object>
+            {
+                ["archiveAfterDays"] = 365,
+                ["autoDeleteAfterDays"] = 0,
+                ["retainAuditLogsDays"] = 2555,
+            },
             ["dashboardUi"] = new Dictionary<string, object>
             {
                 ["companyName"] = "Verdiq Law Chamber",
@@ -220,6 +264,38 @@ public class ChamberSettingsService : IChamberSettingsService
                 ["defaultWidgets"] = new[] { "caseStats", "upcomingHearings", "recentActivities", "invoiceSummary" },
             },
         };
+    }
+
+    private static Dictionary<string, object> MergeSection(Dictionary<string, object>? existing, Dictionary<string, object>? incoming)
+    {
+        var merged = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        if (existing != null)
+        {
+            foreach (var item in existing)
+            {
+                merged[item.Key] = item.Value;
+            }
+        }
+
+        if (incoming != null)
+        {
+            foreach (var item in incoming)
+            {
+                merged[item.Key] = item.Value;
+            }
+        }
+
+        return merged;
+    }
+
+    private static Dictionary<string, object> GetSection(Dictionary<string, object> current, string key)
+    {
+        if (current.TryGetValue(key, out var value) && value is Dictionary<string, object> section)
+        {
+            return section;
+        }
+
+        return new Dictionary<string, object>();
     }
 
     private static ChamberSettingsDto MapToDto(ChamberSettings s)

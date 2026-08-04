@@ -310,6 +310,91 @@ public class CaseService : ICaseService
         return (cases.Count, dto.CaseIds.Count - cases.Count, $"Deleted {cases.Count} case(s)");
     }
 
+    public async Task<(bool Success, string Message, CaseResponseDto? Data)> DuplicateAsync(Guid id, Guid userId, Guid chamberId)
+    {
+        var source = await _context.Cases
+            .Include(c => c.ClientCases)
+            .Include(c => c.CaseLegalSections)
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+
+        if (source == null) return (false, "Source case not found", null);
+
+        var caseNumber = await GenerateCaseNumberAsync();
+        var newCase = new Case
+        {
+            CaseNumber = caseNumber,
+            Title = $"{source.Title} (Copy)",
+            CaseType = source.CaseType,
+            Status = CaseStatus.Pending,
+            Priority = source.Priority,
+            CourtName = source.CourtName,
+            Opponent = source.Opponent,
+            FirNumber = source.FirNumber,
+            PoliceStation = source.PoliceStation,
+            GdNumber = source.GdNumber,
+            JudgeName = source.JudgeName,
+            Bench = source.Bench,
+            Prosecutor = source.Prosecutor,
+            OpposingLawyer = source.OpposingLawyer,
+            Jurisdiction = source.Jurisdiction,
+            AppealStatus = source.AppealStatus,
+            RiskLevel = source.RiskLevel,
+            ComplexityScore = source.ComplexityScore,
+            PracticeArea = source.PracticeArea,
+            Department = source.Department,
+            InternalNotes = source.InternalNotes,
+            RetainerAmount = source.RetainerAmount,
+            BillingMethod = source.BillingMethod,
+            FixedFee = source.FixedFee,
+            HourlyRate = source.HourlyRate,
+            BudgetLimit = source.BudgetLimit,
+            ExpenseBudget = source.ExpenseBudget,
+            NextHearingDate = source.NextHearingDate,
+            CriticalDeadlines = source.CriticalDeadlines,
+            LimitationExpiry = source.LimitationExpiry,
+            ActsAndSections = source.ActsAndSections,
+            Description = source.Description,
+            FilingDate = source.FilingDate,
+            AssignedLawyerId = userId,
+            TeamId = source.TeamId,
+            ChamberId = chamberId,
+        };
+
+        _context.Cases.Add(newCase);
+
+        foreach (var cc in source.ClientCases.Where(cc => !cc.IsDeleted))
+        {
+            _context.ClientCases.Add(new ClientCase
+            {
+                ClientId = cc.ClientId,
+                CaseId = newCase.Id,
+                Role = cc.Role,
+            });
+        }
+
+        var sourceSectionIds = source.CaseLegalSections.Where(cls => !cls.IsDeleted).Select(cls => cls.LegalSectionId).ToList();
+        foreach (var sectionId in sourceSectionIds)
+        {
+            _context.CaseLegalSections.Add(new CaseLegalSection
+            {
+                CaseId = newCase.Id,
+                LegalSectionId = sectionId,
+            });
+        }
+
+        _context.CaseActivities.Add(new CaseActivity
+        {
+            CaseId = newCase.Id,
+            ActivityType = ActivityType.Note,
+            Description = $"Duplicated from {source.CaseNumber}",
+            CreatedBy = userId,
+        });
+
+        await _context.SaveChangesAsync();
+        var result = await GetByIdAsync(newCase.Id);
+        return (true, $"Case duplicated as {caseNumber}", result);
+    }
+
     public async Task<int> GetCountAsync(Guid chamberId, string? status = null, string? priority = null, string? type = null, string? courtName = null, DateTime? dateFrom = null, DateTime? dateTo = null)
     {
         var query = _context.Cases.Where(c => c.ChamberId == chamberId && !c.IsDeleted);

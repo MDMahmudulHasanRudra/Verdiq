@@ -104,6 +104,7 @@ try
     builder.Services.AddScoped<IChamberService, ChamberService>();
     builder.Services.AddScoped<ICaseService, CaseService>();
     builder.Services.AddScoped<IClientService, ClientService>();
+    builder.Services.AddScoped<IClientPastAffairService, ClientPastAffairService>();
     builder.Services.AddScoped<IHearingService, HearingService>();
     builder.Services.AddScoped<IDocumentService, DocumentService>();
     builder.Services.AddScoped<IJudgmentService, JudgmentService>();

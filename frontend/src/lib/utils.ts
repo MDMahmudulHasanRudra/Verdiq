@@ -87,3 +87,20 @@ export function getErrorMessage(err: unknown): string {
   }
   return "Something went wrong";
 }
+
+export async function apiDownload(url: string): Promise<Blob> {
+  const response = await fetch(url, { credentials: "include" });
+  if (!response.ok) throw new Error("Download failed");
+  return response.blob();
+}
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

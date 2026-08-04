@@ -11,14 +11,19 @@ public class ChamberSettingsDto
 public class UpdateChamberSettingsDto
 {
     public Dictionary<string, object>? General { get; set; }
+    public Dictionary<string, object>? Branding { get; set; }
     public Dictionary<string, object>? CaseDefaults { get; set; }
     public Dictionary<string, object>? ClientManagement { get; set; }
     public Dictionary<string, object>? Billing { get; set; }
     public Dictionary<string, object>? DocumentManagement { get; set; }
     public Dictionary<string, object>? HearingsReminders { get; set; }
     public Dictionary<string, object>? LegalDrafting { get; set; }
+    public Dictionary<string, object>? Communications { get; set; }
     public Dictionary<string, object>? Notifications { get; set; }
     public Dictionary<string, object>? AiAssistant { get; set; }
     public Dictionary<string, object>? SecuritySession { get; set; }
     public Dictionary<string, object>? DashboardUi { get; set; }
+    public Dictionary<string, object>? Integrations { get; set; }
+    public Dictionary<string, object>? DataRetention { get; set; }
+    public Dictionary<string, object>? Workflow { get; set; }
 }

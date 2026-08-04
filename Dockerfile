@@ -48,7 +48,7 @@ COPY --from=node:22 /usr/local/bin/node /usr/local/bin/node
 
 # PostgreSQL 16 + supervisor + curl (for healthchecks)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends postgresql-16 supervisor curl && \
+    apt-get install -y --no-install-recommends postgresql-18 supervisor curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the published API

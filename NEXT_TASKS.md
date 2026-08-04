@@ -1,6 +1,10 @@
 [x] Backend: fix InvoicesController chamber bug (GetUserId->GetChamberId)
 [x] Backend: lead conversion -> create Client + Case on stage ConvertedToClient
 [x] Backend: LegalDocuments update/delete + fix GetById
+[x] Settings module: expanded configuration backend with richer sections (organization, branding, billing, communications, integrations, security, retention, workflow)
+[x] Settings module UI: upgraded the configuration page into a multi-section, functional settings experience
+[x] Frontend build verification: `npm run build` completed successfully
+[x] Backend build verification: `dotnet build Verdiq.slnx` completed successfully
 [•] Frontend i18n infra: Bengali fonts, LanguageProvider, dictionaries (en/bn), language switcher
 [ ] Upgrade Leads page: edit/delete/search/analytics + i18n
 [ ] Upgrade Invoices page: client/case pickers, edit, mark-paid + i18n

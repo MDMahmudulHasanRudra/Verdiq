@@ -27,9 +27,11 @@ public class BailService : IBailService
         {
             CaseId = dto.CaseId,
             Status = BailStatus.Pending,
+            BailType = dto.BailType,
             BailAmount = dto.BailAmount,
             BailConditions = dto.BailConditions,
             BailHearingDate = dto.BailHearingDate.HasValue ? DateTime.SpecifyKind(dto.BailHearingDate.Value, DateTimeKind.Utc) : null,
+            NextHearingDate = dto.NextHearingDate.HasValue ? DateTime.SpecifyKind(dto.NextHearingDate.Value, DateTimeKind.Utc) : null,
             BondNumber = dto.BondNumber,
             SuretyName = dto.SuretyName,
             SuretyAddress = dto.SuretyAddress,
@@ -51,9 +53,11 @@ public class BailService : IBailService
         if (bail == null || bail.IsDeleted)
             return (false, "Bail record not found", null);
 
+        if (dto.BailType != null) bail.BailType = dto.BailType;
         if (dto.BailAmount.HasValue) bail.BailAmount = dto.BailAmount;
         if (dto.BailConditions != null) bail.BailConditions = dto.BailConditions;
         if (dto.BailHearingDate.HasValue) bail.BailHearingDate = DateTime.SpecifyKind(dto.BailHearingDate.Value, DateTimeKind.Utc);
+        if (dto.NextHearingDate.HasValue) bail.NextHearingDate = DateTime.SpecifyKind(dto.NextHearingDate.Value, DateTimeKind.Utc);
         if (dto.BondNumber != null) bail.BondNumber = dto.BondNumber;
         if (dto.SuretyName != null) bail.SuretyName = dto.SuretyName;
         if (dto.SuretyAddress != null) bail.SuretyAddress = dto.SuretyAddress;
@@ -151,10 +155,12 @@ public class BailService : IBailService
         CaseNumber = b.Case.CaseNumber,
         CaseTitle = b.Case.Title,
         Status = b.Status.ToString(),
+        BailType = b.BailType,
         BailAmount = b.BailAmount,
         BailConditions = b.BailConditions,
         BailGrantedAt = b.BailGrantedAt,
         BailHearingDate = b.BailHearingDate,
+        NextHearingDate = b.NextHearingDate,
         BondNumber = b.BondNumber,
         SuretyName = b.SuretyName,
         SuretyAddress = b.SuretyAddress,

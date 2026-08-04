@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<CaseActivity> CaseActivities => Set<CaseActivity>();
     public DbSet<CauseList> CauseLists => Set<CauseList>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<ClientPastAffair> ClientPastAffairs => Set<ClientPastAffair>();
     public DbSet<ClientCase> ClientCases => Set<ClientCase>();
     public DbSet<Hearing> Hearings => Set<Hearing>();
     public DbSet<Document> Documents => Set<Document>();
@@ -613,6 +614,37 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.ClientCases)
                 .HasForeignKey(e => e.CaseId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        modelBuilder.Entity<ClientPastAffair>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("ClientPastAffairs");
+            entity.Property(e => e.CaseTitle).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.CaseNumber).HasMaxLength(100);
+            entity.Property(e => e.CourtName).HasMaxLength(255);
+            entity.Property(e => e.CaseType).HasMaxLength(100);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.Opponent).HasMaxLength(255);
+            entity.Property(e => e.JudgeName).HasMaxLength(255);
+            entity.Property(e => e.Verdict).HasMaxLength(1000);
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.ActsAndSections).HasMaxLength(500);
+            entity.Property(e => e.LawyerName).HasMaxLength(255);
+            entity.Property(e => e.Outcome).HasMaxLength(500);
+            entity.Property(e => e.Notes).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Client)
+                .WithMany()
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Chamber)
+                .WithMany()
+                .HasForeignKey(e => e.ChamberId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

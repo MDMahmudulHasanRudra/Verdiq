@@ -218,6 +218,30 @@ export interface Client {
   avatarUrl: string | null;
 }
 
+export interface ClientPastAffair {
+  id: string;
+  clientId: string;
+  clientName: string;
+  caseTitle: string;
+  caseNumber: string | null;
+  courtName: string | null;
+  caseType: string | null;
+  status: string | null;
+  filingDate: string | null;
+  closingDate: string | null;
+  opponent: string | null;
+  judgeName: string | null;
+  verdict: string | null;
+  description: string | null;
+  actsAndSections: string | null;
+  lawyerName: string | null;
+  isCriminal: boolean;
+  outcome: string | null;
+  notes: string | null;
+  documentCount: number;
+  createdAt: string;
+}
+
 export interface CreateClientInput {
   name: string;
   phone: string;
@@ -867,10 +891,12 @@ export interface Bail {
   caseNumber: string;
   caseTitle: string;
   status: string;
+  bailType: string;
   bailAmount: number | null;
   bailConditions: string | null;
   bailGrantedAt: string | null;
   bailHearingDate: string | null;
+  nextHearingDate: string | null;
   bondNumber: string | null;
   suretyName: string | null;
   suretyAddress: string | null;

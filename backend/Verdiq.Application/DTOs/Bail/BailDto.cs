@@ -3,9 +3,11 @@ namespace Verdiq.Application.DTOs.Bail;
 public class CreateBailDto
 {
     public Guid CaseId { get; set; }
+    public string BailType { get; set; } = "Regular";
     public decimal? BailAmount { get; set; }
     public string? BailConditions { get; set; }
     public DateTime? BailHearingDate { get; set; }
+    public DateTime? NextHearingDate { get; set; }
     public string? BondNumber { get; set; }
     public string? SuretyName { get; set; }
     public string? SuretyAddress { get; set; }
@@ -16,9 +18,11 @@ public class CreateBailDto
 
 public class UpdateBailDto
 {
+    public string? BailType { get; set; }
     public decimal? BailAmount { get; set; }
     public string? BailConditions { get; set; }
     public DateTime? BailHearingDate { get; set; }
+    public DateTime? NextHearingDate { get; set; }
     public string? BondNumber { get; set; }
     public string? SuretyName { get; set; }
     public string? SuretyAddress { get; set; }
@@ -40,10 +44,12 @@ public class BailResponseDto
     public string CaseNumber { get; set; } = string.Empty;
     public string CaseTitle { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public string BailType { get; set; } = string.Empty;
     public decimal? BailAmount { get; set; }
     public string? BailConditions { get; set; }
     public DateTime? BailGrantedAt { get; set; }
     public DateTime? BailHearingDate { get; set; }
+    public DateTime? NextHearingDate { get; set; }
     public string? BondNumber { get; set; }
     public string? SuretyName { get; set; }
     public string? SuretyAddress { get; set; }

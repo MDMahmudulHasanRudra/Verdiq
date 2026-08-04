@@ -32,7 +32,13 @@ export const clientService = {
   hearings: (id: string) => apiGet<import("@/types/models").ClientHearing[]>(`/clients/${id}/hearings`),
   grantPortalAccess: (clientId: string, data: { fullName: string; email: string; password: string; phone?: string }) =>
     apiPost<object>(`/clients/${clientId}/portal-access`, data),
-  revokePortalAccess: (clientId: string) => apiPost<object>(`/clients/${clientId}/revoke-portal`)
+  revokePortalAccess: (clientId: string) => apiPost<object>(`/clients/${clientId}/revoke-portal`),
+  pastAffairs: {
+    list: (clientId: string) => apiGet<import("@/types/models").ClientPastAffair[]>(`/clients/${clientId}/past-affairs`),
+    create: (clientId: string, input: Record<string, unknown>) => apiPost<import("@/types/models").ClientPastAffair>(`/clients/${clientId}/past-affairs`, input),
+    update: (clientId: string, id: string, input: Record<string, unknown>) => apiPut<import("@/types/models").ClientPastAffair>(`/clients/${clientId}/past-affairs/${id}`, input),
+    remove: (clientId: string, id: string) => apiDelete<object>(`/clients/${clientId}/past-affairs/${id}`)
+  }
 };
 
 export const hearingService = {
@@ -62,12 +68,18 @@ export const taskService = {
   my: () => apiGet<import("@/types/models").Task[]>("/tasks/my"),
   byCase: (caseId: string) => apiGet<import("@/types/models").Task[]>(`/tasks/by-case/${caseId}`),
   overdue: () => apiGet<import("@/types/models").Task[]>("/tasks/overdue"),
+  get: (id: string) => apiGet<import("@/types/models").Task>(`/tasks/${id}`),
   create: (input: Record<string, unknown>) => apiPost<import("@/types/models").Task>("/tasks", input),
   update: (id: string, input: Record<string, unknown>) =>
     apiPut<import("@/types/models").Task>(`/tasks/${id}`, input),
   remove: (id: string) => apiDelete<object>(`/tasks/${id}`),
   comments: (id: string) => apiGet<import("@/types/models").TaskComment[]>(`/tasks/${id}/comments`),
-  addComment: (id: string, content: string) => apiPost<import("@/types/models").TaskComment>(`/tasks/${id}/comments`, { content })
+  addComment: (id: string, content: string) => apiPost<import("@/types/models").TaskComment>(`/tasks/${id}/comments`, { content }),
+  toggleWatcher: (id: string) => apiPost<object>(`/tasks/${id}/watchers`),
+  startTimer: (id: string) => apiPost<import("@/types/models").Task>(`/tasks/${id}/start-timer`),
+  stopTimer: (id: string, minutes: number) => apiPost<import("@/types/models").Task>(`/tasks/${id}/stop-timer`, { minutes }),
+  reorder: (items: { id: string; sortOrder: number; status?: string }[]) =>
+    apiPost<object>("/tasks/reorder", { items })
 };
 
 export const documentService = {
@@ -88,6 +100,7 @@ export const documentService = {
       form
     );
   },
+  download: (id: string) => apiDownload(`/documents/download/${id}`),
   remove: (id: string) => apiDelete<object>(`/documents/${id}`),
   update: (id: string, input: Record<string, unknown>) =>
     apiPatch<import("@/types/models").Document>(`/documents/${id}`, input),
@@ -281,7 +294,10 @@ export const teamService = {
   create: (input: Record<string, unknown>) => apiPost<import("@/types/models").Team>("/teams", input),
   update: (id: string, input: Record<string, unknown>) => apiPut<import("@/types/models").Team>(`/teams/${id}`, input),
   remove: (id: string) => apiDelete<object>(`/teams/${id}`),
-  addMember: (id: string, input: Record<string, unknown>) => apiPost<import("@/types/models").TeamMember>(`/teams/${id}/members`, input)
+  addMember: (id: string, input: Record<string, unknown>) => apiPost<import("@/types/models").TeamMember>(`/teams/${id}/members`, input),
+  removeMember: (teamId: string, memberId: string) => apiDelete<object>(`/teams/${teamId}/members/${memberId}`),
+  updateMemberRole: (teamId: string, memberId: string, role: string) =>
+    apiPut<import("@/types/models").TeamMember>(`/teams/${teamId}/members/${memberId}/role`, { role })
 };
 
 export const accountingService = {
@@ -365,8 +381,11 @@ export const bailService = {
   list: (status?: string) => apiGet<import("@/types/models").Bail[]>(`/bails${status ? `?status=${status}` : ""}`),
   byCase: (caseId: string) => apiGet<import("@/types/models").Bail | null>(`/bails/by-case/${caseId}`),
   create: (input: Record<string, unknown>) => apiPost<import("@/types/models").Bail>("/bails", input),
+  update: (id: string, input: Record<string, unknown>) =>
+    apiPut<import("@/types/models").Bail>(`/bails/${id}`, input),
   updateStatus: (id: string, input: { status: string; revokedReason?: string }) =>
-    apiPost<import("@/types/models").Bail>(`/bails/${id}/status`, input)
+    apiPatch<import("@/types/models").Bail>(`/bails/${id}/status`, input),
+  remove: (id: string) => apiDelete<object>(`/bails/${id}`)
 };
 
 export const leadService = {

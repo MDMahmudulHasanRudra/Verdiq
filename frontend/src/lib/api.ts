@@ -210,6 +210,24 @@ export function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(href);
 }
 
+export async function apiUpload<T>(
+  url: string,
+  file: File,
+  extraFields?: Record<string, string>,
+  onProgress?: (pct: number) => void
+): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  if (extraFields) Object.entries(extraFields).forEach(([k, v]) => form.append(k, v));
+  const { data } = await api.post<{ data: T }>(url, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+    }
+  });
+  return data.data;
+}
+
 export async function saGet<T>(url: string): Promise<T> {
   const { data } = await saApi.get<{ data: T }>(url);
   return data.data;

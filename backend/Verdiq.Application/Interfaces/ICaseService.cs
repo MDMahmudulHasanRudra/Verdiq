@@ -13,4 +13,5 @@ public interface ICaseService
     Task<int> GetCountAsync(Guid chamberId, string? status = null, string? priority = null, string? type = null, string? courtName = null, DateTime? dateFrom = null, DateTime? dateTo = null);
     Task<(int SuccessCount, int FailCount, string Message)> BulkStatusChangeAsync(BulkStatusChangeDto dto, Guid chamberId);
     Task<(int SuccessCount, int FailCount, string Message)> BulkDeleteAsync(BulkDeleteDto dto, Guid chamberId);
+    Task<(bool Success, string Message, CaseResponseDto? Data)> DuplicateAsync(Guid id, Guid userId, Guid chamberId);
 }

@@ -35,5 +35,6 @@ export const caseService = {
   generateProcedures: (caseId: string, legalSectionId: string) =>
     apiPost<object>(`/cases/${caseId}/procedures/generate/${legalSectionId}`),
   completeProcedure: (caseId: string, procedureId: string) =>
-    apiPost<object>(`/cases/${caseId}/procedures/${procedureId}/complete`)
+    apiPost<object>(`/cases/${caseId}/procedures/${procedureId}/complete`),
+  duplicate: (id: string) => apiPost<Case>(`/cases/${id}/duplicate`)
 };

@@ -110,6 +110,16 @@ public class CasesController : BaseController
         return Ok(ApiResponse<object>.Ok(new { successCount, failCount, message }));
     }
 
+    [HttpPost("{id}/duplicate")]
+    public async Task<ActionResult<ApiResponse<CaseResponseDto>>> Duplicate(Guid id)
+    {
+        var (success, message, data) = await _caseService.DuplicateAsync(id, GetUserId(), GetChamberId());
+        if (!success || data == null)
+            return BadRequest(ApiResponse<CaseResponseDto>.Fail(message));
+
+        return Ok(ApiResponse<CaseResponseDto>.Ok(data, message));
+    }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, [FromBody] ConfirmCaseDeleteDto dto)
     {
